@@ -4,6 +4,18 @@ const { loadCommands } = require('./handlers/commandHandler');
 const { loadEvents } = require('./handlers/eventHandler');
 const logger = require('./utils/logger');
 const config = require('../config.json');
+const express = require('express');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('Onyx Bot is running.');
+});
+
+app.listen(PORT, () => {
+  logger.info(`Web server listening on port ${PORT}`);
+});
 
 const token = process.env.DISCORD_TOKEN;
 
