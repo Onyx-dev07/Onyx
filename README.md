@@ -264,11 +264,11 @@ Welcome messages support these variables:
 
 <br />
 
-A spam panel posts one message at a time. Clicking **Send** re-sends the panel text, and **Custom message** opens a modal for one-off text. Neither action posts a receipt card.
+A spam panel queues sends per channel, so rapid clicks post back-to-back instead of stalling on rate limits. **Send** posts the panel text once, **Burst** posts a configurable batch, **Custom message** opens a modal for one-off text, and the mode button switches delivery between webhook and bot message. None of the actions post a receipt card.
 
 | Command | Alias | Slash | Description |
 |---|---|---|---|
-| `!spamraid [webhook\|message] <text>` | `promo`, `promobroadcast` | `/spamraid <message> [mode] [channel]` | Posts a click-to-send spam panel with Send and Custom message buttons |
+| `!spamraid [webhook\|message] [x1-x10] <text>` | `promo`, `promobroadcast` | `/spamraid <message> [mode] [burst] [channel]` | Posts a spam panel with Send, Burst, Custom message, and mode controls |
 
 </details>
 
