@@ -1,5 +1,6 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
 const { createEmbed, UI } = require('../../utils/embeds');
+const { createShipCard } = require('../../utils/shipCard');
 const config = require('../../../config.json');
 
 const VERDICTS = [
@@ -50,42 +51,66 @@ function verdictFor(percent) {
   return VERDICTS.find(entry => percent <= entry.max)?.text || VERDICTS[VERDICTS.length - 1].text;
 }
 
+function statsFor(first, second) {
+  if (first.id === second.id) {
+    return {
+      percent: 100,
+      name: shipName(first.username, second.username),
+      verdict: 'Self-love is valid. The council approves.'
+    };
+  }
+
+  const percent = compatibility(first.id, second.id);
+  return {
+    percent,
+    name: shipName(first.username, second.username),
+    verdict: verdictFor(percent)
+  };
+}
+
 function pickRandom(guild, excludeId) {
   const pool = guild?.members?.cache?.filter(member => !member.user.bot && member.id !== excludeId);
   return pool?.size ? pool.random().user : null;
 }
 
-function shipPayload(first, second) {
-  if (first.id === second.id) {
-    return createEmbed({
-      title: 'Ship Meter',
-      description: [
-        `**${first.username}** + **${second.username}**`,
-        `${UI.progressFull.repeat(10)}`,
-        '**100%**',
-        '',
-        'Self-love is valid. The council approves.'
-      ].join('\n'),
-      color: config.colors.crimson
-    });
-  }
-
-  const percent = compatibility(first.id, second.id);
-  const name = shipName(first.username, second.username);
-  const color = percent >= 70 ? config.colors.crimson : config.colors.accent;
+// Text fallback used only if the image renderer is unavailable.
+function shipEmbed(first, second, stats) {
+  const color = stats.percent >= 70 ? config.colors.crimson : config.colors.accent;
 
   return createEmbed({
     title: 'Ship Meter',
     description: [
       `**${first.username}** + **${second.username}**`,
-      `${bar(percent)}`,
-      `**${percent}%**`,
+      `${bar(stats.percent)}`,
+      `**${stats.percent}%**`,
       '',
-      verdictFor(percent)
+      stats.verdict
     ].join('\n'),
-    fields: [{ name: 'Ship name', value: `**${name}**`, inline: true }],
+    fields: [{ name: 'Ship name', value: `**${stats.name}**`, inline: true }],
     color
   });
+}
+
+async function shipPayload(first, second) {
+  const stats = statsFor(first, second);
+  const color = stats.percent >= 70 ? config.colors.crimson : config.colors.accent;
+
+  try {
+    const buffer = await createShipCard({ first, second, ...stats });
+    const attachment = new AttachmentBuilder(buffer, { name: 'onyx-ship.png' });
+
+    return {
+      files: [attachment],
+      embeds: [createEmbed({
+        author: false,
+        image: 'attachment://onyx-ship.png',
+        color
+      })]
+    };
+  } catch (error) {
+    console.error('[ship] card render failed:', error.message);
+    return { embeds: [shipEmbed(first, second, stats)] };
+  }
 }
 
 module.exports = {
@@ -115,7 +140,8 @@ module.exports = {
     if (!pairA) pairA = pickRandom(interaction.guild, interaction.user.id) || interaction.user;
     if (!pairB) pairB = interaction.user;
 
-    return interaction.reply({ embeds: [shipPayload(pairA, pairB)] });
+    await interaction.deferReply();
+    return interaction.editReply(await shipPayload(pairA, pairB));
   },
 
   async executePrefix(message) {
@@ -126,6 +152,6 @@ module.exports = {
     if (!pairA) pairA = pickRandom(message.guild, message.author.id) || message.author;
     if (!pairB) pairB = message.author;
 
-    return message.reply({ embeds: [shipPayload(pairA, pairB)] });
+    return message.reply(await shipPayload(pairA, pairB));
   }
 };
