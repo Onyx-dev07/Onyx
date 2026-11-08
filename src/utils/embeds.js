@@ -15,6 +15,50 @@ const STATUS_HEADINGS = {
   info: 'NOTICE'
 };
 
+// Action receipts read as one sentence, so every title maps to the verb that
+// follows the staff member's name. Titles without an entry keep the quieter
+// title-and-fields card used by status panels and failures.
+const ACTION_VERBS = {
+  'Member Banned': 'Banned',
+  'Member Unbanned': 'Unbanned',
+  'Member Kicked': 'Kicked',
+  'Member Hardbanned': 'Permanently banned',
+  'Member Softbanned': 'Soft-banned',
+  'Member Timed Out': 'Timed out',
+  'Timeout Removed': 'Removed the timeout from',
+  'Member Muted': 'Muted',
+  'Member Unmuted': 'Unmuted',
+  'Member Warned': 'Warned',
+  'Warnings Cleared': 'Cleared the warnings of',
+  'Member Jailed': 'Jailed',
+  'Member Released from Jail': 'Released',
+  'Member Dehoisted': 'Dehoisted',
+  'Server Dehoisted': 'Dehoisted the server',
+  'Nickname Set': 'Set the nickname of',
+  'Nickname Cleared': 'Cleared the nickname of',
+  'Channel Locked': 'Locked the channel',
+  'Channel Unlocked': 'Unlocked the channel',
+  'Channel Cleared': 'Cleared the channel',
+  'Messages Deleted': 'Deleted messages in the channel',
+  'Messages Purged': 'Purged messages in the channel',
+  'Slowmode Updated': 'Updated the channel slowmode',
+  'Server lockdown active': 'Locked down the server',
+  'Server lockdown lifted': 'Lifted the server lockdown',
+  'Members Moved': 'Moved members',
+  'Voice Disconnect': 'Disconnected',
+  'Voice Muted': 'Server-muted',
+  'Voice Unmuted': 'Server-unmuted',
+  'Voice Deafened': 'Server-deafened',
+  'Voice Undeafened': 'Server-undeafened',
+  'Direct Message Sent': 'Directly messaged',
+  'Reminder Set': 'Set a reminder for',
+  'AFK Set': 'Went AFK',
+  'Announcement Dispatched': 'Sent an announcement',
+  'Emoji Stolen': 'Added an emoji to the server',
+  'Sticker Stolen': 'Added a sticker to the server',
+  'Prefix Changed': 'Changed the prefix'
+};
+
 const UI = {
   active: '●',
   partial: '◐',
@@ -52,6 +96,11 @@ function stateLine(active, label) {
 // Falls back to the typographic dots when no emoji slot is configured.
 function mark(active) {
   return active ? (emoji('enabled') || UI.active) : (emoji('disabled') || UI.inactive);
+}
+
+// Approve marker that leads every completed action line.
+function approve() {
+  return emoji('check') || '✅';
 }
 
 /**
@@ -250,8 +299,17 @@ function alertEmbed(options = {}) {
 }
 
 /**
- * Structured moderation card: target, moderator, reason, duration and DM status.
- * Compact inline fields keep action logs scannable; no decorative icons.
+ * Structured action card.
+ *
+ * Completed actions render as one sentence led by an approve marker, with the
+ * staff member first and the target after the verb:
+ *
+ *   ✅ **@moderator**: Timed out @user for 5 minutes.
+ *   -# Reason · Raiding
+ *   -# Expires · in 5 minutes
+ *
+ * Titles without a verb mapping (status panels, failures) keep the older
+ * title-and-fields layout so nothing loses its heading.
  */
 function actionEmbed(options = {}) {
   const {
@@ -266,6 +324,30 @@ function actionEmbed(options = {}) {
     description,
     color = config.colors.accent || config.colors.primary || DEFAULT_COLOR
   } = options;
+
+  const verb = ACTION_VERBS[title];
+  if (moderator && verb) {
+    const sentence = `${approve()} **${moderator}**: ${[
+      verb,
+      target,
+      duration ? `for ${duration}` : null
+    ].filter(Boolean).join(' ')}.`;
+
+    const meta = [];
+    if (reason) meta.push(`Reason ${UI.separator} ${reason}`);
+    for (const field of fields) {
+      meta.push(`${field.name} ${UI.separator} ${field.value}`);
+    }
+    if (dmDelivered !== undefined) {
+      meta.push(`Direct message ${UI.separator} ${dmDelivered ? 'Delivered' : 'Failed'}`);
+    }
+
+    return createEmbed({
+      description: [sentence, description, ...meta.map(muted)].filter(Boolean).join('\n'),
+      color,
+      footer: false
+    });
+  }
 
   const embedFields = [];
 
@@ -297,6 +379,8 @@ module.exports = {
   withEmoji,
   stateLine,
   mark,
+  approve,
+  ACTION_VERBS,
   receiptText,
   receiptEmbed,
   brand,

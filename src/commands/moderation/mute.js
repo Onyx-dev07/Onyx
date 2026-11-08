@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const ms = require('ms');
-const { code } = require('../../utils/embeds');
 const {
   actionPayload,
   failurePayload,
@@ -33,7 +32,8 @@ function mutePayload({ user, durationMs, reason, moderator, isDefault }) {
     icon: 'lock',
     target: `<@${user.id}>`,
     moderator: `<@${moderator.id}>`,
-    duration: `${code(ms(durationMs, { long: true }))}${isDefault ? ' (default)' : ''} · <t:${expiresAt}:R>`,
+    duration: `${ms(durationMs, { long: true })}${isDefault ? ' (default)' : ''}`,
+    fields: [{ name: 'Expires', value: `<t:${expiresAt}:R>` }],
     reason
   });
 }

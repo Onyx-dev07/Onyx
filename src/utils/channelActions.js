@@ -37,10 +37,7 @@ function channelStatePayload({ channel, moderator, state, reason = 'No reason pr
       title: locked ? 'Channel Locked' : 'Channel Unlocked',
       moderator: `<@${moderator.id}>`,
       reason,
-      fields: [
-        { name: 'Channel', value: `<#${channel.id}>`, inline: true },
-        { name: 'State', value: locked ? 'Locked' : 'Unlocked', inline: true }
-      ],
+      fields: [{ name: 'Channel', value: `<#${channel.id}>`, inline: true }],
       color: locked ? config.colors.error : config.colors.success
     })],
     components: [controlRow(state, channel.id), actionButtons()]

@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const ms = require('ms');
-const { code } = require('../../utils/embeds');
 const {
   actionPayload,
   failurePayload,
@@ -73,7 +72,8 @@ module.exports = {
         icon: 'lock',
         target: `<@${user.id}>`,
         moderator: `<@${interaction.user.id}>`,
-        duration: `${code(durationInput)} · <t:${expiresAt}:R>`,
+        duration: ms(durationMs, { long: true }),
+        fields: [{ name: 'Expires', value: `<t:${expiresAt}:R>` }],
         reason
       }));
     } catch (err) {
@@ -116,7 +116,8 @@ module.exports = {
         icon: 'lock',
         target: `<@${user.id}>`,
         moderator: `<@${message.author.id}>`,
-        duration: `${code(durationInput)} · <t:${expiresAt}:R>`,
+        duration: ms(durationMs, { long: true }),
+        fields: [{ name: 'Expires', value: `<t:${expiresAt}:R>` }],
         reason
       }));
     } catch (err) {

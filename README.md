@@ -52,7 +52,7 @@ Every command works as both a **slash command** (`/ban`) and a **prefix command*
 | **Fortress Mode** | Freezes dangerous permissions across every manageable role, then restores each saved bitfield exactly. |
 | **Complete AutoMod** | Anti-spam, caps, links, invites, mass mentions, emoji spam, NSFW links, external apps, and token spam. Word blacklist included. |
 | **Hierarchy-aware moderation** | Ban, kick, timeout, mute, nickname, jail, and voice actions explain exactly why a target cannot be actioned: owner, administrator, or a higher role. No raw `Missing Permissions`. |
-| **Action cards** | Every moderation result uses a compact `actionEmbed` card with clean **Acknowledge** and **Dismiss** controls. |
+| **Action cards** | Every moderation result reads as one approve-marked sentence — `✅ **@moderator**: Timed out @user for 5 minutes.` — with reason and metadata as muted subtext, plus clean **Acknowledge** and **Dismiss** controls. |
 | **Jail system** | Strip a member's roles, isolate them in a jail channel, then restore their exact roles on release. |
 | **Interactive panels** | AutoMod, AntiNuke, AntiRaid, logs, welcome, autorole, media, extra owners, whitelist, limits, Anti-Betray, and the security dashboard are driven by buttons and select menus. |
 | **Security dashboard** | `!security` scores the server across eight protocols, renders coverage bars, and recommends the highest-impact fixes. |
@@ -125,7 +125,7 @@ Onyx deliberately avoids noisy Unicode decoration. The interface is built from t
 
 - **Two accents.** ONYX crimson for actions and attention; dark charcoal for passive information.
 - **Written status.** Headings such as `SUCCESS`, `ERROR`, `WARNING`, and `NOTICE` carry the meaning, so color never has to.
-- **Action cards.** Title, target, moderator, reason, duration, and DM status in compact inline fields.
+- **Action cards.** One approve-marked sentence: the staff member first, the action and target next, then duration. Reason, expiry, and DM status drop to muted subtext.
 - **Quiet chrome.** Routine replies carry no footer or timestamp. Panels and paginated lists use one muted footer line.
 - **Interactive controls.** Long lists paginate with Previous, Next, and Close buttons. Giveaways use buttons instead of reactions.
 
