@@ -32,7 +32,7 @@ onyx@discord:~$ onyx start --secure
   [ok] anti-nuke armed
   [ok] automod online · anti-raid gated
   [ok] moderation cards · hierarchy-aware
-  [ok] 70 commands · 29 event listeners
+  [ok] 71 commands · 29 event listeners
 
 onyx@discord:~$ _
 ```
@@ -239,6 +239,7 @@ Aliases work with the prefix form only (`!alias`). Slash commands always use the
 |---|---|---|---|
 | `!poll Question \| Option 1 \| Option 2` | `vote` | `/poll <question> <options>` | Creates a native Discord poll (up to 5 options, 24 hours) |
 | `!announce <#channel> <message>` | `ann` | `/announce <channel> <title> <message>` | Sends a formatted announcement embed |
+| `!dm <@user\|id> <message>` | `pm` | `/dm <user> <message>` | DMs a user from the bot |
 | `!giveaway <time> <prize>` | `gw` | `/giveaway <duration> <prize> [winners]` | Starts a timed giveaway |
 | `!embed <title \| description>` | — | `/embed <title> <description>` | Creates a custom embed |
 | `!remind <time> <message>` | `reminder` | `/remind <time> <message>` | Sets a personal reminder delivered by DM |
@@ -347,7 +348,7 @@ Onyx/
     └── commands/
         ├── general/          # ping, help, botinfo, serverinfo, userinfo, avatar, banner, uptime, invite
         ├── moderation/       # setup, jail, ban, kick, timeout, mute, purge, lock, slowmode, warn, nuke, voicemod
-        ├── utility/          # poll, announce, giveaway, embed, remind, snipe, editsnipe, afk, autoresponder
+        ├── utility/          # poll, announce, dm, giveaway, embed, remind, snipe, editsnipe, afk, autoresponder
         ├── config/           # prefix, welcome, autorole, antinuke, antiraid, automod, logs, whitelist, security
         ├── spamraid/         # spamraid
         └── fun/              # 8ball, coinflip, dice, rps, meme, ship, dih, puh
