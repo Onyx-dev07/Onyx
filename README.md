@@ -32,7 +32,7 @@ onyx@discord:~$ onyx start --secure
   [ok] anti-nuke armed
   [ok] automod online · anti-raid gated
   [ok] moderation cards · hierarchy-aware
-  [ok] 67 commands · 29 event listeners
+  [ok] 70 commands · 29 event listeners
 
 onyx@discord:~$ _
 ```
@@ -303,6 +303,9 @@ A spam panel posts one message at a time. Clicking **Send** re-sends the panel t
 | `!dice [sides]` | `roll` | `/dice [sides]` | Rolls a die |
 | `!rps <choice>` | — | `/rps <choice>` | Plays rock, paper, scissors |
 | `!meme` | — | `/meme` | Fetches a meme |
+| `!ship [@user] [@user2]` | `match` | `/ship [user] [user2]` | Rates compatibility between two members |
+| `!dih [@user]` | `dihmeter` | `/dih [user]` | Daily dih energy reading, purely for fun |
+| `!puh [@user]` | `puhmeter` | `/puh [user]` | Daily puh energy reading, purely for fun |
 
 </details>
 
@@ -344,7 +347,7 @@ Onyx/
         ├── utility/          # poll, announce, giveaway, embed, remind, snipe, editsnipe, afk, autoresponder
         ├── config/           # prefix, welcome, autorole, antinuke, antiraid, automod, logs, whitelist, security
         ├── spamraid/         # spamraid
-        └── fun/              # 8ball, coinflip, dice, rps, meme
+        └── fun/              # 8ball, coinflip, dice, rps, meme, ship, dih, puh
 ```
 
 ---
