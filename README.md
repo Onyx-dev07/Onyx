@@ -32,7 +32,7 @@ onyx@discord:~$ onyx start --secure
   [ok] anti-nuke armed
   [ok] automod online · anti-raid gated
   [ok] moderation cards · hierarchy-aware
-  [ok] 71 commands · 29 event listeners
+  [ok] 72 commands · 29 event listeners
 
 onyx@discord:~$ _
 ```
@@ -57,7 +57,8 @@ Every command works as both a **slash command** (`/ban`) and a **prefix command*
 | **Interactive panels** | AutoMod, AntiNuke, AntiRaid, logs, welcome, autorole, media, extra owners, whitelist, limits, Anti-Betray, and the security dashboard are driven by buttons and select menus. |
 | **Security dashboard** | `!security` scores the server across eight protocols, renders coverage bars, and recommends the highest-impact fixes. |
 | **Punishment DMs** | Kick, ban, softban, and hardban notify the member by direct message before acting, then report delivery status. |
-| **Utility suite** | Native polls, announcements, giveaways, custom embeds, reminders, snipe, edit-snipe, AFK, and autoresponders. |
+| **Utility suite** | Native polls, announcements, giveaways, custom embeds, reminders, snipe, edit-snipe, AFK, autoresponders, and bot DMs. |
+| **Emoji & sticker steal** | Copies custom emojis and stickers into the server from markup, replies, IDs, CDN links, or image attachments. |
 | **Zero-crash architecture** | Global unhandled-rejection handling and an atomic JSON database with an in-memory cache. |
 | **Per-server configuration** | Custom prefixes, welcome messages, autoroles, mod logs, AutoMod, and AntiNuke settings per guild. |
 
@@ -240,6 +241,7 @@ Aliases work with the prefix form only (`!alias`). Slash commands always use the
 | `!poll Question \| Option 1 \| Option 2` | `vote` | `/poll <question> <options>` | Creates a native Discord poll (up to 5 options, 24 hours) |
 | `!announce <#channel> <message>` | `ann` | `/announce <channel> <title> <message>` | Sends a formatted announcement embed |
 | `!dm <@user\|id> <message>` | `pm` | `/dm <user> <message>` | DMs a user from the bot |
+| `!steal <emoji>` | — | `/steal [emoji] [sticker] [file] [name]` | Copies an emoji or sticker into this server |
 | `!giveaway <time> <prize>` | `gw` | `/giveaway <duration> <prize> [winners]` | Starts a timed giveaway |
 | `!embed <title \| description>` | — | `/embed <title> <description>` | Creates a custom embed |
 | `!remind <time> <message>` | `reminder` | `/remind <time> <message>` | Sets a personal reminder delivered by DM |
@@ -348,7 +350,7 @@ Onyx/
     └── commands/
         ├── general/          # ping, help, botinfo, serverinfo, userinfo, avatar, banner, uptime, invite
         ├── moderation/       # setup, jail, ban, kick, timeout, mute, purge, lock, slowmode, warn, nuke, voicemod
-        ├── utility/          # poll, announce, dm, giveaway, embed, remind, snipe, editsnipe, afk, autoresponder
+        ├── utility/          # poll, announce, dm, steal, giveaway, embed, remind, snipe, editsnipe, afk, autoresponder
         ├── config/           # prefix, welcome, autorole, antinuke, antiraid, automod, logs, whitelist, security
         ├── spamraid/         # spamraid
         └── fun/              # 8ball, coinflip, dice, rps, meme, ship, dih, puh
