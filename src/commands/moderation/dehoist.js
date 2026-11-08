@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { errorEmbed, actionEmbed } = require('../../utils/embeds');
+const { errorEmbed } = require('../../utils/embeds');
+const { actionPayload } = require('../../utils/moderation');
 
 const hoistRegex = /^[^a-zA-Z0-9]/;
 
@@ -25,30 +26,26 @@ module.exports = {
       const name = member.nickname || member.user.username;
       if (hoistRegex.test(name)) {
         await member.setNickname('Dehoisted', '[Onyx Mod] Dehoist');
-        return interaction.editReply({
-          embeds: [actionEmbed({
-            title: 'Member Dehoisted',
-            icon: 'check',
-            target: `<@${member.user.id}>`,
-            moderator: `<@${interaction.user.id}>`,
-            reason: 'Hoisting characters removed from nickname',
-            fields: [{ name: 'Previous nickname', value: name, inline: true }]
-          })]
-        });
+        return interaction.editReply(actionPayload({
+          title: 'Member Dehoisted',
+          icon: 'check',
+          target: `<@${member.user.id}>`,
+          moderator: `<@${interaction.user.id}>`,
+          reason: 'Hoisting characters removed from nickname',
+          fields: [{ name: 'Previous nickname', value: name, inline: true }]
+        }));
       }
       return interaction.editReply({ embeds: [errorEmbed('This user is not hoisting.')] });
     }
 
     const result = await dehoistGuild(interaction.guild);
-    await interaction.editReply({
-      embeds: [actionEmbed({
-        title: 'Server Dehoisted',
-        icon: 'check',
-        moderator: `<@${interaction.user.id}>`,
-        reason: 'Hoisting characters removed from nicknames',
-        fields: [{ name: 'Members Dehoisted', value: `${result.count}`, inline: true }]
-      })]
-    });
+    await interaction.editReply(actionPayload({
+      title: 'Server Dehoisted',
+      icon: 'check',
+      moderator: `<@${interaction.user.id}>`,
+      reason: 'Hoisting characters removed from nicknames',
+      fields: [{ name: 'Members Dehoisted', value: `${result.count}`, inline: true }]
+    }));
   },
 
   async executePrefix(message, args) {
@@ -60,36 +57,32 @@ module.exports = {
       const name = member.nickname || member.user.username;
       if (hoistRegex.test(name)) {
         await member.setNickname('Dehoisted', '[Onyx Mod] Dehoist');
-        return message.reply({
-          embeds: [actionEmbed({
-            title: 'Member Dehoisted',
-            icon: 'check',
-            target: `<@${member.user.id}>`,
-            moderator: `<@${message.author.id}>`,
-            reason: 'Hoisting characters removed from nickname',
-            fields: [{ name: 'Previous nickname', value: name, inline: true }]
-          })]
-        });
+        return message.reply(actionPayload({
+          title: 'Member Dehoisted',
+          icon: 'check',
+          target: `<@${member.user.id}>`,
+          moderator: `<@${message.author.id}>`,
+          reason: 'Hoisting characters removed from nickname',
+          fields: [{ name: 'Previous nickname', value: name, inline: true }]
+        }));
       }
       return message.reply({ embeds: [errorEmbed('This user is not hoisting.')] });
     }
 
-    const sent = await message.reply({ embeds: [actionEmbed({
+    const sent = await message.reply(actionPayload({
       title: 'Scanning Server',
       icon: 'info',
       moderator: `<@${message.author.id}>`,
       reason: 'Scanning members for hoisting characters.'
-    })] });
+    }));
     const result = await dehoistGuild(message.guild);
-    await sent.edit({
-      embeds: [actionEmbed({
-        title: 'Server Dehoisted',
-        icon: 'check',
-        moderator: `<@${message.author.id}>`,
-        reason: 'Hoisting characters removed from nicknames',
-        fields: [{ name: 'Members Dehoisted', value: `${result.count}`, inline: true }]
-      })]
-    });
+    await sent.edit(actionPayload({
+      title: 'Server Dehoisted',
+      icon: 'check',
+      moderator: `<@${message.author.id}>`,
+      reason: 'Hoisting characters removed from nicknames',
+      fields: [{ name: 'Members Dehoisted', value: `${result.count}`, inline: true }]
+    }));
   }
 };
 

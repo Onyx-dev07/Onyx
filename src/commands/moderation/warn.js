@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const db = require('../../database');
-const { errorEmbed, warningEmbed, actionEmbed, code, UI } = require('../../utils/embeds');
+const { errorEmbed, warningEmbed, code, UI } = require('../../utils/embeds');
+const { actionPayload } = require('../../utils/moderation');
 
 module.exports = {
   name: 'warn',
@@ -33,16 +34,14 @@ module.exports = {
     };
 
     const allWarnings = db.addWarning(interaction.guild.id, user.id, warning);
-    await interaction.reply({
-      embeds: [actionEmbed({
-        title: 'Member Warned',
-        icon: 'warning',
-        target: `<@${user.id}>`,
-        moderator: `<@${interaction.user.id}>`,
-        reason,
-        fields: [{ name: 'Total warnings', value: code(allWarnings.length), inline: true }]
-      })]
-    });
+    await interaction.reply(actionPayload({
+      title: 'Member Warned',
+      icon: 'warning',
+      target: `<@${user.id}>`,
+      moderator: `<@${interaction.user.id}>`,
+      reason,
+      fields: [{ name: 'Total warnings', value: code(allWarnings.length), inline: true }]
+    }));
 
     // Try to DM user
     await user.send({
@@ -66,16 +65,14 @@ module.exports = {
     };
 
     const allWarnings = db.addWarning(message.guild.id, user.id, warning);
-    await message.reply({
-      embeds: [actionEmbed({
-        title: 'Member Warned',
-        icon: 'warning',
-        target: `<@${user.id}>`,
-        moderator: `<@${message.author.id}>`,
-        reason,
-        fields: [{ name: 'Total warnings', value: code(allWarnings.length), inline: true }]
-      })]
-    });
+    await message.reply(actionPayload({
+      title: 'Member Warned',
+      icon: 'warning',
+      target: `<@${user.id}>`,
+      moderator: `<@${message.author.id}>`,
+      reason,
+      fields: [{ name: 'Total warnings', value: code(allWarnings.length), inline: true }]
+    }));
 
     await user.send({
       embeds: [warningEmbed(`**Warned** in **${message.guild.name}** ${UI.separator} ${reason}`)]

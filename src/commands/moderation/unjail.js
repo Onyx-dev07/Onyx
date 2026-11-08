@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const db = require('../../database');
-const { errorEmbed, actionEmbed } = require('../../utils/embeds');
+const { actionPayload, failurePayload } = require('../../utils/moderation');
 
 module.exports = {
   name: 'unjail',
@@ -21,34 +21,40 @@ module.exports = {
     const member = await interaction.guild.members.fetch(user.id).catch(() => null);
 
     if (!member) {
-      return interaction.reply({ embeds: [errorEmbed('Member not found in this server.')], flags: MessageFlags.Ephemeral });
+      return interaction.reply({
+        ...failurePayload('Unjail Blocked', 'That member is not in this server.'),
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     const result = await unjailMember(interaction.guild, member, interaction.user);
     if (result.error) {
-      return interaction.reply({ embeds: [errorEmbed(result.error)], flags: MessageFlags.Ephemeral });
+      return interaction.reply({
+        ...failurePayload('Unjail Blocked', result.error),
+        flags: MessageFlags.Ephemeral
+      });
     }
 
-    await interaction.reply({ embeds: [result.embed] });
+    await interaction.reply(result.payload);
   },
 
   async executePrefix(message, args) {
     const user = message.mentions.users.first() || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
     if (!user) {
-      return message.reply({ embeds: [errorEmbed('Please specify a member to unjail. Usage: `!unjail @user`')] });
+      return message.reply(failurePayload('Unjail Blocked', 'Please specify a member to unjail. Usage: `!unjail @user`'));
     }
 
     const member = await message.guild.members.fetch(user.id).catch(() => null);
     if (!member) {
-      return message.reply({ embeds: [errorEmbed('Member not found in this server.')] });
+      return message.reply(failurePayload('Unjail Blocked', 'That member is not in this server.'));
     }
 
     const result = await unjailMember(message.guild, member, message.author);
     if (result.error) {
-      return message.reply({ embeds: [errorEmbed(result.error)] });
+      return message.reply(failurePayload('Unjail Blocked', result.error));
     }
 
-    await message.reply({ embeds: [result.embed] });
+    await message.reply(result.payload);
   }
 };
 
@@ -71,7 +77,7 @@ async function unjailMember(guild, member, moderator) {
     db.removeJailedMember(guild.id, member.id);
 
     return {
-      embed: actionEmbed({
+      payload: actionPayload({
         title: 'Member Released from Jail',
         icon: 'check',
         target: `<@${member.id}>`,

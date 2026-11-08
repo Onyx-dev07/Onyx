@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { actionEmbed, infoEmbed } = require('../../utils/embeds');
+const { infoEmbed } = require('../../utils/embeds');
+const { actionPayload } = require('../../utils/moderation');
 const { unlockServer } = require('../../utils/serverLock');
 
 module.exports = {
@@ -15,27 +16,23 @@ module.exports = {
   async executeSlash(interaction) {
     await interaction.deferReply();
     const result = await unlockServer(interaction.guild);
-    await interaction.editReply({
-      embeds: [actionEmbed({
-        title: 'Server lockdown lifted',
-        moderator: `<@${interaction.user.id}>`,
-        reason: 'Lockdown lifted',
-        fields: [{ name: 'Channels restored', value: `\`${result.count}\``, inline: true }]
-      })]
-    });
+    await interaction.editReply(actionPayload({
+      title: 'Server lockdown lifted',
+      moderator: `<@${interaction.user.id}>`,
+      reason: 'Lockdown lifted',
+      fields: [{ name: 'Channels restored', value: `\`${result.count}\``, inline: true }]
+    }));
   },
 
   async executePrefix(message) {
     const sent = await message.reply({ embeds: [infoEmbed('Lifting server lockdown.')] });
     const result = await unlockServer(message.guild);
-    await sent.edit({
-      embeds: [actionEmbed({
-        title: 'Server lockdown lifted',
-        moderator: `<@${message.author.id}>`,
-        reason: 'Lockdown lifted',
-        fields: [{ name: 'Channels restored', value: `\`${result.count}\``, inline: true }]
-      })]
-    });
+    await sent.edit(actionPayload({
+      title: 'Server lockdown lifted',
+      moderator: `<@${message.author.id}>`,
+      reason: 'Lockdown lifted',
+      fields: [{ name: 'Channels restored', value: `\`${result.count}\``, inline: true }]
+    }));
   }
 };
 

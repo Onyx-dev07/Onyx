@@ -1,6 +1,14 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { errorEmbed, actionEmbed } = require('../../utils/embeds');
+const { errorEmbed } = require('../../utils/embeds');
 const { sendModerationDM } = require('../../utils/notify');
+const {
+  actionPayload,
+  failurePayload,
+  moderationBlock,
+  moderationFailure
+} = require('../../utils/moderation');
+
+const ACTION = 'kick';
 
 module.exports = {
   name: 'kick',
@@ -22,8 +30,14 @@ module.exports = {
     const reason = interaction.options.getString('reason') || 'No reason provided';
     const member = await interaction.guild.members.fetch(user.id).catch(() => null);
 
-    if (!member) return interaction.editReply({ embeds: [errorEmbed('Member not found in this server.')] });
-    if (!member.kickable) return interaction.editReply({ embeds: [errorEmbed('I cannot kick this member. They may have a higher role or permissions.')] });
+    if (!member) {
+      return interaction.editReply(failurePayload('Kick Blocked', 'That member is not in this server.'));
+    }
+
+    const problem = moderationBlock(interaction.guild, member, ACTION);
+    if (problem) {
+      return interaction.editReply(failurePayload('Kick Blocked', problem));
+    }
 
     // Send the DM before the kick removes mutual guild access.
     const dmSent = await sendModerationDM(user, {
@@ -35,28 +49,32 @@ module.exports = {
 
     try {
       await member.kick('[Onyx Mod] ' + reason);
-      return interaction.editReply({
-        embeds: [actionEmbed({
-          title: 'Member Kicked',
-          icon: 'stop',
-          target: `<@${user.id}>`,
-          moderator: `<@${interaction.user.id}>`,
-          reason,
-          dmDelivered: dmSent
-        })]
-      });
+      return interaction.editReply(actionPayload({
+        title: 'Member Kicked',
+        icon: 'stop',
+        target: `<@${user.id}>`,
+        moderator: `<@${interaction.user.id}>`,
+        reason,
+        dmDelivered: dmSent
+      }));
     } catch (err) {
-      return interaction.editReply({ embeds: [errorEmbed('Failed to kick: ' + err.message)] });
+      return interaction.editReply(failurePayload('Kick Blocked', moderationFailure(ACTION, err)));
     }
   },
 
   async executePrefix(message, args) {
     const user = message.mentions.users.first() || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
-    if (!user) return message.reply({ embeds: [errorEmbed('Please specify a member to kick.')] });
+    if (!user) return message.reply({ embeds: [errorEmbed('Please specify a valid member to kick.')] });
 
     const member = await message.guild.members.fetch(user.id).catch(() => null);
-    if (!member) return message.reply({ embeds: [errorEmbed('Member not found in this server.')] });
-    if (!member.kickable) return message.reply({ embeds: [errorEmbed('I cannot kick this member. They may have a higher role or permissions.')] });
+    if (!member) {
+      return message.reply(failurePayload('Kick Blocked', 'That member is not in this server.'));
+    }
+
+    const problem = moderationBlock(message.guild, member, ACTION);
+    if (problem) {
+      return message.reply(failurePayload('Kick Blocked', problem));
+    }
 
     const reason = args.slice(1).join(' ') || 'No reason provided';
     const dmSent = await sendModerationDM(user, {
@@ -68,18 +86,16 @@ module.exports = {
 
     try {
       await member.kick('[Onyx Mod] ' + reason);
-      message.reply({
-        embeds: [actionEmbed({
-          title: 'Member Kicked',
-          icon: 'stop',
-          target: `<@${user.id}>`,
-          moderator: `<@${message.author.id}>`,
-          reason,
-          dmDelivered: dmSent
-        })]
-      });
+      return message.reply(actionPayload({
+        title: 'Member Kicked',
+        icon: 'stop',
+        target: `<@${user.id}>`,
+        moderator: `<@${message.author.id}>`,
+        reason,
+        dmDelivered: dmSent
+      }));
     } catch (err) {
-      message.reply({ embeds: [errorEmbed('Failed to kick: ' + err.message)] });
+      return message.reply(failurePayload('Kick Blocked', moderationFailure(ACTION, err)));
     }
   }
 };

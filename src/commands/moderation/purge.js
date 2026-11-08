@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const db = require('../../database');
-const { errorEmbed, actionEmbed, code } = require('../../utils/embeds');
+const { code } = require('../../utils/embeds');
+const { actionPayload, failurePayload } = require('../../utils/moderation');
 
 module.exports = {
   name: 'purge',
@@ -67,20 +68,18 @@ module.exports = {
       }
 
       const deleted = await interaction.channel.bulkDelete(filtered, true);
-      await interaction.editReply({
-        embeds: [actionEmbed({
-          title: 'Messages Purged',
-          icon: 'trash',
-          moderator: `<@${interaction.user.id}>`,
-          reason: 'Purged messages matching your filter',
-          fields: [
-            { name: 'Messages Purged', value: `${deleted.size}`, inline: true },
-            { name: 'Filter', value: filter || targetUser ? 'User filter' : containsText ? 'Text filter' : 'All messages', inline: true }
-          ]
-        })]
-      });
+      await interaction.editReply(actionPayload({
+        title: 'Messages Purged',
+        icon: 'trash',
+        moderator: `<@${interaction.user.id}>`,
+        reason: 'Purged messages matching your filter',
+        fields: [
+          { name: 'Messages Purged', value: `${deleted.size}`, inline: true },
+          { name: 'Filter', value: filter || targetUser ? 'User filter' : containsText ? 'Text filter' : 'All messages', inline: true }
+        ]
+      }));
     } catch (err) {
-      await interaction.editReply({ embeds: [errorEmbed(`Failed to purge messages: ${err.message}`)] });
+      await interaction.editReply(failurePayload('Purge Blocked', `Failed to purge messages: ${err.message}`));
     }
   },
 
@@ -112,9 +111,10 @@ module.exports = {
       amount = parseInt(args[1]) || 50;
     } else if (args.length > 0) {
       const prefix = db.getPrefix(message.guild.id, process.env.DEFAULT_PREFIX || '!');
-      return message.reply({
-        embeds: [errorEmbed(`Usage: ${code(`${prefix}purge [bots|humans|links|images|contains <word>|@user] <1-100>`)}`)]
-      });
+      return message.reply(failurePayload(
+        'Purge Blocked',
+        `Usage: ${code(`${prefix}purge [bots|humans|links|images|contains <word>|@user] <1-100>`)}`
+      ));
     }
 
     if (amount > 100) amount = 100;
@@ -140,18 +140,16 @@ module.exports = {
       }
 
       const deleted = await message.channel.bulkDelete(filtered, true);
-      const reply = await message.channel.send({
-        embeds: [actionEmbed({
-          title: 'Messages Purged',
-          icon: 'trash',
-          moderator: `<@${message.author.id}>`,
-          reason: 'Purged messages matching your filter',
-          fields: [{ name: 'Messages Purged', value: `${deleted.size}`, inline: true }]
-        })]
-      });
+      const reply = await message.channel.send(actionPayload({
+        title: 'Messages Purged',
+        icon: 'trash',
+        moderator: `<@${message.author.id}>`,
+        reason: 'Purged messages matching your filter',
+        fields: [{ name: 'Messages Purged', value: `${deleted.size}`, inline: true }]
+      }));
       setTimeout(() => reply.delete().catch(() => {}), 4000);
     } catch (err) {
-      message.channel.send({ embeds: [errorEmbed(`Failed to purge messages: ${err.message}`)] }).catch(() => {});
+      message.channel.send(failurePayload('Purge Blocked', `Failed to purge messages: ${err.message}`)).catch(() => {});
     }
   }
 };

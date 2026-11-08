@@ -8,10 +8,17 @@ const {
 } = require('discord.js');
 const db = require('../../database');
 const config = require('../../../config.json');
-const { securityEmbed, errorEmbed, muted, UI } = require('../../utils/embeds');
+const { securityEmbed, errorEmbed, muted, mark, UI } = require('../../utils/embeds');
 
 function isOwner(interaction) {
   return interaction.user.id === interaction.guild.ownerId;
+}
+
+function targetProblem(guild, userId) {
+  if (!userId) return 'Choose a valid user.';
+  if (userId === guild.ownerId) return 'The server owner already has full access.';
+  if (userId === guild.members.me?.id) return 'I cannot be appointed as an extra owner.';
+  return null;
 }
 
 function panelEmbed(guild) {
@@ -98,6 +105,10 @@ module.exports = {
     const target = interaction.options.getUser('target');
 
     if (sub === 'add') {
+      const problem = targetProblem(interaction.guild, target.id);
+      if (problem) {
+        return interaction.reply({ embeds: [errorEmbed(problem)], flags: MessageFlags.Ephemeral });
+      }
       db.addExtraOwner(interaction.guild.id, target.id);
     } else if (sub === 'remove') {
       db.removeExtraOwner(interaction.guild.id, target.id);
@@ -124,6 +135,10 @@ module.exports = {
       if (!target) {
         return message.reply({ embeds: [errorEmbed('Specify a user: `!extraowner add @user`')] });
       }
+      const problem = targetProblem(message.guild, target.id);
+      if (problem) {
+        return message.reply({ embeds: [errorEmbed(problem)] });
+      }
       db.addExtraOwner(message.guild.id, target.id);
     } else if (sub === 'remove' || sub === 'del') {
       if (!target) {
@@ -144,6 +159,10 @@ module.exports = {
     }
 
     if (interaction.customId === 'extraowner_add') {
+      const problem = targetProblem(interaction.guild, interaction.values[0]);
+      if (problem) {
+        return interaction.reply({ embeds: [errorEmbed(problem)], flags: MessageFlags.Ephemeral });
+      }
       db.addExtraOwner(interaction.guild.id, interaction.values[0]);
     } else if (interaction.customId === 'extraowner_remove') {
       db.removeExtraOwner(interaction.guild.id, interaction.values[0]);

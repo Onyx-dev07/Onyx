@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const db = require('../../database');
-const { errorEmbed, createEmbed, actionEmbed } = require('../../utils/embeds');
+const { createEmbed } = require('../../utils/embeds');
+const { actionPayload, failurePayload, moderationBlock } = require('../../utils/moderation');
 const config = require('../../../config.json');
 
 module.exports = {
@@ -28,35 +29,54 @@ module.exports = {
     const member = await interaction.guild.members.fetch(user.id).catch(() => null);
 
     if (!member) {
-      return interaction.reply({ embeds: [errorEmbed('Member not found in this server.')], flags: MessageFlags.Ephemeral });
+      return interaction.reply({
+        ...failurePayload('Jail Blocked', 'That member is not in this server.'),
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    const problem = moderationBlock(interaction.guild, member, 'jail');
+    if (problem) {
+      return interaction.reply({
+        ...failurePayload('Jail Blocked', problem),
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     const result = await jailMember(interaction.guild, member, reason, interaction.user);
     if (result.error) {
-      return interaction.reply({ embeds: [errorEmbed(result.error)], flags: MessageFlags.Ephemeral });
+      return interaction.reply({
+        ...failurePayload('Jail Blocked', result.error),
+        flags: MessageFlags.Ephemeral
+      });
     }
 
-    await interaction.reply({ embeds: [result.embed] });
+    await interaction.reply(result.payload);
   },
 
   async executePrefix(message, args) {
     const user = message.mentions.users.first() || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
     if (!user) {
-      return message.reply({ embeds: [errorEmbed('Please specify a member to jail. Usage: `!jail @user [reason]`')] });
+      return message.reply(failurePayload('Jail Blocked', 'Please specify a member to jail. Usage: `!jail @user [reason]`'));
     }
 
     const member = await message.guild.members.fetch(user.id).catch(() => null);
     if (!member) {
-      return message.reply({ embeds: [errorEmbed('Member not found in this server.')] });
+      return message.reply(failurePayload('Jail Blocked', 'That member is not in this server.'));
+    }
+
+    const problem = moderationBlock(message.guild, member, 'jail');
+    if (problem) {
+      return message.reply(failurePayload('Jail Blocked', problem));
     }
 
     const reason = args.slice(1).join(' ') || 'Violation of server rules';
     const result = await jailMember(message.guild, member, reason, message.author);
     if (result.error) {
-      return message.reply({ embeds: [errorEmbed(result.error)] });
+      return message.reply(failurePayload('Jail Blocked', result.error));
     }
 
-    await message.reply({ embeds: [result.embed] });
+    await message.reply(result.payload);
   }
 };
 
@@ -72,7 +92,7 @@ async function jailMember(guild, member, reason, moderator) {
   }
 
   if (member.roles.highest.position >= guild.members.me.roles.highest.position) {
-    return { error: 'I cannot jail this member due to role hierarchy.' };
+    return { error: `I can't jail **${member.user.username}**. Their highest role is above mine, so move my role higher and try again.` };
   }
 
   // Save current roles (excluding @everyone)
@@ -94,7 +114,7 @@ async function jailMember(guild, member, reason, moderator) {
       await jailChannel.send({ content: `<@${member.id}>`, embeds: [jailAlert] });
     }
 
-    const embed = actionEmbed({
+    const payload = actionPayload({
       title: 'Member Jailed',
       icon: 'lock',
       target: `<@${member.id}>`,
@@ -103,7 +123,7 @@ async function jailMember(guild, member, reason, moderator) {
       fields: [{ name: 'Jail channel', value: `<#${jailConfig.channelId}>`, inline: true }]
     });
 
-    return { embed };
+    return { payload };
   } catch (err) {
     return { error: `Failed to jail member: ${err.message}` };
   }

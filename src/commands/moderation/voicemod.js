@@ -1,5 +1,10 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = require('discord.js');
-const { errorEmbed, actionEmbed } = require('../../utils/embeds');
+const {
+  actionPayload,
+  failurePayload,
+  moderationBlock,
+  moderationFailure
+} = require('../../utils/moderation');
 
 module.exports = {
   name: 'voicemod',
@@ -60,70 +65,84 @@ module.exports = {
         } catch {}
       }
 
-      return interaction.editReply({ embeds: [actionEmbed({
+      return interaction.editReply(actionPayload({
         title: 'Members Moved',
         moderator: `<@${interaction.user.id}>`,
         reason: `Moved from <#${fromCh.id}> to <#${toCh.id}>`,
         fields: [{ name: 'Members Moved', value: `${moved}`, inline: true }]
-      })] });
+      }));
     }
 
     const target = interaction.options.getUser('target');
     const member = await interaction.guild.members.fetch(target.id).catch(() => null);
 
     if (!member || !member.voice.channel) {
-      return interaction.reply({ embeds: [errorEmbed('User is not in any voice channel.')], flags: MessageFlags.Ephemeral });
+      return interaction.reply({
+        ...failurePayload('Voice Action Blocked', 'That member is not in a voice channel.'),
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    const problem = moderationBlock(interaction.guild, member, `${sub} in voice`);
+    if (problem) {
+      return interaction.reply({
+        ...failurePayload('Voice Action Blocked', problem),
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     try {
       if (sub === 'kick') {
         await member.voice.disconnect('[Onyx VoiceMod] Disconnected by mod');
-        return interaction.reply({ embeds: [actionEmbed({
+        return interaction.reply(actionPayload({
           title: 'Voice Disconnect',
           icon: 'disconnect',
           target: `<@${target.id}>`,
           moderator: `<@${interaction.user.id}>`,
           reason: 'Disconnected from voice channel'
-        })] });
+        }));
       } else if (sub === 'mute') {
         await member.voice.setMute(true, '[Onyx VoiceMod] Server muted');
-        return interaction.reply({ embeds: [actionEmbed({
+        return interaction.reply(actionPayload({
           title: 'Voice Muted',
           icon: 'lock',
           target: `<@${target.id}>`,
           moderator: `<@${interaction.user.id}>`,
           reason: 'Server-muted in voice channel'
-        })] });
+        }));
       } else if (sub === 'unmute') {
         await member.voice.setMute(false, '[Onyx VoiceMod] Server unmuted');
-        return interaction.reply({ embeds: [actionEmbed({
+        return interaction.reply(actionPayload({
           title: 'Voice Unmuted',
           icon: 'check',
           target: `<@${target.id}>`,
           moderator: `<@${interaction.user.id}>`,
           reason: 'Server-unmuted in voice channel'
-        })] });
+        }));
       } else if (sub === 'deafen') {
         await member.voice.setDeaf(true, '[Onyx VoiceMod] Server deafened');
-        return interaction.reply({ embeds: [actionEmbed({
+        return interaction.reply(actionPayload({
           title: 'Voice Deafened',
           icon: 'lock',
           target: `<@${target.id}>`,
           moderator: `<@${interaction.user.id}>`,
           reason: 'Server-deafened in voice channel'
-        })] });
+        }));
       } else if (sub === 'undeafen') {
         await member.voice.setDeaf(false, '[Onyx VoiceMod] Server undeafened');
-        return interaction.reply({ embeds: [actionEmbed({
+        return interaction.reply(actionPayload({
           title: 'Voice Undeafened',
           icon: 'check',
           target: `<@${target.id}>`,
           moderator: `<@${interaction.user.id}>`,
           reason: 'Server-undeafened in voice channel'
-        })] });
+        }));
       }
     } catch (err) {
-      return interaction.reply({ embeds: [errorEmbed(`Failed: ${err.message}`)], flags: MessageFlags.Ephemeral });
+      return interaction.reply({
+        ...failurePayload('Voice Action Blocked', moderationFailure(`${sub} in voice`, err)),
+        flags: MessageFlags.Ephemeral
+      });
     }
   },
 
@@ -131,24 +150,21 @@ module.exports = {
     const action = args[0]?.toLowerCase();
 
     if (!action) {
-      return message.reply({
-        embeds: [errorEmbed('Usage: `!voicemod <kick|mute|unmute|deafen|undeafen> @user` or `!voicemod moveall #from #to`')]
-      });
+      return message.reply(failurePayload(
+        'Voice Action Blocked',
+        'Usage: `!voicemod <kick|mute|unmute|deafen|undeafen> @user` or `!voicemod moveall #from #to`'
+      ));
     }
 
     if (action === 'moveall' || action === 'vcmove') {
       const channels = [...message.mentions.channels.values()];
       if (channels.length < 2) {
-        return message.reply({
-          embeds: [errorEmbed('Usage: `!voicemod moveall #from #to`')]
-        });
+        return message.reply(failurePayload('Voice Action Blocked', 'Usage: `!voicemod moveall #from #to`'));
       }
 
       const [fromCh, toCh] = channels;
       if (fromCh.type !== ChannelType.GuildVoice || toCh.type !== ChannelType.GuildVoice) {
-        return message.reply({
-          embeds: [errorEmbed('Both channels must be voice channels.')]
-        });
+        return message.reply(failurePayload('Voice Action Blocked', 'Both channels must be voice channels.'));
       }
 
       let moved = 0;
@@ -159,80 +175,86 @@ module.exports = {
         } catch {}
       }
 
-      return message.reply({
-        embeds: [actionEmbed({
-          title: 'Members Moved',
-          moderator: `<@${message.author.id}>`,
-          reason: `Moved from <#${fromCh.id}> to <#${toCh.id}>`,
-          fields: [{ name: 'Members Moved', value: `${moved}`, inline: true }]
-        })] });
+      return message.reply(actionPayload({
+        title: 'Members Moved',
+        moderator: `<@${message.author.id}>`,
+        reason: `Moved from <#${fromCh.id}> to <#${toCh.id}>`,
+        fields: [{ name: 'Members Moved', value: `${moved}`, inline: true }]
+      }));
     }
 
     const user = message.mentions.users.first();
     if (!user) {
-      return message.reply({
-        embeds: [errorEmbed('Usage: `!voicemod <kick|mute|unmute|deafen|undeafen> @user`')]
-      });
+      return message.reply(failurePayload(
+        'Voice Action Blocked',
+        'Usage: `!voicemod <kick|mute|unmute|deafen|undeafen> @user`'
+      ));
     }
 
     const member = await message.guild.members.fetch(user.id).catch(() => null);
     if (!member || !member.voice.channel) {
-      return message.reply({ embeds: [errorEmbed('User is not in any voice channel.')] });
+      return message.reply(failurePayload('Voice Action Blocked', 'That member is not in a voice channel.'));
+    }
+
+    const problem = moderationBlock(message.guild, member, `${action} in voice`);
+    if (problem) {
+      return message.reply(failurePayload('Voice Action Blocked', problem));
     }
 
     try {
       if (action === 'kick' || action === 'vkick') {
         await member.voice.disconnect();
-        return message.reply({ embeds: [actionEmbed({
+        return message.reply(actionPayload({
           title: 'Voice Disconnect',
           icon: 'disconnect',
           target: `<@${user.id}>`,
           moderator: `<@${message.author.id}>`,
           reason: 'Disconnected from voice channel'
-        })] });
+        }));
       } else if (action === 'mute' || action === 'vmute') {
         await member.voice.setMute(true);
-        return message.reply({ embeds: [actionEmbed({
+        return message.reply(actionPayload({
           title: 'Voice Muted',
           icon: 'lock',
           target: `<@${user.id}>`,
           moderator: `<@${message.author.id}>`,
           reason: 'Server-muted in voice channel'
-        })] });
+        }));
       } else if (action === 'unmute' || action === 'vunmute') {
         await member.voice.setMute(false);
-        return message.reply({ embeds: [actionEmbed({
+        return message.reply(actionPayload({
           title: 'Voice Unmuted',
           icon: 'check',
           target: `<@${user.id}>`,
           moderator: `<@${message.author.id}>`,
           reason: 'Server-unmuted in voice channel'
-        })] });
+        }));
       } else if (action === 'deafen' || action === 'vdeafen') {
         await member.voice.setDeaf(true);
-        return message.reply({ embeds: [actionEmbed({
+        return message.reply(actionPayload({
           title: 'Voice Deafened',
           icon: 'lock',
           target: `<@${user.id}>`,
           moderator: `<@${message.author.id}>`,
           reason: 'Server-deafened in voice channel'
-        })] });
+        }));
       } else if (action === 'undeafen' || action === 'vundeafen') {
         await member.voice.setDeaf(false);
-        return message.reply({ embeds: [actionEmbed({
+        return message.reply(actionPayload({
           title: 'Voice Undeafened',
           icon: 'check',
           target: `<@${user.id}>`,
           moderator: `<@${message.author.id}>`,
           reason: 'Server-undeafened in voice channel'
-        })] });
+        }));
       }
     } catch (err) {
-      return message.reply({ embeds: [errorEmbed(`Failed: ${err.message}`)] });
+      return message.reply(failurePayload('Voice Action Blocked', moderationFailure(`${action} in voice`, err)));
     }
 
-    return message.reply({
-      embeds: [errorEmbed('Unknown voice action. Usage: `!voicemod <kick|mute|unmute|deafen|undeafen> @user`')]
-    });
+    return message.reply(failurePayload(
+      'Voice Action Blocked',
+      'Unknown voice action. Usage: `!voicemod <kick|mute|unmute|deafen|undeafen> @user`'
+    ));
   }
 };

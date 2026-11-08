@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const { errorEmbed, actionEmbed } = require('../../utils/embeds');
+const { actionPayload, failurePayload } = require('../../utils/moderation');
 
 module.exports = {
   name: 'slowmode',
@@ -23,40 +23,39 @@ module.exports = {
     try {
       await interaction.channel.setRateLimitPerUser(seconds);
       const desc = seconds === 0 ? 'Slowmode has been disabled.' : `Slowmode set to **${seconds}s**.`;
-      await interaction.reply({
-        embeds: [actionEmbed({
-          title: 'Slowmode Updated',
-          icon: 'clock',
-          moderator: `<@${interaction.user.id}>`,
-          reason: desc,
-          fields: [{ name: 'Channel', value: `<#${interaction.channel.id}>`, inline: true }]
-        })]
-      });
+      await interaction.reply(actionPayload({
+        title: 'Slowmode Updated',
+        icon: 'clock',
+        moderator: `<@${interaction.user.id}>`,
+        reason: desc,
+        fields: [{ name: 'Channel', value: `<#${interaction.channel.id}>`, inline: true }]
+      }));
     } catch (err) {
-      await interaction.reply({ embeds: [errorEmbed(`Failed to set slowmode: ${err.message}`)], flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        ...failurePayload('Slowmode Blocked', `Failed to set slowmode: ${err.message}`),
+        flags: MessageFlags.Ephemeral
+      });
     }
   },
 
   async executePrefix(message, args) {
     const seconds = parseInt(args[0], 10);
     if (isNaN(seconds) || seconds < 0 || seconds > 21600) {
-      return message.reply({ embeds: [errorEmbed('Please provide a valid slowmode between 0 and 21600 seconds.')] });
+      return message.reply(failurePayload('Slowmode Blocked', 'Please provide a valid slowmode between 0 and 21600 seconds.'));
     }
 
     try {
       await message.channel.setRateLimitPerUser(seconds);
       const desc = seconds === 0 ? 'Slowmode has been disabled.' : `Slowmode set to **${seconds}s**.`;
-      await message.reply({
-        embeds: [actionEmbed({
-          title: 'Slowmode Updated',
-          icon: 'clock',
-          moderator: `<@${message.author.id}>`,
-          reason: desc,
-          fields: [{ name: 'Channel', value: `<#${message.channel.id}>`, inline: true }]
-        })]
-      });
+      await message.reply(actionPayload({
+        title: 'Slowmode Updated',
+        icon: 'clock',
+        moderator: `<@${message.author.id}>`,
+        reason: desc,
+        fields: [{ name: 'Channel', value: `<#${message.channel.id}>`, inline: true }]
+      }));
     } catch (err) {
-      await message.reply({ embeds: [errorEmbed(`Failed to set slowmode: ${err.message}`)] });
+      await message.reply(failurePayload('Slowmode Blocked', `Failed to set slowmode: ${err.message}`));
     }
   }
 };

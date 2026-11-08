@@ -1,7 +1,15 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const db = require('../../database');
-const { errorEmbed, actionEmbed } = require('../../utils/embeds');
+const { errorEmbed } = require('../../utils/embeds');
 const { sendModerationDM } = require('../../utils/notify');
+const {
+  actionPayload,
+  failurePayload,
+  moderationBlock,
+  moderationFailure
+} = require('../../utils/moderation');
+
+const ACTION = 'hardban';
 
 module.exports = {
   name: 'hardban',
@@ -30,6 +38,14 @@ module.exports = {
 
     const user = interaction.options.getUser('target');
     const reason = interaction.options.getString('reason') || 'Severe infraction / permanent hardban';
+    const member = await interaction.guild.members.fetch(user.id).catch(() => null);
+
+    if (member) {
+      const problem = moderationBlock(interaction.guild, member, ACTION);
+      if (problem) {
+        return interaction.editReply(failurePayload('Hardban Blocked', problem));
+      }
+    }
 
     const dmSent = await sendModerationDM(user, {
       action: 'hardban',
@@ -45,19 +61,17 @@ module.exports = {
       });
       db.addHardban(interaction.guild.id, user.id);
 
-      return interaction.editReply({
-        embeds: [actionEmbed({
-          title: 'Member Hardbanned',
-          icon: 'stop',
-          target: `<@${user.id}>`,
-          moderator: `<@${interaction.user.id}>`,
-          reason,
-          dmDelivered: dmSent,
-          fields: [{ name: 'Protection', value: 'Added to the permanent hardban blacklist.', inline: false }]
-        })]
-      });
+      return interaction.editReply(actionPayload({
+        title: 'Member Hardbanned',
+        icon: 'stop',
+        target: `<@${user.id}>`,
+        moderator: `<@${interaction.user.id}>`,
+        reason,
+        dmDelivered: dmSent,
+        fields: [{ name: 'Protection', value: 'Added to the permanent hardban blacklist.', inline: false }]
+      }));
     } catch (err) {
-      return interaction.editReply({ embeds: [errorEmbed(`Failed to hardban: ${err.message}`)] });
+      return interaction.editReply(failurePayload('Hardban Blocked', moderationFailure(ACTION, err)));
     }
   },
 
@@ -65,6 +79,14 @@ module.exports = {
     const user = message.mentions.users.first() || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
     if (!user) {
       return message.reply({ embeds: [errorEmbed('Please specify a user to hardban. Usage: `!hardban @user [reason]`')] });
+    }
+
+    const member = await message.guild.members.fetch(user.id).catch(() => null);
+    if (member) {
+      const problem = moderationBlock(message.guild, member, ACTION);
+      if (problem) {
+        return message.reply(failurePayload('Hardban Blocked', problem));
+      }
     }
 
     const reason = args.slice(1).join(' ') || 'Severe infraction / permanent hardban';
@@ -82,19 +104,17 @@ module.exports = {
       });
       db.addHardban(message.guild.id, user.id);
 
-      await message.reply({
-        embeds: [actionEmbed({
-          title: 'Member Hardbanned',
-          icon: 'stop',
-          target: `<@${user.id}>`,
-          moderator: `<@${message.author.id}>`,
-          reason,
-          dmDelivered: dmSent,
-          fields: [{ name: 'Protection', value: 'Added to the permanent hardban blacklist.', inline: false }]
-        })]
-      });
+      return message.reply(actionPayload({
+        title: 'Member Hardbanned',
+        icon: 'stop',
+        target: `<@${user.id}>`,
+        moderator: `<@${message.author.id}>`,
+        reason,
+        dmDelivered: dmSent,
+        fields: [{ name: 'Protection', value: 'Added to the permanent hardban blacklist.', inline: false }]
+      }));
     } catch (err) {
-      await message.reply({ embeds: [errorEmbed(`Failed to hardban: ${err.message}`)] });
+      return message.reply(failurePayload('Hardban Blocked', moderationFailure(ACTION, err)));
     }
   }
 };

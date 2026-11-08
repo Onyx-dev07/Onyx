@@ -107,6 +107,28 @@ module.exports = {
 
       if (await handlePagination(interaction)) return;
 
+      // Moderation action cards: check acknowledges (removes the controls),
+      // cross dismisses (deletes the card).
+      if (customId === 'mod_ack') {
+        if (!interaction.member) return reject(interaction, 'This control can only be used in a server.');
+        return interaction.update({ components: [] }).catch(() => {});
+      }
+
+      if (customId === 'mod_dismiss') {
+        const authorId = interaction.message?.interactionMetadata?.user?.id
+          || interaction.message?.interaction?.user?.id;
+        const allowed = interaction.member?.permissions?.has(PermissionFlagsBits.ManageMessages)
+          || authorId === interaction.user.id;
+
+        if (!allowed) {
+          return reject(interaction, 'You need Manage Messages to dismiss this card.');
+        }
+
+        await interaction.deferUpdate().catch(() => {});
+        await interaction.message.delete().catch(() => {});
+        return;
+      }
+
       if (customId === 'show_punishment') {
         const { securityEmbed, bullets, muted } = require('../../utils/embeds');
         const embed = securityEmbed({

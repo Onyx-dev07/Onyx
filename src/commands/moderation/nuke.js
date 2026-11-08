@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const { errorEmbed, actionEmbed } = require('../../utils/embeds');
+const { errorEmbed } = require('../../utils/embeds');
+const { actionPayload } = require('../../utils/moderation');
 
 module.exports = {
   name: 'nuke',
@@ -39,14 +40,13 @@ module.exports = {
       await newChannel.setPosition(position);
       await channel.delete();
 
-      const embed = actionEmbed({
+      await newChannel.send(actionPayload({
         title: 'Channel Cleared',
         icon: 'trash',
         moderator: `<@${interaction.user.id}>`,
         reason: 'Channel messages wiped',
         fields: [{ name: 'New Channel', value: `<#${newChannel.id}>`, inline: true }]
-      });
-      await newChannel.send({ embeds: [embed] });
+      }));
     } catch (err) {
       // If deletion succeeded this edit fails silently, which is expected —
       // there is no original channel left to report into.
@@ -77,14 +77,13 @@ module.exports = {
       await newChannel.setPosition(position);
       await channel.delete();
 
-      const embed = actionEmbed({
+      await newChannel.send(actionPayload({
         title: 'Channel Cleared',
         icon: 'trash',
         moderator: `<@${message.author.id}>`,
         reason: 'Channel messages wiped',
         fields: [{ name: 'New Channel', value: `<#${newChannel.id}>`, inline: true }]
-      });
-      await newChannel.send({ embeds: [embed] });
+      }));
     } catch (err) {
       await message.reply({ embeds: [errorEmbed(`Failed to nuke channel: ${err.message}`)] });
     }

@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { errorEmbed, actionEmbed } = require('../../utils/embeds');
+const { actionPayload, failurePayload, actionButtons } = require('../../utils/moderation');
 
 function unlockRow(channelId) {
   return new ActionRowBuilder().addComponents(
@@ -23,16 +23,19 @@ module.exports = {
         SendMessages: null
       });
       await interaction.reply({
-        embeds: [actionEmbed({
+        ...actionPayload({
           title: 'Channel Unlocked',
           moderator: `<@${interaction.user.id}>`,
           reason: 'Channel unlocked',
           fields: [{ name: 'Channel', value: `<#${interaction.channel.id}>`, inline: true }]
-        })],
-        components: [unlockRow(interaction.channel.id)]
+        }),
+        components: [unlockRow(interaction.channel.id), actionButtons()]
       });
     } catch (err) {
-      await interaction.reply({ embeds: [errorEmbed(`Failed to unlock channel: ${err.message}`)], flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        ...failurePayload('Unlock Blocked', `Failed to unlock channel: ${err.message}`),
+        flags: MessageFlags.Ephemeral
+      });
     }
   },
 
@@ -42,15 +45,16 @@ module.exports = {
         SendMessages: null
       });
       await message.reply({
-        embeds: [actionEmbed({
+        ...actionPayload({
           title: 'Channel Unlocked',
           moderator: `<@${message.author.id}>`,
           reason: 'Channel unlocked',
           fields: [{ name: 'Channel', value: `<#${message.channel.id}>`, inline: true }]
-        })]
+        }),
+        components: [unlockRow(message.channel.id), actionButtons()]
       });
     } catch (err) {
-      await message.reply({ embeds: [errorEmbed(`Failed to unlock channel: ${err.message}`)] });
+      await message.reply(failurePayload('Unlock Blocked', `Failed to unlock channel: ${err.message}`));
     }
   },
 
@@ -59,32 +63,35 @@ module.exports = {
     const guild = interaction.guild;
     const channel = guild.channels.cache.get(channelId);
     if (!channel) {
-      return interaction.reply({ embeds: [errorEmbed('Channel not found.')], flags: MessageFlags.Ephemeral });
+      return interaction.reply({
+        ...failurePayload('Unlock Blocked', 'Channel not found.'),
+        flags: MessageFlags.Ephemeral
+      });
     }
 
     if (action === 'unlock_lock') {
       await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: false });
       return interaction.update({
-        embeds: [actionEmbed({
+        ...actionPayload({
           title: 'Channel Locked',
           moderator: `<@${interaction.user.id}>`,
           reason: 'Channel locked',
           fields: [{ name: 'Channel', value: `<#${channelId}>`, inline: true }]
-        })],
-        components: [unlockRow(channelId)]
+        }),
+        components: [unlockRow(channelId), actionButtons()]
       });
     }
 
     if (action === 'unlock_toggle') {
       await channel.permissionOverwrites.edit(guild.roles.everyone, { SendMessages: null });
       return interaction.update({
-        embeds: [actionEmbed({
+        ...actionPayload({
           title: 'Channel Unlocked',
           moderator: `<@${interaction.user.id}>`,
           reason: 'Channel unlocked',
           fields: [{ name: 'Channel', value: `<#${channelId}>`, inline: true }]
-        })],
-        components: [unlockRow(channelId)]
+        }),
+        components: [unlockRow(channelId), actionButtons()]
       });
     }
 

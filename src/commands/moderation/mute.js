@@ -1,9 +1,16 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const ms = require('ms');
-const { errorEmbed, actionEmbed, code } = require('../../utils/embeds');
+const { code } = require('../../utils/embeds');
+const {
+  actionPayload,
+  failurePayload,
+  moderationBlock,
+  moderationFailure
+} = require('../../utils/moderation');
 
 const DEFAULT_DURATION = '5m';
 const MAX_DURATION = 28 * 24 * 60 * 60 * 1000;
+const ACTION = 'time out';
 
 function parseDuration(input) {
   const value = ms(input);
@@ -18,10 +25,10 @@ async function resolveUser(client, input) {
   return client.users.fetch(id).catch(() => null);
 }
 
-function muteEmbed({ user, durationMs, reason, moderator, isDefault }) {
+function mutePayload({ user, durationMs, reason, moderator, isDefault }) {
   const expiresAt = Math.floor((Date.now() + durationMs) / 1000);
 
-  return actionEmbed({
+  return actionPayload({
     title: 'Member Muted',
     icon: 'lock',
     target: `<@${user.id}>`,
@@ -31,8 +38,9 @@ function muteEmbed({ user, durationMs, reason, moderator, isDefault }) {
   });
 }
 
-function invalidDurationEmbed(input) {
-  return errorEmbed(
+function invalidDuration(input) {
+  return failurePayload(
+    'Mute Blocked',
     `**${input}** is not a valid duration. Use a value between 1 second and 28 days, for example \`5m\`, \`1h\`, or \`1d\`.`
   );
 }
@@ -55,6 +63,8 @@ module.exports = {
     .addStringOption(option => option.setName('reason').setDescription('Reason for the timeout').setRequired(false)),
 
   async executeSlash(interaction) {
+    await interaction.deferReply();
+
     const user = interaction.options.getUser('target');
     const rawDuration = interaction.options.getString('duration');
     const isDefault = !rawDuration;
@@ -63,39 +73,34 @@ module.exports = {
 
     const member = await interaction.guild.members.fetch(user.id).catch(() => null);
     if (!member) {
-      return interaction.reply({
-        embeds: [errorEmbed('Member not found in server.')],
-        flags: MessageFlags.Ephemeral
-      });
+      return interaction.editReply(failurePayload('Mute Blocked', 'That member is not in this server.'));
     }
 
     const durationMs = parseDuration(durationInput);
     if (!durationMs) {
-      return interaction.reply({
-        embeds: [invalidDurationEmbed(durationInput)],
-        flags: MessageFlags.Ephemeral
-      });
+      return interaction.editReply(invalidDuration(durationInput));
+    }
+
+    const problem = moderationBlock(interaction.guild, member, ACTION);
+    if (problem) {
+      return interaction.editReply(failurePayload('Mute Blocked', problem));
     }
 
     try {
       await member.timeout(durationMs, `[Onyx Mod] ${reason}`);
-      return interaction.reply({
-        embeds: [muteEmbed({ user, durationMs, reason, moderator: interaction.user, isDefault })]
-      });
+      return interaction.editReply(mutePayload({ user, durationMs, reason, moderator: interaction.user, isDefault }));
     } catch (err) {
-      return interaction.reply({
-        embeds: [errorEmbed(`Failed to timeout member: ${err.message}`)],
-        flags: MessageFlags.Ephemeral
-      });
+      return interaction.editReply(failurePayload('Mute Blocked', moderationFailure(ACTION, err)));
     }
   },
 
   async executePrefix(message, args) {
     const user = message.mentions.users.first() || (await resolveUser(message.client, args[0]));
     if (!user) {
-      return message.reply({
-        embeds: [errorEmbed('Please specify a member to mute. Usage: `!mute @user [duration] [reason]`')]
-      });
+      return message.reply(failurePayload(
+        'Mute Blocked',
+        'Please specify a member to mute. Usage: `!mute @user [duration] [reason]`'
+      ));
     }
 
     const rawDuration = args[1];
@@ -106,25 +111,26 @@ module.exports = {
     const durationInput = intendedDuration ? rawDuration : DEFAULT_DURATION;
     const durationMs = parseDuration(durationInput);
     if (!durationMs) {
-      return message.reply({ embeds: [invalidDurationEmbed(durationInput)] });
+      return message.reply(invalidDuration(durationInput));
     }
 
     const member = await message.guild.members.fetch(user.id).catch(() => null);
     if (!member) {
-      return message.reply({
-        embeds: [errorEmbed('Member not found in server.')]
-      });
+      return message.reply(failurePayload('Mute Blocked', 'That member is not in this server.'));
+    }
+
+    const problem = moderationBlock(message.guild, member, ACTION);
+    if (problem) {
+      return message.reply(failurePayload('Mute Blocked', problem));
     }
 
     const reason = (isDefault ? args.slice(1) : args.slice(2)).join(' ').trim() || 'No reason provided';
 
     try {
       await member.timeout(durationMs, `[Onyx Mod] ${reason}`);
-      return message.reply({
-        embeds: [muteEmbed({ user, durationMs, reason, moderator: message.author, isDefault })]
-      });
+      return message.reply(mutePayload({ user, durationMs, reason, moderator: message.author, isDefault }));
     } catch (err) {
-      return message.reply({ embeds: [errorEmbed(`Failed to timeout: ${err.message}`)] });
+      return message.reply(failurePayload('Mute Blocked', moderationFailure(ACTION, err)));
     }
   }
 };

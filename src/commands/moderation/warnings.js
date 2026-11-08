@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const db = require('../../database');
 const { paginatedReply } = require('../../utils/pagination');
-const { errorEmbed, actionEmbed, muted, UI } = require('../../utils/embeds');
+const { createEmbed, muted, UI } = require('../../utils/embeds');
+const { actionPayload, failurePayload } = require('../../utils/moderation');
 
 const PER_PAGE = 4;
 
@@ -80,15 +81,13 @@ module.exports = {
 
     if (shouldClear) {
       db.clearWarnings(interaction.guild.id, user.id);
-      return interaction.reply({
-        embeds: [actionEmbed({
-          title: 'Warnings Cleared',
-          icon: 'trash',
-          target: `<@${user.id}>`,
-          moderator: `<@${interaction.user.id}>`,
-          reason: 'All warnings cleared'
-        })]
-      });
+      return interaction.reply(actionPayload({
+        title: 'Warnings Cleared',
+        icon: 'trash',
+        target: `<@${user.id}>`,
+        moderator: `<@${interaction.user.id}>`,
+        reason: 'All warnings cleared'
+      }));
     }
 
     const list = db.getWarnings(interaction.guild.id, user.id);
@@ -100,18 +99,18 @@ module.exports = {
       || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
 
     if (!user) {
-      return message.reply({ embeds: [errorEmbed('Please specify a member.')] });
+      return message.reply(failurePayload('Warnings Blocked', 'Please specify a member.'));
     }
 
     if (args[1] === 'clear') {
       db.clearWarnings(message.guild.id, user.id);
-      return message.reply({ embeds: [actionEmbed({
+      return message.reply(actionPayload({
         title: 'Warnings Cleared',
         icon: 'trash',
         target: `<@${user.id}>`,
         moderator: `<@${message.author.id}>`,
         reason: 'All warnings cleared'
-      })] });
+      }));
     }
 
     const list = db.getWarnings(message.guild.id, user.id);
