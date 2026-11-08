@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="Onyx — Advanced Discord security and moderation bot">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0b0d"/>
+      <stop offset="0.55" stop-color="#101114"/>
+      <stop offset="1" stop-color="#0a0b0d"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#b4545b" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#b4545b" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-opacity="0.025" stroke-width="1"/>
+    </pattern>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <rect width="1280" height="400" fill="url(#grid)"/>
+  <ellipse cx="1010" cy="170" rx="300" ry="190" fill="url(#glow)" filter="url(#soft)"/>
+
+  <!-- terminal window -->
+  <g>
+    <rect x="64" y="64" width="640" height="272" rx="16" fill="#111216" stroke="#2a2c32"/>
+    <path d="M64 100 L704 100" stroke="#2a2c32"/>
+    <circle cx="92" cy="82" r="6" fill="#b4545b"/>
+    <circle cx="114" cy="82" r="6" fill="#3a3c44"/>
+    <circle cx="136" cy="82" r="6" fill="#3a3c44"/>
+    <text x="164" y="88" fill="#7c818c" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15">onyx@discord: ~</text>
+    <text x="660" y="88" fill="#4b4e57" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="13">bash</text>
+
+    <text x="96" y="152" fill="#b4545b" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="20">&#10095;</text>
+    <text x="122" y="152" fill="#eceef2" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="20">onyx start --secure</text>
+
+    <text x="96" y="196" fill="#6f747f" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15">[ok]</text>
+    <text x="146" y="196" fill="#a9aeb8" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15">anti-nuke armed</text>
+
+    <text x="96" y="224" fill="#6f747f" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15">[ok]</text>
+    <text x="146" y="224" fill="#a9aeb8" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15">automod online &#183; anti-raid gated</text>
+
+    <text x="96" y="252" fill="#6f747f" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15">[ok]</text>
+    <text x="146" y="252" fill="#a9aeb8" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15">67 commands &#183; 29 event listeners</text>
+
+    <text x="96" y="296" fill="#b4545b" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15">&#10095;</text>
+    <rect x="118" y="282" width="10" height="18" fill="#b4545b">
+      <animate attributeName="opacity" values="1;1;0;0;1" dur="1.2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- wordmark -->
+  <text x="760" y="202" fill="#f2f3f5" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="124" font-weight="700" letter-spacing="14">ONYX</text>
+  <rect x="764" y="222" width="86" height="4" fill="#b4545b"/>
+  <text x="764" y="262" fill="#b4545b" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="15" letter-spacing="4">SECURITY / MODERATION / CONTROL</text>
+  <text x="764" y="300" fill="#6f747f" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="13" letter-spacing="2">BUILT WITH NODE.JS + DISCORD.JS V14</text>
+
+  <text x="1216" y="366" fill="#4b4e57" font-family="'JetBrains Mono','Fira Code',Consolas,monospace" font-size="12" text-anchor="end" letter-spacing="2">ONYX-DEV07 / GITHUB</text>
+</svg>
