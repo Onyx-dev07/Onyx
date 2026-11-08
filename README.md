@@ -304,7 +304,7 @@ A spam panel posts one message at a time. Clicking **Send** re-sends the panel t
 | `!rps <choice>` | — | `/rps <choice>` | Plays rock, paper, scissors |
 | `!meme` | — | `/meme` | Fetches a meme |
 | `!ship [@user] [@user2]` | `match` | `/ship [user] [user2]` | Renders a shareable ship card with both avatars, a heart, and a compatibility score |
-| `!dih [@user]` | `dihmeter` | `/dih [user]` | One-line random dih size |
+| `!dih [@user]` | `dihmeter` | `/dih [user]` | One-line random dih size from 1 to 12 |
 | `!puh [@user]` | `puhmeter` | `/puh [user]` | One-line random puh color: pink, black, or brown |
 
 `!ship` generates a PNG card on the fly: both avatars in rings, a heart between them, the percentage, the ship name, and a verdict. The score is stable for each pair.

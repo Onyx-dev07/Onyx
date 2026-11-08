@@ -4,8 +4,7 @@ const MIN_SIZE = 1;
 const MAX_SIZE = 12;
 
 function randomSize() {
-  const value = MIN_SIZE + Math.random() * (MAX_SIZE - MIN_SIZE);
-  return value.toFixed(1);
+  return Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE + 1)) + MIN_SIZE;
 }
 
 module.exports = {
