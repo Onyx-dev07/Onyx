@@ -7,18 +7,19 @@ const {
 const config = require('../../config.json');
 const { actionEmbed } = require('./embeds');
 
-// Every moderation card carries the same two controls: check to acknowledge
-// (removes the buttons) and cross to dismiss (deletes the card).
+// Every moderation card carries the same two controls. Text labels keep the
+// row compact and on-brand; emoji-only buttons render oversized in Discord.
+// Acknowledge clears the controls, Dismiss deletes the card.
 function actionButtons() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('mod_ack')
-      .setEmoji('✔️')
-      .setStyle(ButtonStyle.Success),
+      .setLabel('Acknowledge')
+      .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('mod_dismiss')
-      .setEmoji('✖️')
-      .setStyle(ButtonStyle.Danger)
+      .setLabel('Dismiss')
+      .setStyle(ButtonStyle.Secondary)
   );
 }
 
