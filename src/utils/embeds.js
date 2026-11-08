@@ -103,6 +103,11 @@ function approve() {
   return emoji('check') || '✅';
 }
 
+// Deny marker that leads blocked and failed action cards.
+function deny() {
+  return emoji('cross') || '❌';
+}
+
 /**
  * Receipt text: a marker-led headline, marker-led detail lines, then muted
  * hints in the "- Run ... / - Onyx Security · Module" shape.
@@ -308,7 +313,13 @@ function alertEmbed(options = {}) {
  *   -# Reason · Raiding
  *   -# Expires · in 5 minutes
  *
- * Titles without a verb mapping (status panels, failures) keep the older
+ * Blocked actions lead with a deny marker and the blocked title instead, since
+ * there is no staff action to credit:
+ *
+ *   ❌ **Kick Blocked**
+ *   That member is not in this server.
+ *
+ * Every other title (status panels, interim state) keeps the older
  * title-and-fields layout so nothing loses its heading.
  */
 function actionEmbed(options = {}) {
@@ -325,6 +336,15 @@ function actionEmbed(options = {}) {
     color = config.colors.accent || config.colors.primary || DEFAULT_COLOR
   } = options;
 
+  const meta = [];
+  if (reason) meta.push(`Reason ${UI.separator} ${reason}`);
+  for (const field of fields) {
+    meta.push(`${field.name} ${UI.separator} ${field.value}`);
+  }
+  if (dmDelivered !== undefined) {
+    meta.push(`Direct message ${UI.separator} ${dmDelivered ? 'Delivered' : 'Failed'}`);
+  }
+
   const verb = ACTION_VERBS[title];
   if (moderator && verb) {
     const sentence = `${approve()} **${moderator}**: ${[
@@ -333,17 +353,18 @@ function actionEmbed(options = {}) {
       duration ? `for ${duration}` : null
     ].filter(Boolean).join(' ')}.`;
 
-    const meta = [];
-    if (reason) meta.push(`Reason ${UI.separator} ${reason}`);
-    for (const field of fields) {
-      meta.push(`${field.name} ${UI.separator} ${field.value}`);
-    }
-    if (dmDelivered !== undefined) {
-      meta.push(`Direct message ${UI.separator} ${dmDelivered ? 'Delivered' : 'Failed'}`);
-    }
-
     return createEmbed({
       description: [sentence, description, ...meta.map(muted)].filter(Boolean).join('\n'),
+      color,
+      footer: false
+    });
+  }
+
+  if (!moderator && icon === 'cross' && title) {
+    return createEmbed({
+      description: [`${deny()} **${title}**`, description, ...meta.map(muted)]
+        .filter(Boolean)
+        .join('\n'),
       color,
       footer: false
     });
@@ -380,6 +401,7 @@ module.exports = {
   stateLine,
   mark,
   approve,
+  deny,
   ACTION_VERBS,
   receiptText,
   receiptEmbed,
