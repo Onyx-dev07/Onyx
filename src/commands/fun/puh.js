@@ -21,11 +21,11 @@ module.exports = {
 
   async executeSlash(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
-    return interaction.reply({ content: `${user.username}'s puh: ${randomColor()}` });
+    return interaction.reply({ content: `${user}: Your puh is \`${randomColor()}\`` });
   },
 
   async executePrefix(message) {
     const user = message.mentions.users.first() || message.author;
-    return message.reply(`${user.username}'s puh: ${randomColor()}`);
+    return message.reply(`${user}: Your puh is \`${randomColor()}\``);
   }
 };

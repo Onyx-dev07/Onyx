@@ -22,11 +22,11 @@ module.exports = {
 
   async executeSlash(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
-    return interaction.reply({ content: `${user.username}'s dih: ${randomSize()} inches` });
+    return interaction.reply({ content: `${user}: Your dih is \`${randomSize()} inches\`` });
   },
 
   async executePrefix(message) {
     const user = message.mentions.users.first() || message.author;
-    return message.reply(`${user.username}'s dih: ${randomSize()} inches`);
+    return message.reply(`${user}: Your dih is \`${randomSize()} inches\``);
   }
 };
