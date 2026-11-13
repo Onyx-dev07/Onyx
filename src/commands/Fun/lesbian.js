@@ -1,4 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { createEmbed } from '../../utils/embeds.js';
+import { userMention } from '../../utils/theme.js';
 
 export default {
   data: new SlashCommandBuilder()
@@ -15,8 +17,14 @@ export default {
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
     const percent = Math.floor(Math.random() * 100) + 1;
-    const name = user.displayName || user.username;
 
-    return interaction.reply({ content: `${name} is ${percent}% lesbian.` });
+    return interaction.reply({
+      embeds: [
+        createEmbed({
+          description: `${userMention(user)} is ${percent}% lesbian.`,
+          color: 'primary',
+        }),
+      ],
+    });
   },
 };

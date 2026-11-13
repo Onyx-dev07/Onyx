@@ -1,4 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { createEmbed } from '../../utils/embeds.js';
+import { userMention } from '../../utils/theme.js';
 
 const COLORS = ['pink', 'black', 'brown'];
 
@@ -21,8 +23,14 @@ export default {
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
     const color = randomColor();
-    const name = user.displayName || user.username;
 
-    return interaction.reply({ content: `${name}'s puh is ${color}.` });
+    return interaction.reply({
+      embeds: [
+        createEmbed({
+          description: `${userMention(user)}'s puh is ${color}.`,
+          color: 'primary',
+        }),
+      ],
+    });
   },
 };

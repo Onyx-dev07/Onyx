@@ -1,4 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { createEmbed } from '../../utils/embeds.js';
+import { userMention } from '../../utils/theme.js';
 
 const MIN_SIZE = 1;
 const MAX_SIZE = 12;
@@ -22,8 +24,14 @@ export default {
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
     const size = randomSize();
-    const name = user.displayName || user.username;
 
-    return interaction.reply({ content: `${name}'s dih is ${size} inches.` });
+    return interaction.reply({
+      embeds: [
+        createEmbed({
+          description: `${userMention(user)}'s dih is ${size} inches.`,
+          color: 'primary',
+        }),
+      ],
+    });
   },
 };
