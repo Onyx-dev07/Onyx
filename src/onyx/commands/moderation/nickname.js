@@ -63,6 +63,10 @@ module.exports = {
   },
 
   async executePrefix(message, args) {
+    if (!message.member?.permissions?.has(PermissionFlagsBits.ManageNicknames)) {
+      return message.reply({ embeds: [errorEmbed('You need the **Manage Nicknames** permission to use this command.')] });
+    }
+
     const target = message.mentions.users.first()
       || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
 

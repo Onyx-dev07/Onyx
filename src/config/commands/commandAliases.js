@@ -29,6 +29,8 @@ export const commandAliases = {
     'kick': 'kick',
     'mute': 'timeout',
     'warn': 'warn',
+    'nick': 'nickname',
+    'setnick': 'nickname',
     'clear': 'purge',
     'purge': 'purge',
     'untimeout': 'untimeout',

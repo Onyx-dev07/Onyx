@@ -208,7 +208,7 @@ Community slash commands register globally on startup. The Onyx security command
 | `lockdown` | Lock all public text channels for `@everyone` | — |
 | `media` | Keep media channels free of text-only messages | `add`, `remove`, `list` |
 | `mute` | Time out a member for 5 minutes by default | — |
-| `nickname` | Change or clear a member's nickname | — |
+| `nickname` | Change or clear a member's nickname (`!nick @user [name]`) | — |
 | `nuke` | Clone and delete the current channel to wipe messages | — |
 | `role` | Add, remove, or toggle a role for a member | — |
 | `security` | Audit the server's security posture and score | — |

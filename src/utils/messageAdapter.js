@@ -58,6 +58,7 @@ export function createMockInteraction(message, commandData, args) {
 
   const mockInteraction = {
     user: message.author,
+    author: message.author,
     member: message.member,
     get memberPermissions() {
       return message.member?.permissions ?? null;
