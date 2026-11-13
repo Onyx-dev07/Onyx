@@ -1,12 +1,6 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
-import { avatarURL, userMention } from '../../utils/theme.js';
 
-const COLORS = [
-  { name: 'pink', emoji: '🩷', token: 'primary' },
-  { name: 'black', emoji: '🖤', token: 'secondary' },
-  { name: 'brown', emoji: '🤎', token: 'warning' },
-];
+const COLORS = ['pink', 'black', 'brown'];
 
 function randomColor() {
   return COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -27,19 +21,8 @@ export default {
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
     const color = randomColor();
+    const name = user.displayName || user.username;
 
-    const embed = createEmbed({
-      title: '🎨 Puh Meter',
-      description: [
-        `**${userMention(user)}** rolled **${color.name}** ${color.emoji}`,
-        '',
-        `-# Palette · ${color.name}`,
-      ].join('\n'),
-      color: color.token,
-      thumbnail: avatarURL(user),
-      footer: { text: 'Onyx · Fun' },
-    });
-
-    return interaction.reply({ embeds: [embed] });
+    return interaction.reply({ content: `${name}'s puh is ${color}.` });
   },
 };

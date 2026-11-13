@@ -1,6 +1,4 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
-import { avatarURL, progressLabel, userMention } from '../../utils/theme.js';
 
 export default {
   data: new SlashCommandBuilder()
@@ -17,18 +15,8 @@ export default {
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
     const percent = Math.floor(Math.random() * 100) + 1;
+    const name = user.displayName || user.username;
 
-    const embed = createEmbed({
-      title: '🩷 Lesbian Meter',
-      description: [
-        `**${userMention(user)}** scored **${percent}%**.`,
-        '',
-        progressLabel(percent),
-      ].join('\n'),
-      color: 'primary',
-      thumbnail: avatarURL(user),
-    });
-
-    return interaction.reply({ embeds: [embed] });
+    return interaction.reply({ content: `${name} is ${percent}% lesbian.` });
   },
 };

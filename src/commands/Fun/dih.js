@@ -1,6 +1,4 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
-import { avatarURL, progressLabel, userMention } from '../../utils/theme.js';
 
 const MIN_SIZE = 1;
 const MAX_SIZE = 12;
@@ -24,19 +22,8 @@ export default {
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
     const size = randomSize();
-    const percent = Math.round((size / MAX_SIZE) * 100);
+    const name = user.displayName || user.username;
 
-    const embed = createEmbed({
-      title: '📏 Dih Meter',
-      description: [
-        `**${userMention(user)}** measured **${size} inches**.`,
-        '',
-        progressLabel(percent),
-      ].join('\n'),
-      color: size >= 9 ? 'accent' : 'primary',
-      thumbnail: avatarURL(user),
-    });
-
-    return interaction.reply({ embeds: [embed] });
+    return interaction.reply({ content: `${name}'s dih is ${size} inches.` });
   },
 };
