@@ -1,0 +1,33 @@
+services:
+  bot:
+    build: .
+    container_name: onyx-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - CLIENT_ID=${CLIENT_ID}
+      - GUILD_ID=${GUILD_ID}
+      - PREFIX=${PREFIX:-!}
+      - USE_POSTGRES=${USE_POSTGRES:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-warn}
+      - PORT=3000
+      - WEB_HOST=0.0.0.0
+    ports:
+      - "${PORT:-3000}:3000"
+    volumes:
+      - ./data:/usr/src/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - onyx-network
+
+networks:
+  onyx-network:
+    driver: bridge

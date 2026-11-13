@@ -1,0 +1,29 @@
+{
+  "name": "onyx-bot",
+  "version": "1.0.0",
+  "description": "Onyx - An advanced, modern Discord bot built with Node.js and Discord.js v14.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "deploy": "node src/deploy-commands.js"
+  },
+  "keywords": [
+    "onyx",
+    "discord-bot",
+    "discordjs",
+    "moderation",
+    "antinuke",
+    "utility"
+  ],
+  "author": "Onyx Development",
+  "license": "MIT",
+  "dependencies": {
+    "@napi-rs/canvas": "^1.1.0",
+    "chalk": "^4.1.2",
+    "discord.js": "^14.28.1",
+    "dotenv": "^18.0.9",
+    "express": "^4.22.3",
+    "ms": "^2.1.3"
+  }
+}

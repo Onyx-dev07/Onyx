@@ -1,93 +1,199 @@
-const {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  PermissionFlagsBits
-} = require('discord.js');
-const config = require('../../config.json');
-const { actionEmbed } = require('./embeds');
+// moderation.js
 
-// Every moderation card carries the same two controls. Text labels keep the
-// row compact and on-brand; emoji-only buttons render oversized in Discord.
-// Acknowledge clears the controls, Dismiss deletes the card.
-function actionButtons() {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('mod_ack')
-      .setLabel('Acknowledge')
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId('mod_dismiss')
-      .setLabel('Dismiss')
-      .setStyle(ButtonStyle.Secondary)
-  );
-}
+import { logEvent as logAuditEvent, EVENT_TYPES } from '../services/loggingService.js';
+import { formatLogLine } from './logging/logEmbeds.js';
+import { logger } from './logger.js';
+import { getFromDb, setInDb } from './database.js';
 
-// Successful moderation action rendered as an actionEmbed card.
-function actionPayload(options) {
-  return {
-    embeds: [actionEmbed(options)],
-    components: [actionButtons()]
-  };
-}
-
-// Blocked or failed moderation action rendered as a red actionEmbed card.
-function failurePayload(title, description) {
-  return {
-    embeds: [actionEmbed({
-      title,
-      icon: 'cross',
-      description,
-      color: config.colors.error
-    })],
-    components: [actionButtons()]
-  };
-}
-
-/**
- * Returns a user-facing reason the bot cannot moderate `member`, or null when
- * the action is allowed. `action` is a verb phrase such as "change the
- * nickname of" or "time out".
- */
-function moderationBlock(guild, member, action) {
-  if (!member) return 'That member is not in this server.';
-
-  const me = guild.members.me;
-  if (member.id === guild.ownerId) {
-    return `I can't ${action} the server owner.`;
-  }
-  if (me && member.id === me.id) {
-    return `I can't ${action} myself.`;
-  }
-
-  const botPosition = me?.roles?.highest?.position ?? -1;
-  const targetPosition = member.roles?.highest?.position ?? -1;
-
-  if (me && targetPosition >= botPosition) {
-    const traits = [];
-    if (member.id === guild.ownerId) traits.push('they own the server');
-    if (member.permissions?.has(PermissionFlagsBits.Administrator)) traits.push('they are an administrator');
-    if (member.user?.bot) traits.push('they are a bot');
-
-    const detail = traits.length ? ` — ${traits.join(' and ')}` : '';
-    return `I can't ${action} **${member.user.username}**${detail}. Their highest role is above mine, so move my role higher and try again.`;
-  }
-
-  return null;
-}
-
-// Turns the common Discord API permission failures into a readable card.
-function moderationFailure(action, err) {
-  if (/missing permissions|missing access/i.test(err?.message || '')) {
-    return `I can't ${action} because I am missing permissions or my role is below theirs.`;
-  }
-  return `I couldn't ${action}: ${err?.message || 'unknown error'}`;
-}
-
-module.exports = {
-  actionButtons,
-  actionPayload,
-  failurePayload,
-  moderationBlock,
-  moderationFailure
+const ACTION_TO_EVENT_TYPE = {
+  'Member Banned': EVENT_TYPES.MODERATION_BAN,
+  'Member Kicked': EVENT_TYPES.MODERATION_KICK,
+  'Member Timed Out': EVENT_TYPES.MODERATION_TIMEOUT,
+  'Member Untimeouted': EVENT_TYPES.MODERATION_UNTIMEOUT,
+  'Member Unbanned': EVENT_TYPES.MODERATION_UNBAN,
+  'User Warned': EVENT_TYPES.MODERATION_WARN,
+  'Warnings Viewed': EVENT_TYPES.MODERATION_WARN,
+  'Messages Purged': EVENT_TYPES.MODERATION_PURGE,
+  'Channel Locked': EVENT_TYPES.MODERATION_LOCK,
+  'Channel Unlocked': EVENT_TYPES.MODERATION_UNLOCK,
+  'DM Sent': EVENT_TYPES.MODERATION_DM,
+  'Bot Message Sent': EVENT_TYPES.MODERATION_CONFIG,
+  'Log Channel Activated': EVENT_TYPES.MODERATION_CONFIG,
+  'Log Filter Updated': EVENT_TYPES.MODERATION_CONFIG,
+  'Case Created': EVENT_TYPES.MODERATION_CONFIG,
+  'Case Updated': EVENT_TYPES.MODERATION_CONFIG,
 };
+
+function buildModerationLogData(event) {
+  const targetIdMatch = event.target?.match(/\((\d+)\)/);
+  const targetId = targetIdMatch?.[1];
+  const executorIdMatch = event.executor?.match(/\((\d+)\)/);
+  const executorTag = event.executor?.split(' (')[0] || 'Moderator';
+
+  const lines = [];
+  if (event.target) {
+    lines.push(formatLogLine('User', event.target));
+  }
+  if (event.reason) {
+    const reason = event.reason.length > 900
+      ? `${event.reason.substring(0, 897)}...`
+      : event.reason;
+    lines.push(formatLogLine('Reason', reason));
+  }
+  if (event.duration) {
+    lines.push(formatLogLine('Duration', event.duration));
+  }
+  if (event.caseId) {
+    lines.push(formatLogLine('Case', `\`${event.caseId}\``));
+  }
+
+  const meta = [];
+  if (event.metadata) {
+    Object.entries(event.metadata).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && key !== 'userId' && key !== 'moderatorId') {
+        meta.push([key.charAt(0).toUpperCase() + key.slice(1), String(value)]);
+      }
+    });
+  }
+
+  const title = event.caseId ? `${event.action} · Case #${event.caseId}` : event.action;
+
+  return {
+    title,
+    lines,
+    meta,
+    userId: event.metadata?.userId || targetId || undefined,
+    thumbnail: targetId ? `https://cdn.discordapp.com/embed/avatars/${Number(targetId) % 5}.png` : undefined,
+    footer: executorIdMatch
+      ? { text: executorTag, iconURL: undefined }
+      : undefined,
+  };
+}
+
+export async function logEvent({ client, guild, guildId, event }) {
+  try {
+    if (!guild && guildId) {
+      guild = client.guilds.cache.get(guildId) || await client.guilds.fetch(guildId).catch(() => null);
+    }
+    if (!guild) {
+      logger.warn('logEvent invoked without valid guild or guildId');
+      return;
+    }
+
+    const eventType = ACTION_TO_EVENT_TYPE[event.action] || EVENT_TYPES.MODERATION_CONFIG;
+    const data = buildModerationLogData(event);
+
+    await logAuditEvent({
+      client,
+      guildId: guild.id,
+      eventType,
+      data,
+    });
+
+    logger.info(`Moderation action logged: ${event.action} by ${event.executor} on ${event.target} in guild ${guild.id}`);
+  } catch (error) {
+    logger.error('Error logging moderation event:', error);
+  }
+}
+
+export async function generateCaseId(client, guildId) {
+  try {
+    const caseKey = `moderation_cases_${guildId}`;
+    const currentCase = await getFromDb(caseKey, 0);
+    const nextCase = currentCase + 1;
+    await setInDb(caseKey, nextCase);
+    return nextCase;
+  } catch (error) {
+    logger.error("Error generating case ID:", error);
+return Date.now();
+  }
+}
+
+export async function storeModerationCase({ guildId, caseId, caseData }) {
+  try {
+    const caseKey = `moderation_case_${guildId}_${caseId}`;
+    const caseDataWithTimestamp = {
+      ...caseData,
+      createdAt: new Date().toISOString(),
+      caseId
+    };
+    
+    await setInDb(caseKey, caseDataWithTimestamp);
+    
+    const caseListKey = `moderation_cases_list_${guildId}`;
+    const caseList = await getFromDb(caseListKey, []);
+    caseList.push(caseDataWithTimestamp);
+    
+    if (caseList.length > 1000) {
+      caseList.splice(0, caseList.length - 1000);
+    }
+    
+    await setInDb(caseListKey, caseList);
+    return true;
+  } catch (error) {
+    logger.error("Error storing moderation case:", error);
+    return false;
+  }
+}
+
+export async function getModerationCases(guildId, filters = {}) {
+  try {
+    const { userId, moderatorId, action, limit = 50, offset = 0 } = filters;
+    
+    const allCases = [];
+    
+    const caseListKey = `moderation_cases_list_${guildId}`;
+    const caseList = await getFromDb(caseListKey, []);
+    
+    let filteredCases = caseList;
+    
+    if (userId) {
+      filteredCases = filteredCases.filter(case_ => case_.targetUserId === userId);
+    }
+    
+    if (moderatorId) {
+      filteredCases = filteredCases.filter(case_ => case_.moderatorId === moderatorId);
+    }
+    
+    if (action) {
+      filteredCases = filteredCases.filter(case_ => case_.action === action);
+    }
+    
+    filteredCases.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    return filteredCases.slice(offset, offset + limit);
+  } catch (error) {
+    logger.error("Error getting moderation cases:", error);
+    return [];
+  }
+}
+
+export async function logModerationAction({ client, guild, event }) {
+  const caseId = await generateCaseId(client, guild.id);
+  
+  await storeModerationCase({
+    guildId: guild.id,
+    caseId,
+    caseData: {
+      action: event.action,
+      target: event.target,
+      executor: event.executor,
+      reason: event.reason,
+      duration: event.duration,
+      metadata: event.metadata,
+      targetUserId: event.metadata?.userId,
+      moderatorId: event.metadata?.moderatorId
+    }
+  });
+  
+  await logEvent({
+    client,
+    guild,
+    event: {
+      ...event,
+      caseId
+    }
+  });
+  
+  return caseId;
+}

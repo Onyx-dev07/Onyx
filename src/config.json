@@ -1,0 +1,73 @@
+{
+  "botName": "Onyx",
+  "version": "3.0.0",
+  "defaultPrefix": "!",
+  "colors": {
+    "accent": "#2b2d31",
+    "crimson": "#dc143c",
+    "primary": "#2b2d31",
+    "success": "#43b581",
+    "error": "#f04747",
+    "warning": "#faa61a",
+    "info": "#5865f2",
+    "dark": "#1b1c1e",
+    "charcoal": "#24262a",
+    "muted": "#72767d",
+    "blurple": "#5865f2",
+    "white": "#ffffff"
+  },
+  "footer": {
+    "text": "Onyx",
+    "iconUrl": ""
+  },
+  "emojis": {
+    "enabled": "<a:enabled_:1559628526628503672>",
+    "disabled": "",
+    "success": "",
+    "error": "",
+    "warning": "",
+    "info": "",
+    "shield": "",
+    "spark": "",
+    "giveaway": "",
+    "alert": "",
+    "stop": "",
+    "lock": "",
+    "unlock": "",
+    "target": "",
+    "moderator": "",
+    "time": "",
+    "channel": "",
+    "trash": "",
+    "check": "",
+    "cross": "",
+    "online": "",
+    "idle": "",
+    "dnd": "",
+    "offline": "",
+    "boost": "",
+    "owner": "",
+    "bot": "",
+    "member": "",
+    "role": "",
+    "text": "",
+    "voice": "",
+    "stage": "",
+    "forum": "",
+    "category": ""
+  },
+  "presences": [
+    { "name": "/help | Onyx", "type": "PLAYING" },
+    { "name": "{guildCount} servers | Onyx", "type": "WATCHING" },
+    { "name": "{memberCount} members protected", "type": "WATCHING" },
+    { "name": "!help • onyx.gg", "type": "LISTENING" }
+  ],
+  "presenceIntervalSeconds": 15,
+  "antiNuke": {
+    "defaultMaxKicks": 3,
+    "defaultMaxBans": 3,
+    "defaultMaxChannelDeletes": 3,
+    "defaultMaxRoleDeletes": 3,
+    "timeWindowSeconds": 10
+  }
+}

@@ -1,430 +1,410 @@
-const { EmbedBuilder } = require('discord.js');
-const config = require('../../config.json');
+// embeds.js
 
-// Onyx visual language: dark charcoal cards, one ONYX red accent stripe,
-// typographic separators instead of decoration.
-const DEFAULT_COLOR = 0x2b2d31;
-const BRAND_NAME = String(config.botName || 'ONYX').toUpperCase();
+import { EmbedBuilder } from 'discord.js';
+import { getColor, botConfig } from '../config/bot.js';
 
-// Every card carries the same small status heading so tone is readable
-// without relying on color.
-const STATUS_HEADINGS = {
-  success: 'SUCCESS',
-  error: 'ERROR',
-  warning: 'WARNING',
-  info: 'NOTICE'
-};
+const EMOJI_REGEX = /[\p{Extended_Pictographic}\uFE0F]/gu;
+const EMBED_FOOTER_SYMBOL = Symbol('OnyxFooterText');
+const EMBED_BASE_DESCRIPTION_SYMBOL = Symbol('OnyxBaseDescription');
 
-// Action receipts read as one sentence, so every title maps to the verb that
-// follows the staff member's name. Titles without an entry keep the quieter
-// title-and-fields card used by status panels and failures.
-const ACTION_VERBS = {
-  'Member Banned': 'Banned',
-  'Member Unbanned': 'Unbanned',
-  'Member Kicked': 'Kicked',
-  'Member Hardbanned': 'Permanently banned',
-  'Member Softbanned': 'Soft-banned',
-  'Member Timed Out': 'Timed out',
-  'Timeout Removed': 'Removed the timeout from',
-  'Member Muted': 'Muted',
-  'Member Unmuted': 'Unmuted',
-  'Member Warned': 'Warned',
-  'Warnings Cleared': 'Cleared the warnings of',
-  'Member Jailed': 'Jailed',
-  'Member Released from Jail': 'Released',
-  'Member Dehoisted': 'Dehoisted',
-  'Server Dehoisted': 'Dehoisted the server',
-  'Nickname Set': 'Set the nickname of',
-  'Nickname Cleared': 'Cleared the nickname of',
-  'Channel Locked': 'Locked the channel',
-  'Channel Unlocked': 'Unlocked the channel',
-  'Channel Cleared': 'Cleared the channel',
-  'Messages Deleted': 'Deleted messages in the channel',
-  'Messages Purged': 'Purged messages in the channel',
-  'Slowmode Updated': 'Updated the channel slowmode',
-  'Server lockdown active': 'Locked down the server',
-  'Server lockdown lifted': 'Lifted the server lockdown',
-  'Members Moved': 'Moved members',
-  'Voice Disconnect': 'Disconnected',
-  'Voice Muted': 'Server-muted',
-  'Voice Unmuted': 'Server-unmuted',
-  'Voice Deafened': 'Server-deafened',
-  'Voice Undeafened': 'Server-undeafened',
-  'Direct Message Sent': 'Directly messaged',
-  'Reminder Set': 'Set a reminder for',
-  'AFK Set': 'Went AFK',
-  'Announcement Dispatched': 'Sent an announcement',
-  'Emoji Stolen': 'Added an emoji to the server',
-  'Sticker Stolen': 'Added a sticker to the server',
-  'Prefix Changed': 'Changed the prefix'
-};
-
-const UI = {
-  active: '●',
-  partial: '◐',
-  inactive: '○',
-  separator: '·',
-  bullet: '›',
-  dot: '•',
-  arrow: '→',
-  diamond: '◆',
-  progressFull: '━',
-  progressEmpty: '─',
-  divider: '────────────────────',
-  shortDivider: '──────────'
-};
-
-/**
- * Returns a thematic token configured in config.json, or an empty string.
- * Unset slots fall back to the typographic marks in UI.
- */
-function emoji(name) {
-  if (!name) return '';
-  return config.emojis?.[name] || '';
-}
-
-function withEmoji(name, text) {
-  const token = emoji(name);
-  return token ? `${token} ${text}` : text;
-}
-
-function stateLine(active, label) {
-  return `${active ? UI.active : UI.inactive} ${label}`;
-}
-
-// Themed status marker used by confirmation receipts and module lists.
-// Falls back to the typographic dots when no emoji slot is configured.
-function mark(active) {
-  return active ? (emoji('enabled') || UI.active) : (emoji('disabled') || UI.inactive);
-}
-
-// Approve marker that leads every completed action line.
-function approve() {
-  return emoji('check') || '✅';
-}
-
-// Deny marker that leads blocked and failed action cards.
-function deny() {
-  return emoji('cross') || '❌';
-}
-
-/**
- * Receipt text: a marker-led headline, marker-led detail lines, then muted
- * hints in the "- Run ... / - Onyx Security · Module" shape.
- */
-function receiptText({ active = true, headline, lines = [], hint, source }) {
-  const marker = mark(active);
-  const output = [
-    `${marker} **${headline}**`,
-    ...lines.filter(Boolean).map(line => `${marker} ${line}`)
-  ];
-
-  if (hint) output.push(muted(hint));
-  if (source) output.push(`-# Onyx Security ${UI.separator} ${source}`);
-
-  return output.join('\n');
-}
-
-// Standalone receipt card for a completed configuration action.
-function receiptEmbed(options = {}) {
-  return createEmbed({
-    description: receiptText(options),
-    color: options.active === false ? config.colors.muted : config.colors.success,
-    footer: false
-  });
-}
-
-// Signature brand mark used on security embeds.
-function brand(text) {
-  return withEmoji('shield', text);
-}
-
-// A text-only meter that renders consistently without emoji or images.
-function progressBar(value, max = 100, length = 10) {
-  const ratio = Math.max(0, Math.min(1, Number(value) / Number(max || 1)));
-  const filled = Math.round(ratio * length);
-  return `${UI.progressFull.repeat(filled)}${UI.progressEmpty.repeat(length - filled)}`;
-}
-
-// Turns a score into a label and accent color for status cards.
-function scoreBand(score) {
-  if (score >= 90) return { label: 'Fortified', color: config.colors.success };
-  if (score >= 75) return { label: 'Strong', color: config.colors.success };
-  if (score >= 50) return { label: 'Moderate', color: config.colors.warning };
-  return { label: 'Exposed', color: config.colors.error };
-}
-
-// Author row shared by cards. Discord renders it above the title.
-function cardAuthor(label, iconURL) {
-  return iconURL ? { name: label, iconURL } : { name: label };
-}
-
-// Default brand row. Pass `author: false` on a card to omit it.
-function brandAuthor() {
-  const iconURL = config.footer?.iconUrl || undefined;
-  return cardAuthor(BRAND_NAME, iconURL);
-}
-
-// Block quotes get Discord's soft accent bar, so summaries read as a card header.
-function quote(text) {
-  return String(text)
-    .split('\n')
-    .map(line => (line.trim() ? `> ${line}` : '>'))
-    .join('\n');
-}
-
-// Muted subtext for IDs, hints and metadata.
-function muted(text) {
-  return `-# ${text}`;
-}
-
-function code(value) {
-  return `\`${value}\``;
-}
-
-function divider(length = 'long') {
-  return length === 'short' ? UI.shortDivider : UI.divider;
-}
-
-// A quiet bullet list. Pass strings, markup is preserved.
-function list(items) {
-  return items.map(item => `${UI.bullet} ${item}`).join('\n');
-}
-
-// Structured bullet lines used inside security and moderation embeds.
-function bullets(items) {
-  return items.filter(Boolean).map(item => `${UI.dot} ${item}`).join('\n');
-}
-
-// Two-column style rows that stack cleanly on narrow clients.
-function keyValues(entries) {
-  return entries
-    .filter(Boolean)
-    .map(([label, value]) => `**${label.toUpperCase()}**\n${value}`)
-    .join('\n\n');
-}
-
-// A labeled block: small caps label above a value.
-function section(label, value) {
-  return `**${String(label).toUpperCase()}**\n${value}`;
-}
-
-// Compact status row used by configuration panels.
-function status(label, active, note) {
-  return `${stateLine(active, label)}${note ? ` ${UI.separator} ${note}` : ''}`;
-}
-
-// Footer defaults to a single word: no marketing line on routine replies.
-function footerPayload(options) {
-  if (options.footer === false) return null;
-
-  const footer = options.footer === undefined
-    ? { text: config.footer?.text || 'ONYX' }
-    : options.footer;
-
-  if (!footer || !footer.text) return null;
-
-  const iconURL = footer.iconURL || undefined;
-  return { text: footer.text, ...(iconURL ? { iconURL } : {}) };
-}
-
-/**
- * Base embed builder.
- *
- * Every card inherits the same ONYX author row and the same accent stripe.
- * Quiet by default: no timestamp, no marketing footer. Cards that need a
- * timestamp pass `timestamp: true`; replies that need context pass a footer.
- */
-function createEmbed(options = {}) {
-  const embed = new EmbedBuilder()
-    .setColor(options.color || config.colors.accent || DEFAULT_COLOR);
-
-  if (options.author !== false) {
-    embed.setAuthor(options.author || brandAuthor());
+function sanitizeEmbedText(text = '') {
+  if (typeof text !== 'string') {
+    return text;
   }
 
-  if (options.title) {
-    embed.setTitle(options.emoji ? withEmoji(options.emoji, options.title) : options.title);
+  return text
+    .replace(EMOJI_REGEX, '')
+    .replace(/[ \t]+/g, ' ')  // Replace consecutive spaces/tabs with single space
+    .replace(/[ \t]\n/g, '\n')  // Remove spaces before newlines
+    .replace(/\n[ \t]/g, '\n')  // Remove spaces after newlines
+    .replace(/\n{3,}/g, '\n\n')  // Limit consecutive newlines to 2
+    .trim();
+}
+
+function sanitizeEmbedField(field) {
+  if (!field || typeof field !== 'object') {
+    return field;
   }
 
-  if (options.description) embed.setDescription(options.description);
-  if (options.fields?.length) embed.addFields(options.fields);
-  if (options.thumbnail) embed.setThumbnail(options.thumbnail);
-  if (options.image) embed.setImage(options.image);
+  return {
+    ...field,
+    name: sanitizeEmbedText(field.name),
+    value: sanitizeEmbedText(field.value),
+  };
+}
 
-  if (options.timestamp === true) embed.setTimestamp();
+const originalSetTitle = EmbedBuilder.prototype.setTitle;
+const originalSetAuthor = EmbedBuilder.prototype.setAuthor;
+const originalAddFields = EmbedBuilder.prototype.addFields;
 
-  const footer = footerPayload(options);
-  if (footer) embed.setFooter(footer);
+EmbedBuilder.prototype.setTitle = function setSanitizedTitle(title) {
+  return originalSetTitle.call(this, sanitizeEmbedText(title));
+};
+
+EmbedBuilder.prototype.setAuthor = function setSanitizedAuthor(author) {
+  if (typeof author === 'string') {
+    return originalSetAuthor.call(this, sanitizeEmbedText(author));
+  }
+
+  if (author && typeof author.name === 'string') {
+    return originalSetAuthor.call(this, {
+      ...author,
+      name: sanitizeEmbedText(author.name),
+    });
+  }
+
+  return originalSetAuthor.call(this, author);
+};
+
+EmbedBuilder.prototype.addFields = function addSanitizedFields(...fields) {
+  const normalized = fields.flatMap((field) => (Array.isArray(field) ? field : [field]));
+  const sanitized = normalized.map(sanitizeEmbedField);
+  return originalAddFields.call(this, sanitized);
+};
+
+function normalizeFooterText(footer) {
+  if (!footer) {
+    return '';
+  }
+
+  if (typeof footer === 'string') {
+    return footer.trim();
+  }
+
+  if (footer && typeof footer.text === 'string') {
+    return footer.text.trim();
+  }
+
+  return '';
+}
+
+function isImportantFooter(footerText) {
+  if (!footerText) {
+    return false;
+  }
+
+  const normalized = footerText.toLowerCase();
+  return /\b(close|closes|closed|expire|expires|available in|page\s+\d+|dashboard closes|ticket id)\b/.test(normalized);
+}
+
+const originalSetDescription = EmbedBuilder.prototype.setDescription;
+const originalSetFooter = EmbedBuilder.prototype.setFooter;
+const originalSetTimestamp = EmbedBuilder.prototype.setTimestamp;
+
+EmbedBuilder.prototype.setDescription = function(description = '') {
+  const descString = sanitizeEmbedText(description || '');
+  this[EMBED_BASE_DESCRIPTION_SYMBOL] = descString;
+  return originalSetDescription.call(this, descString);
+};
+
+EmbedBuilder.prototype.setFooter = function(footer) {
+  const footerText = sanitizeEmbedText(normalizeFooterText(footer));
+  if (!footerText || !isImportantFooter(footerText)) {
+    return this;
+  }
+
+  this[EMBED_FOOTER_SYMBOL] = footerText;
+  return originalSetFooter.call(this, { text: footerText });
+};
+
+EmbedBuilder.prototype.setTimestamp = function() {
+  return this;
+};
+
+export function createEmbed({
+  title = '',
+  description = '',
+  color = 'primary',
+  fields = [],
+  author = null,
+  footer = null,
+  thumbnail = null,
+  image = null,
+  timestamp = false,
+  url = null
+} = {}) {
+  const embed = new EmbedBuilder();
+
+  if (title && typeof title === 'string' && title.length > 0) {
+    embed.setTitle(title.substring(0, 256));
+  }
+
+  if (description && typeof description === 'string' && description.length > 0) {
+    embed.setDescription(description.substring(0, 4096));
+  }
+
+  try {
+    const embedColor = getColor(color) || '#000000';
+    embed.setColor(embedColor);
+  } catch (error) {
+    embed.setColor('#000000');
+  }
+
+  if (Array.isArray(fields) && fields.length > 0) {
+    const validFields = fields.filter(f => f && f.name && f.value);
+    if (validFields.length > 0) {
+      embed.addFields(validFields.slice(0, 25)); 
+    }
+  }
+
+  if (author) {
+    try {
+      if (typeof author === 'string' && author.length > 0) {
+        embed.setAuthor({ name: author.substring(0, 256) });
+      } else if (author && typeof author.name === 'string') {
+        embed.setAuthor(author);
+      }
+    } catch (error) {
+      
+    }
+  } else if (botConfig.embeds?.author?.name) {
+    embed.setAuthor({
+      name: botConfig.embeds.author.name,
+      ...(botConfig.embeds.author.icon ? { iconURL: botConfig.embeds.author.icon } : {}),
+      ...(botConfig.embeds.author.url ? { url: botConfig.embeds.author.url } : {}),
+    });
+  }
+
+  if (footer) {
+    try {
+      if (typeof footer === 'string' && footer.length > 0) {
+        embed.setFooter({ text: footer.substring(0, 2048) });
+      } else if (footer && typeof footer.text === 'string') {
+        embed.setFooter(footer);
+      }
+    } catch (error) {
+      
+    }
+  } else if (botConfig.embeds?.footer?.text) {
+    const defaultFooter = {
+      text: botConfig.embeds.footer.text,
+      ...(botConfig.embeds.footer.icon ? { iconURL: botConfig.embeds.footer.icon } : {}),
+    };
+    embed.setFooter(defaultFooter);
+  }
+
+  if (thumbnail) {
+    try {
+      if (typeof thumbnail === 'string' && thumbnail.length > 0) {
+        embed.setThumbnail(thumbnail);
+      } else if (thumbnail && typeof thumbnail.url === 'string') {
+        embed.setThumbnail(thumbnail.url);
+      }
+    } catch (error) {
+      
+    }
+  } else if (botConfig.embeds?.thumbnail) {
+    embed.setThumbnail(botConfig.embeds.thumbnail);
+  }
+
+  if (image) {
+    try {
+      if (typeof image === 'string' && image.length > 0) {
+        embed.setImage(image);
+      } else if (image && typeof image.url === 'string') {
+        embed.setImage(image.url);
+      }
+    } catch (error) {
+      
+    }
+  }
+
+  if (timestamp === true) {
+    embed.setTimestamp();
+  } else if (timestamp instanceof Date) {
+    embed.setTimestamp(timestamp);
+  }
+
+  if (url && typeof url === 'string' && url.length > 0) {
+    try {
+      embed.setURL(url);
+    } catch (error) {
+      
+    }
+  }
 
   return embed;
 }
 
-// Thin action replies: a small status heading, one line, one accent, no footer.
-function actionReply(emojiName, description, color) {
-  const heading = STATUS_HEADINGS[emojiName];
-  const body = withEmoji(emojiName, description);
+const NOTIFICATION_DEFAULT_TITLES = {
+  success: 'Success',
+  error: 'Error',
+  info: 'Information',
+  warning: 'Warning',
+  primary: 'Notice',
+};
+
+export const USER_ERROR_TITLES = {
+  validation: 'Invalid Input',
+  permission: 'Permission Denied',
+  configuration: 'Configuration Error',
+  database: 'Database Error',
+  network: 'Network Error',
+  discord_api: 'Discord API Error',
+  user_input: 'Input Error',
+  rate_limit: 'Too Fast',
+  unknown: 'Something Went Wrong',
+};
+
+const USER_ERROR_COLORS = {
+  rate_limit: 'warning',
+};
+
+/**
+ * Build a consistent user-facing error embed.
+ * @param {string} errorType - Error category key (e.g. validation, permission)
+ * @param {string} [description] - Specific, actionable message for the user
+ * @param {{ titleOverride?: string }} [options]
+ */
+export function buildUserErrorEmbed(errorType, description = '', options = {}) {
+  const type = errorType || 'unknown';
+  const title = options.titleOverride || USER_ERROR_TITLES[type] || USER_ERROR_TITLES.unknown;
+  const color = USER_ERROR_COLORS[type] || 'error';
+  const body = description ? String(description).trim() : undefined;
 
   return createEmbed({
-    description: heading ? `${muted(heading)}\n${body}` : body,
+    title,
+    description: body,
     color,
-    footer: false
   });
 }
 
-function successEmbed(description) {
-  return actionReply('success', description, config.colors.success);
+function containsDiscordRenderable(content = '') {
+  return /<@!?&?\d+>|<#\d+>|\b\d{17,19}\b/.test(String(content));
 }
 
-function errorEmbed(description) {
-  return actionReply('error', description, config.colors.error);
-}
+function buildNotificationEmbed(title, body = '', color = 'primary') {
+  const defaultTitle = NOTIFICATION_DEFAULT_TITLES[color] || NOTIFICATION_DEFAULT_TITLES.primary;
+  let titleText = String(title || '').trim();
+  let bodyText = body ? String(body).trim() : '';
 
-function warningEmbed(description) {
-  return actionReply('warning', description, config.colors.warning);
-}
+  if (titleText && containsDiscordRenderable(titleText)) {
+    bodyText = bodyText ? `${titleText}\n\n${bodyText}` : titleText;
+    titleText = defaultTitle;
+  }
 
-function infoEmbed(description) {
-  return actionReply('info', description, config.colors.info);
-}
-
-// Core security cards use the accent color by default.
-function securityEmbed(options = {}) {
   return createEmbed({
-    ...options,
-    color: options.color || config.colors.accent || config.colors.primary || DEFAULT_COLOR
-  });
-}
-
-function alertEmbed(options = {}) {
-  return securityEmbed({
-    ...options,
-    title: options.title ? withEmoji(options.alertEmoji || 'alert', options.title) : undefined
+    title: titleText || defaultTitle,
+    description: bodyText || undefined,
+    color,
   });
 }
 
 /**
- * Structured action card.
- *
- * Completed actions render as one sentence led by an approve marker, with the
- * staff member first and the target after the verb:
- *
- *   ✅ **@moderator**: Timed out @user for 5 minutes.
- *   -# Reason · Raiding
- *   -# Expires · in 5 minutes
- *
- * Blocked actions lead with a deny marker and the blocked title instead, since
- * there is no staff action to credit:
- *
- *   ❌ **Kick Blocked**
- *   That member is not in this server.
- *
- * Every other title (status panels, interim state) keeps the older
- * title-and-fields layout so nothing loses its heading.
+ * @deprecated Prefer buildUserErrorEmbed or replyUserError from errorHandler.js.
  */
-function actionEmbed(options = {}) {
-  const {
-    title,
-    icon,
-    target,
-    moderator,
-    reason,
-    duration,
-    dmDelivered,
-    fields = [],
-    description,
-    color = config.colors.accent || config.colors.primary || DEFAULT_COLOR
-  } = options;
+export function errorEmbed(title, detail = null, options = {}) {
+  const { showDetails = process.env.NODE_ENV !== 'production' } = options;
+  let body = detail;
 
-  const meta = [];
-  if (reason) meta.push(`Reason ${UI.separator} ${reason}`);
-  for (const field of fields) {
-    meta.push(`${field.name} ${UI.separator} ${field.value}`);
-  }
-  if (dmDelivered !== undefined) {
-    meta.push(`Direct message ${UI.separator} ${dmDelivered ? 'Delivered' : 'Failed'}`);
+  if (detail && showDetails && typeof detail !== 'string') {
+    const detailText = detail.message || String(detail);
+    body = formatCodeBlock(detailText);
   }
 
-  const verb = ACTION_VERBS[title];
-  if (moderator && verb) {
-    const sentence = `${approve()} **${moderator}**: ${[
-      verb,
-      target,
-      duration ? `for ${duration}` : null
-    ].filter(Boolean).join(' ')}.`;
+  const description = body ? String(body).trim() : '';
+  const titleOverride = title && title !== 'Error' ? title : undefined;
 
-    return createEmbed({
-      description: [sentence, description, ...meta.map(muted)].filter(Boolean).join('\n'),
-      color,
-      footer: false
-    });
-  }
-
-  if (!moderator && icon === 'cross' && title) {
-    return createEmbed({
-      description: [`${deny()} **${title}**`, description, ...meta.map(muted)]
-        .filter(Boolean)
-        .join('\n'),
-      color,
-      footer: false
-    });
-  }
-
-  const embedFields = [];
-
-  if (target) embedFields.push({ name: 'Target', value: target, inline: true });
-  if (moderator) embedFields.push({ name: 'Moderator', value: moderator, inline: true });
-  if (duration) embedFields.push({ name: 'Duration', value: duration, inline: true });
-  if (dmDelivered !== undefined) {
-    embedFields.push({ name: 'Direct Message', value: dmDelivered ? 'Delivered' : 'Failed', inline: true });
-  }
-  if (reason) embedFields.push({ name: 'Reason', value: reason, inline: false });
-
-  embedFields.push(...fields);
-
-  return createEmbed({
-    title: title ? withEmoji(icon || '', title) : undefined,
-    description,
-    fields: embedFields,
-    color,
-    footer: false
-  });
+  return buildUserErrorEmbed('unknown', description, { titleOverride });
 }
 
-module.exports = {
-  DEFAULT_COLOR,
-  BRAND_NAME,
-  STATUS_HEADINGS,
-  UI,
-  emoji,
-  withEmoji,
-  stateLine,
-  mark,
-  approve,
-  deny,
-  ACTION_VERBS,
-  receiptText,
-  receiptEmbed,
-  brand,
-  progressBar,
-  scoreBand,
-  cardAuthor,
-  brandAuthor,
-  quote,
-  muted,
-  code,
-  divider,
-  list,
-  bullets,
-  keyValues,
-  section,
-  status,
-  createEmbed,
-  successEmbed,
-  errorEmbed,
-  warningEmbed,
-  infoEmbed,
-  securityEmbed,
-  alertEmbed,
-  actionEmbed
-};
+/** @param {string} titleOrBody - With one arg: body text. With two args: title and body. */
+export function successEmbed(title, body = '') {
+  if (arguments.length === 1) {
+    return buildNotificationEmbed('Success', title, 'success');
+  }
+
+  return buildNotificationEmbed(title || 'Success', body, 'success');
+}
+
+/** @param {string} titleOrBody - With one arg: body text. With two args: title and body. */
+export function infoEmbed(title, body = '') {
+  if (arguments.length === 1) {
+    return buildNotificationEmbed('Information', title, 'info');
+  }
+
+  return buildNotificationEmbed(title || 'Information', body, 'info');
+}
+
+/** @param {string} titleOrBody - With one arg: body text. With two args: title and body. */
+export function warningEmbed(title, body = '') {
+  if (arguments.length === 1) {
+    return buildNotificationEmbed('Warning', title, 'warning');
+  }
+
+  return buildNotificationEmbed(title || 'Warning', body, 'warning');
+}
+
+export function formatUser(user) {
+  return `${user} (${user.tag} | ${user.id})`;
+}
+
+export function formatDate(date) {
+  return `<t:${Math.floor(date.getTime() / 1000)}:F>`;
+}
+
+export function formatRelativeTime(date) {
+  return `<t:${Math.floor(date.getTime() / 1000)}:R>`;
+}
+
+export function formatCodeBlock(content, language = '') {
+  return `\`\`\`${language}\n${content}\n\`\`\``;
+}
+
+export function formatInlineCode(content) {
+  return `\`${content}\``;
+}
+
+export function formatBold(content) {
+  return `**${content}**`;
+}
+
+export function formatItalic(content) {
+  return `*${content}*`;
+}
+
+export function formatUnderline(content) {
+  return `__${content}__`;
+}
+
+export function formatStrikethrough(content) {
+  return `~~${content}~~`;
+}
+
+export function formatSpoiler(content) {
+  return `||${content}||`;
+}
+
+export function formatQuote(content) {
+  return `> ${content}`;
+}
+
+export function formatList(items, ordered = false) {
+  return items
+    .map((item, index) => (ordered ? `${index + 1}.` : '•') + `${item}`)
+    .join('\n');
+}
+
+export function formatDuration(ms) {
+  if (ms < 0) return '0s';
+
+  const seconds = Math.floor(ms / 1000) % 60;
+  const minutes = Math.floor(ms / (1000 * 60)) % 60;
+  const hours = Math.floor(ms / (1000 * 60 * 60)) % 24;
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
+
+  return parts.join('');
+}
+
+export function formatProgressBar(current, max, size = 10) {
+  const progress = Math.min(Math.max(0, current / max), 1);
+  const filled = Math.round(size * progress);
+  const empty = size - filled;
+  return `[${'█'.repeat(filled)}${'░'.repeat(empty)}] ${Math.round(progress * 100)}%`;
+}
