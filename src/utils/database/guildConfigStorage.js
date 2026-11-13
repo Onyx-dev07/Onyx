@@ -27,7 +27,20 @@ export async function readGuildConfig(client, guildId, context = {}) {
             return normalizeGuildConfig({}, GUILD_CONFIG_DEFAULTS);
         }
 
-        if (typeof client.db.isAvailable === 'function' && !client.db.isAvailable()) {
+        // `isAvailable()` is a PostgreSQL-only check. JSON storage is a fully
+        // supported backend, so only short-circuit when PostgreSQL was selected
+        // but the connection is gone. Otherwise reads would always fall back to
+        // defaults on the default JSON setup.
+        const connectionType = typeof client.db.getConnectionType === 'function'
+            ? client.db.getConnectionType()
+            : client.db.connectionType;
+        const usesPostgres = connectionType === 'postgresql';
+
+        if (
+            usesPostgres &&
+            typeof client.db.isAvailable === 'function' &&
+            !client.db.isAvailable()
+        ) {
             logger.warn(`PostgreSQL unavailable for readGuildConfig in guild ${guildId}`, {
                 traceId: context.traceId,
                 guildId,
