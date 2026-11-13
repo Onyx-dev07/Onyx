@@ -248,6 +248,11 @@ function createEmbed(options = {}) {
   const embed = new EmbedBuilder()
     .setColor(options.color || config.colors.primary || DEFAULT_COLOR);
 
+  // The shared embed theme adds a footer and timestamp at serialization time
+  // unless these markers are present.
+  if (options.footer === false) embed[Symbol.for('OnyxNoFooter')] = true;
+  if (options.timestamp === false) embed[Symbol.for('OnyxNoTimestamp')] = true;
+
   if (options.author) {
     embed.setAuthor(options.author);
   }

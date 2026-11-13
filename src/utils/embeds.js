@@ -6,8 +6,9 @@ import { DEFAULT_FOOTER, EMOJI, statusTitle } from './theme.js';
 
 const EMBED_FOOTER_SYMBOL = Symbol('OnyxFooterText');
 const EMBED_BASE_DESCRIPTION_SYMBOL = Symbol('OnyxBaseDescription');
-const EMBED_NO_FOOTER_SYMBOL = Symbol('OnyxNoFooter');
-const EMBED_NO_TIMESTAMP_SYMBOL = Symbol('OnyxNoTimestamp');
+// Registry symbols so the CommonJS Onyx builders can opt out of the chrome too.
+const EMBED_NO_FOOTER_SYMBOL = Symbol.for('OnyxNoFooter');
+const EMBED_NO_TIMESTAMP_SYMBOL = Symbol.for('OnyxNoTimestamp');
 
 function sanitizeEmbedText(text = '') {
   if (typeof text !== 'string') {

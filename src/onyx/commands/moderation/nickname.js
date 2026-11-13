@@ -1,8 +1,8 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { approve, createEmbed, errorEmbed } = require('../../utils/embeds');
+const config = require('../../../config.json');
+const { approve, createEmbed, deny } = require('../../utils/embeds');
 const {
   actionButtons,
-  failurePayload,
   moderationBlock,
   moderationFailure
 } = require('../../utils/moderation');
@@ -34,6 +34,31 @@ function nicknamePayload({ member, moderator, nickname }) {
   };
 }
 
+// Failures stay on the same quiet card: no footer, no timestamp.
+function nicknameFailure(description) {
+  return {
+    embeds: [createEmbed({
+      description: `${deny()} **Nickname Blocked**\n${description}`,
+      color: config.colors.error,
+      footer: false,
+      timestamp: false
+    })],
+    components: [actionButtons()]
+  };
+}
+
+function nicknameError(description) {
+  return {
+    embeds: [createEmbed({
+      title: '❌ Error',
+      description,
+      color: config.colors.error,
+      footer: false,
+      timestamp: false
+    })]
+  };
+}
+
 module.exports = {
   name: 'nickname',
   aliases: ['nick', 'setnick'],
@@ -43,23 +68,27 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('nickname')
     .setDescription('Change or clear a member\'s nickname.')
-    .addUserOption(opt => opt.setName('target').setDescription('Member to nickname').setRequired(true))
+    .addUserOption(opt => opt.setName('target').setDescription('Member to nickname').setRequired(false))
     .addStringOption(opt => opt.setName('nickname').setDescription('New nickname, leave empty to reset').setRequired(false)),
 
   async executeSlash(interaction) {
     await interaction.deferReply();
 
     const target = interaction.options.getUser('target');
+    if (!target) {
+      return interaction.editReply(nicknameError('Please specify a member. Usage: `/nickname target [nickname]`'));
+    }
+
     const nickname = interaction.options.getString('nickname');
     const member = await interaction.guild.members.fetch(target.id).catch(() => null);
 
     if (!member) {
-      return interaction.editReply(failurePayload('Nickname Blocked', 'That member is not in this server.'));
+      return interaction.editReply(nicknameFailure('That member is not in this server.'));
     }
 
     const problem = moderationBlock(interaction.guild, member, ACTION);
     if (problem) {
-      return interaction.editReply(failurePayload('Nickname Blocked', problem));
+      return interaction.editReply(nicknameFailure(problem));
     }
 
     try {
@@ -79,30 +108,30 @@ module.exports = {
         nickname: null
       }));
     } catch (err) {
-      return interaction.editReply(failurePayload('Nickname Blocked', moderationFailure(ACTION, err)));
+      return interaction.editReply(nicknameFailure(moderationFailure(ACTION, err)));
     }
   },
 
   async executePrefix(message, args) {
     if (!message.member?.permissions?.has(PermissionFlagsBits.ManageNicknames)) {
-      return message.reply({ embeds: [errorEmbed('You need the **Manage Nicknames** permission to use this command.')] });
+      return message.reply(nicknameError('You need the **Manage Nicknames** permission to use this command.'));
     }
 
     const target = message.mentions.users.first()
       || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
 
     if (!target) {
-      return message.reply({ embeds: [errorEmbed('Please specify a member. Usage: `!nick @user [nickname]`')] });
+      return message.reply(nicknameError('Please specify a member. Usage: `!nick @user [nickname]`'));
     }
 
     const member = await message.guild.members.fetch(target.id).catch(() => null);
     if (!member) {
-      return message.reply(failurePayload('Nickname Blocked', 'That member is not in this server.'));
+      return message.reply(nicknameFailure('That member is not in this server.'));
     }
 
     const problem = moderationBlock(message.guild, member, ACTION);
     if (problem) {
-      return message.reply(failurePayload('Nickname Blocked', problem));
+      return message.reply(nicknameFailure(problem));
     }
 
     const nickname = args.slice(1).join(' ');
@@ -123,7 +152,7 @@ module.exports = {
         nickname: null
       }));
     } catch (err) {
-      return message.reply(failurePayload('Nickname Blocked', moderationFailure(ACTION, err)));
+      return message.reply(nicknameFailure(moderationFailure(ACTION, err)));
     }
   }
 };
