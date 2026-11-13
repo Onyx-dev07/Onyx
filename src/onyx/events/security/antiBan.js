@@ -29,7 +29,7 @@ module.exports = {
       logger.warn(`[AntiNuke] Unauthorized ban in ${guild.name} by ${executor.tag}! Mitigating...`);
 
       // 1. Contain the rogue executor
-      const banned = await neutralize(guild, executor, `Unauthorized Member Ban: ${ban.user.tag}`);
+      const banned = await neutralize(guild, executor, `Unauthorized Member Ban: ${ban.user.username}`);
 
       // 2. Revert the ban on the victim
       const reverted = await guild.bans.remove(
@@ -47,7 +47,7 @@ module.exports = {
         alertBody(
           executor,
           [
-            `**Target User:** ${ban.user.tag} (\`${ban.user.id}\`)`,
+            `**Target User:** <@${ban.user.id}>`,
             `**Audit Action:** Member Ban`,
             `**Victim Ban Reverted:** ${reverted ? 'Yes' : 'No'}`
           ],

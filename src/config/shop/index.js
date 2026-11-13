@@ -60,19 +60,19 @@ fee: 0.1
         showAffordability: true,
         
         colors: {
-primary: '#5865F2',
-success: '#43B581',
-error: '#F04747',
-warning: '#FAA61A',
-info: '#00B0F4',
+primary: '#F7A8C4',
+success: '#6EE7A8',
+error: '#FF6B81',
+warning: '#FFC66D',
+info: '#A8C7FF',
             
             rarity: {
-common: '#99AAB5',
-uncommon: '#2ECC71',
-rare: '#3498DB',
-epic: '#9B59B6',
-legendary: '#F1C40F',
-mythic: '#E74C3C'
+common: '#9AA0AA',
+uncommon: '#6EE7A8',
+rare: '#A8C7FF',
+epic: '#FF8FB1',
+legendary: '#FFD27A',
+mythic: '#FF6B81'
             }
         },
         

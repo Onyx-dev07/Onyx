@@ -186,7 +186,7 @@ export async function handleApplicationModal(interaction) {
                 data: {
                     title: 'Application Submitted',
                     lines: [
-                        formatLogLine('Applicant', `<@${interaction.user.id}> (${interaction.user.tag})`),
+                        formatLogLine('Applicant', `<@${interaction.user.id}>`),
                         formatLogLine('Application', applicationRole.name),
                         formatLogLine('Role', role.name),
                         formatLogLine('Application ID', `\`${application.id}\``),

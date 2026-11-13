@@ -1,9 +1,9 @@
-// embeds.js
+// embeds.js — Onyx's centralized embed theme.
 
 import { EmbedBuilder } from 'discord.js';
 import { getColor, botConfig } from '../config/bot.js';
+import { DEFAULT_FOOTER, EMOJI, statusTitle } from './theme.js';
 
-const EMOJI_REGEX = /[\p{Extended_Pictographic}\uFE0F]/gu;
 const EMBED_FOOTER_SYMBOL = Symbol('OnyxFooterText');
 const EMBED_BASE_DESCRIPTION_SYMBOL = Symbol('OnyxBaseDescription');
 
@@ -13,11 +13,10 @@ function sanitizeEmbedText(text = '') {
   }
 
   return text
-    .replace(EMOJI_REGEX, '')
-    .replace(/[ \t]+/g, ' ')  // Replace consecutive spaces/tabs with single space
-    .replace(/[ \t]\n/g, '\n')  // Remove spaces before newlines
-    .replace(/\n[ \t]/g, '\n')  // Remove spaces after newlines
-    .replace(/\n{3,}/g, '\n\n')  // Limit consecutive newlines to 2
+    .replace(/[ \t]+/g, ' ')   // collapse runs of spaces/tabs
+    .replace(/[ \t]\n/g, '\n') // trim trailing spaces before newlines
+    .replace(/\n[ \t]/g, '\n') // trim leading spaces after newlines
+    .replace(/\n{3,}/g, '\n\n') // keep at most one blank line
     .trim();
 }
 
@@ -33,9 +32,83 @@ function sanitizeEmbedField(field) {
   };
 }
 
+// Older commands used a handful of literal colors. Route those into the
+// semantic theme so no module keeps the previous palette.
+const LEGACY_COLORS = new Map([
+  [0x2b2d31, 'secondary'],
+  [0x24262a, 'secondary'],
+  [0x2f3136, 'secondary'],
+  [0x202225, 'secondary'],
+  [0x1b1c1e, 'dark'],
+  [0xff0000, 'error'],
+  [0xf04747, 'error'],
+  [0xe74c3c, 'error'],
+  [0xed4245, 'error'],
+  [0xff6b6b, 'error'],
+  [0xff6347, 'error'],
+  [0x8b0000, 'error'],
+  [0x721919, 'error'],
+  [0x00ff00, 'success'],
+  [0x43b581, 'success'],
+  [0x2ecc71, 'success'],
+  [0x57f287, 'success'],
+  [0x51cf66, 'success'],
+  [0x008000, 'success'],
+  [0xffff00, 'warning'],
+  [0xfaa61a, 'warning'],
+  [0xfee75c, 'warning'],
+  [0xffa500, 'warning'],
+  [0xf1c40f, 'warning'],
+  [0xf39c12, 'warning'],
+  [0xff6600, 'warning'],
+  [0xe67e22, 'warning'],
+  [0xffd700, 'warning'],
+  [0xffd43b, 'warning'],
+  [0xa52a2a, 'warning'],
+  [0x3498db, 'info'],
+  [0x74c0fc, 'info'],
+  [0x0099ff, 'info'],
+  [0x00ffff, 'info'],
+  [0x40e0d0, 'info'],
+  [0x5865f2, 'blurple'],
+  [0x336699, 'blurple'],
+  [0x000080, 'blurple'],
+  [0x9b59b6, 'accent'],
+  [0xeb459e, 'accent'],
+  [0x800080, 'accent'],
+  [0xff69b4, 'primary'],
+  [0xffc0cb, 'primary'],
+  [0x95a5a6, 'gray'],
+  [0x808080, 'gray'],
+  [0xc0c0c0, 'gray'],
+  [0xffffff, 'light'],
+  [0xe6e6fa, 'light'],
+]);
+
+const THEME_TOKENS = new Set([
+  'primary', 'secondary', 'accent', 'surface', 'border',
+  'success', 'error', 'warning', 'info',
+  'light', 'dark', 'gray', 'muted', 'blurple',
+  'green', 'yellow', 'fuchsia', 'red', 'black',
+  'economy', 'birthday', 'moderation',
+]);
+
+function resolveThemeColor(color) {
+  if (typeof color === 'number' && LEGACY_COLORS.has(color)) {
+    return getColor(LEGACY_COLORS.get(color));
+  }
+
+  if (typeof color === 'string' && THEME_TOKENS.has(color)) {
+    return getColor(color);
+  }
+
+  return color;
+}
+
 const originalSetTitle = EmbedBuilder.prototype.setTitle;
 const originalSetAuthor = EmbedBuilder.prototype.setAuthor;
 const originalAddFields = EmbedBuilder.prototype.addFields;
+const originalSetColor = EmbedBuilder.prototype.setColor;
 
 EmbedBuilder.prototype.setTitle = function setSanitizedTitle(title) {
   return originalSetTitle.call(this, sanitizeEmbedText(title));
@@ -62,29 +135,27 @@ EmbedBuilder.prototype.addFields = function addSanitizedFields(...fields) {
   return originalAddFields.call(this, sanitized);
 };
 
-function normalizeFooterText(footer) {
-  if (!footer) {
-    return '';
-  }
+EmbedBuilder.prototype.setColor = function setThemedColor(color) {
+  return originalSetColor.call(this, resolveThemeColor(color));
+};
 
+function toFooterPayload(footer) {
   if (typeof footer === 'string') {
-    return footer.trim();
+    const text = sanitizeEmbedText(footer);
+    return text ? { text } : null;
   }
 
   if (footer && typeof footer.text === 'string') {
-    return footer.text.trim();
+    const text = sanitizeEmbedText(footer.text);
+    if (!text) return null;
+    return {
+      ...footer,
+      text,
+      ...(footer.iconURL ? { iconURL: footer.iconURL } : {}),
+    };
   }
 
-  return '';
-}
-
-function isImportantFooter(footerText) {
-  if (!footerText) {
-    return false;
-  }
-
-  const normalized = footerText.toLowerCase();
-  return /\b(close|closes|closed|expire|expires|available in|page\s+\d+|dashboard closes|ticket id)\b/.test(normalized);
+  return null;
 }
 
 const originalSetDescription = EmbedBuilder.prototype.setDescription;
@@ -98,17 +169,46 @@ EmbedBuilder.prototype.setDescription = function(description = '') {
 };
 
 EmbedBuilder.prototype.setFooter = function(footer) {
-  const footerText = sanitizeEmbedText(normalizeFooterText(footer));
-  if (!footerText || !isImportantFooter(footerText)) {
+  if (footer === null || footer === undefined) {
+    return originalSetFooter.call(this, null);
+  }
+
+  const payload = toFooterPayload(footer);
+  if (!payload) {
     return this;
   }
 
-  this[EMBED_FOOTER_SYMBOL] = footerText;
-  return originalSetFooter.call(this, { text: footerText });
+  this[EMBED_FOOTER_SYMBOL] = payload.text;
+  return originalSetFooter.call(this, payload);
 };
 
-EmbedBuilder.prototype.setTimestamp = function() {
-  return this;
+EmbedBuilder.prototype.setTimestamp = function(timestamp = new Date()) {
+  return originalSetTimestamp.call(this, timestamp);
+};
+
+// Final safety net: any embed still built directly with `new EmbedBuilder`
+// receives the same Onyx footer and timestamp at send time. Explicit footers
+// are preserved untouched.
+const originalToJSON = EmbedBuilder.prototype.toJSON;
+
+EmbedBuilder.prototype.toJSON = function onyxSerializedEmbed() {
+  if (!this.data?.footer?.text) {
+    try {
+      originalSetFooter.call(this, { ...DEFAULT_FOOTER });
+    } catch {
+      // ignore malformed footers
+    }
+  }
+
+  if (!this.data?.timestamp) {
+    try {
+      originalSetTimestamp.call(this, new Date());
+    } catch {
+      // ignore malformed timestamps
+    }
+  }
+
+  return originalToJSON.call(this);
 };
 
 export function createEmbed({
@@ -120,7 +220,7 @@ export function createEmbed({
   footer = null,
   thumbnail = null,
   image = null,
-  timestamp = false,
+  timestamp = true,
   url = null
 } = {}) {
   const embed = new EmbedBuilder();
@@ -134,10 +234,10 @@ export function createEmbed({
   }
 
   try {
-    const embedColor = getColor(color) || '#000000';
+    const embedColor = getColor(color) || getColor('primary');
     embed.setColor(embedColor);
   } catch (error) {
-    embed.setColor('#000000');
+    embed.setColor(getColor('primary'));
   }
 
   if (Array.isArray(fields) && fields.length > 0) {
@@ -165,22 +265,17 @@ export function createEmbed({
     });
   }
 
-  if (footer) {
+  if (footer !== false) {
+    const footerPayload = footer ?? DEFAULT_FOOTER;
     try {
-      if (typeof footer === 'string' && footer.length > 0) {
-        embed.setFooter({ text: footer.substring(0, 2048) });
-      } else if (footer && typeof footer.text === 'string') {
-        embed.setFooter(footer);
+      if (typeof footerPayload === 'string' && footerPayload.length > 0) {
+        embed.setFooter({ text: footerPayload.substring(0, 2048) });
+      } else if (footerPayload && typeof footerPayload.text === 'string') {
+        embed.setFooter(footerPayload);
       }
     } catch (error) {
       
     }
-  } else if (botConfig.embeds?.footer?.text) {
-    const defaultFooter = {
-      text: botConfig.embeds.footer.text,
-      ...(botConfig.embeds.footer.icon ? { iconURL: botConfig.embeds.footer.icon } : {}),
-    };
-    embed.setFooter(defaultFooter);
   }
 
   if (thumbnail) {
@@ -250,6 +345,55 @@ const USER_ERROR_COLORS = {
   rate_limit: 'warning',
 };
 
+function mentionOrText(value, kind = 'user') {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'string') {
+    if (/^\d{17,20}$/.test(value)) {
+      return kind === 'channel' ? `<#${value}>` : kind === 'role' ? `<@&${value}>` : `<@${value}>`;
+    }
+    return value;
+  }
+  if (value.id) {
+    return kind === 'channel' ? `<#${value.id}>` : kind === 'role' ? `<@&${value.id}>` : `<@${value.id}>`;
+  }
+  return String(value);
+}
+
+/**
+ * Build a clean moderation receipt: target, moderator, optional duration and
+ * case id, and the reason. Every moderation command uses the same shape.
+ */
+export function moderationEmbed({
+  action = 'Action Complete',
+  target = null,
+  moderator = null,
+  reason = 'No reason provided',
+  duration = null,
+  caseId = null,
+  color = 'success',
+  fields = [],
+  description = null,
+} = {}) {
+  const status = color === 'warning' ? 'warning' : color === 'error' ? 'error' : 'success';
+  const embedFields = [
+    { name: 'Target', value: mentionOrText(target), inline: true },
+    { name: 'Moderator', value: mentionOrText(moderator), inline: true },
+  ];
+
+  if (duration) embedFields.push({ name: 'Duration', value: String(duration), inline: true });
+  if (caseId) embedFields.push({ name: 'Case ID', value: `#${caseId}`, inline: true });
+
+  embedFields.push({ name: 'Reason', value: String(reason || 'No reason provided'), inline: false });
+  embedFields.push(...fields);
+
+  return createEmbed({
+    title: statusTitle(status, action),
+    description: description || undefined,
+    fields: embedFields,
+    color,
+  });
+}
+
 /**
  * Build a consistent user-facing error embed.
  * @param {string} errorType - Error category key (e.g. validation, permission)
@@ -263,7 +407,7 @@ export function buildUserErrorEmbed(errorType, description = '', options = {}) {
   const body = description ? String(description).trim() : undefined;
 
   return createEmbed({
-    title,
+    title: statusTitle(color === 'warning' ? 'warning' : 'error', title),
     description: body,
     color,
   });
@@ -284,7 +428,7 @@ function buildNotificationEmbed(title, body = '', color = 'primary') {
   }
 
   return createEmbed({
-    title: titleText || defaultTitle,
+    title: statusTitle(color === 'primary' ? 'sparkle' : color, titleText || defaultTitle),
     description: bodyText || undefined,
     color,
   });
@@ -336,7 +480,7 @@ export function warningEmbed(title, body = '') {
 }
 
 export function formatUser(user) {
-  return `${user} (${user.tag} | ${user.id})`;
+  return `${user}`;
 }
 
 export function formatDate(date) {
@@ -406,5 +550,5 @@ export function formatProgressBar(current, max, size = 10) {
   const progress = Math.min(Math.max(0, current / max), 1);
   const filled = Math.round(size * progress);
   const empty = size - filled;
-  return `[${'█'.repeat(filled)}${'░'.repeat(empty)}] ${Math.round(progress * 100)}%`;
+  return `${'━'.repeat(filled)}${'─'.repeat(empty)} ${Math.round(progress * 100)}%`;
 }

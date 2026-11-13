@@ -1,9 +1,9 @@
-import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
 import { checkUserPermissions } from '../../utils/permissionGuard.js';
 import { addLevels, getLevelingConfig } from '../../services/leveling/leveling.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { createEmbed, warningEmbed } from '../../utils/embeds.js';
 
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 export default {
@@ -41,9 +41,7 @@ export default {
     if (!levelingConfig?.enabled) {
       await InteractionHelper.safeEditReply(interaction, {
         embeds: [
-          new EmbedBuilder()
-            .setColor('#f1c40f')
-            .setDescription('The leveling system is currently disabled on this server.')
+          warningEmbed('Leveling Disabled', 'The leveling system is currently disabled on this server.')
         ],
         flags: MessageFlags.Ephemeral
       });
@@ -68,7 +66,7 @@ export default {
       embeds: [
         createEmbed({
           title: 'Levels Added',
-          description: `Successfully added ${levelsToAdd} levels to ${targetUser.tag}.\n**New Level:** ${userData.level}`,
+          description: `Added **${levelsToAdd}** levels to <@${targetUser.id}>.\n**New Level:** ${userData.level}`,
           color: 'success'
         })
       ]

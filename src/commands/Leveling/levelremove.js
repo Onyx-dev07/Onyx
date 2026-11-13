@@ -1,9 +1,9 @@
-import { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
 import { checkUserPermissions } from '../../utils/permissionGuard.js';
 import { removeLevels, getUserLevelData, getLevelingConfig } from '../../services/leveling/leveling.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { createEmbed, warningEmbed } from '../../utils/embeds.js';
 
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 export default {
@@ -41,9 +41,7 @@ export default {
     if (!levelingConfig?.enabled) {
       await InteractionHelper.safeEditReply(interaction, {
         embeds: [
-          new EmbedBuilder()
-            .setColor('#f1c40f')
-            .setDescription('The leveling system is currently disabled on this server.')
+          warningEmbed('Leveling Disabled', 'The leveling system is currently disabled on this server.')
         ],
         flags: MessageFlags.Ephemeral
       });
@@ -67,7 +65,7 @@ export default {
       throw new OnyxError(
         `User ${targetUser.id} is already at minimum level`,
         ErrorTypes.VALIDATION,
-        `${targetUser.tag} is already at level 0 and cannot have levels removed.`
+        `${targetUser.username} is already at level 0 and cannot have levels removed.`
       );
     }
 
@@ -77,7 +75,7 @@ export default {
       embeds: [
         createEmbed({
           title: 'Levels Removed',
-          description: `Successfully removed ${levelsToRemove} levels from ${targetUser.tag}.\n**New Level:** ${updatedData.level}`,
+          description: `Removed **${levelsToRemove}** levels from <@${targetUser.id}>.\n**New Level:** ${updatedData.level}`,
           color: 'success'
         })
       ]

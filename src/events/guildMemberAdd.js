@@ -58,7 +58,7 @@ export default {
                         .setDescription(welcomeMessage)
                         .setThumbnail(user.displayAvatarURL())
                         .addFields(
-                            { name: 'User', value: `${user.tag} (${user.id})`, inline: true },
+                            { name: 'User', value: `<@${user.id}>`, inline: true },
                             { name: 'Member Count', value: guild.memberCount.toString(), inline: true }
                         )
                         .setTimestamp()
@@ -112,7 +112,7 @@ export default {
                 data: {
                     title: 'User joined',
                     lines: [
-                        `**User:** ${user.toString()} (${user.displayName !== user.username ? `@${user.displayName}` : user.tag})`,
+                        `**User:** <@${user.id}> (${user.displayName !== user.username ? `@${user.displayName}` : user.username})`,
                         `**ID:** \`${user.id}\``,
                         `**Created:** <t:${Math.floor(user.createdTimestamp / 1000)}:R>`,
                         `**Members:** ${guild.memberCount}`,

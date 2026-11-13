@@ -123,19 +123,19 @@ export default {
                 new ButtonBuilder()
                     .setCustomId(`calc_${interaction.id}_add`)
                     .setLabel("+")
-                    .setStyle(ButtonStyle.Primary),
+                    .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId(`calc_${interaction.id}_subtract`)
                     .setLabel("-")
-                    .setStyle(ButtonStyle.Primary),
+                    .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId(`calc_${interaction.id}_multiply`)
                     .setLabel("×")
-                    .setStyle(ButtonStyle.Primary),
+                    .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId(`calc_${interaction.id}_divide`)
                     .setLabel("÷")
-                    .setStyle(ButtonStyle.Primary),
+                    .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setCustomId(`calc_${interaction.id}_history`)
                     .setLabel("History")

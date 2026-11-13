@@ -61,7 +61,7 @@ function buildDashboardEmbed(cfg, guild, conflictSummary = '') {
     }
 
     return embed
-        .setFooter({ text: 'Dashboard closes after 10 minutes of inactivity' })
+        .setFooter({ text: 'Onyx ? Dashboard closes after 10 minutes of inactivity' })
         .setTimestamp();
 }
 
@@ -89,7 +89,7 @@ function buildButtonRow(cfg, guildId, disabled = false) {
         new ButtonBuilder()
             .setCustomId(`autoverify_cfg_criteria_${guildId}`)
             .setLabel('Change Criteria')
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             .setEmoji('🎯')
             .setDisabled(disabled),
         new ButtonBuilder()
@@ -163,7 +163,7 @@ export default {
                             .setTitle('🤖 Auto-Verification Dashboard')
                             .setDescription(`Auto-verification is not yet configured.${blockingText}\n\nUse \`/autoverify setup\` to configure it.`)
                             .setColor(getColor('warning'))
-                            .setFooter({ text: 'Dashboard closes after 10 minutes of inactivity' })
+                            .setFooter({ text: 'Onyx ? Dashboard closes after 10 minutes of inactivity' })
                             .setTimestamp()
                     ],
                     flags: MessageFlags.Ephemeral

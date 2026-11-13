@@ -118,7 +118,7 @@ export default {
                     },
                 )
                 .setFooter({
-                    text: `Paid to ${receiver.tag}`,
+                    text: `Paid to ${receiver.username}`,
                     iconURL: receiver.displayAvatarURL(),
                 });
 

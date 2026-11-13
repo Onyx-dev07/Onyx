@@ -32,7 +32,7 @@ function buildSharedTodoViewPayload(listData, listId, guild) {
           new ButtonBuilder()
             .setCustomId(`shared_todo_add_${listId}`)
             .setLabel('Add Task')
-            .setStyle(ButtonStyle.Primary),
+            .setStyle(ButtonStyle.Secondary),
           new ButtonBuilder()
             .setCustomId(`shared_todo_complete_${listId}`)
             .setLabel('Complete Task')
@@ -69,7 +69,7 @@ function buildSharedTodoViewPayload(listData, listId, guild) {
         new ButtonBuilder()
           .setCustomId(`shared_todo_add_${listId}`)
           .setLabel('Add Task')
-          .setStyle(ButtonStyle.Primary),
+          .setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
           .setCustomId(`shared_todo_complete_${listId}`)
           .setLabel('Complete Task')

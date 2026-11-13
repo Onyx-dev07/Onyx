@@ -37,8 +37,8 @@ export default {
             data: {
                 title: 'User Report',
                 lines: [
-                    formatLogLine('Reported User', `${targetUser.tag} (\`${targetUser.id}\`)`),
-                    formatLogLine('Reported By', `${interaction.user.tag} (\`${interaction.user.id}\`)`),
+                    formatLogLine('Reported User', `<@${targetUser.id}>`),
+                    formatLogLine('Reported By', `<@${interaction.user.id}>`),
                     formatLogLine('Channel', interaction.channel.toString()),
                 ],
                 blockFields: [{ name: 'Reason', value: reason }],
@@ -50,7 +50,7 @@ export default {
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [createEmbed({
                 title: 'Report Submitted',
-                description: `Your report against **${targetUser.tag}** has been successfully filed and sent to the moderation team. Thank you!`,
+                description: `Your report against <@${targetUser.id}> has been successfully filed and sent to the moderation team. Thank you!`,
             })],
         });
 

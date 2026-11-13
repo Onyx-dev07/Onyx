@@ -41,7 +41,7 @@ function buildButtonRow(guildConfig, guildId, disabled = false, panelStatus = nu
             new ButtonBuilder()
                 .setCustomId(`ticket_cfg_repost_${guildId}`)
                 .setLabel('Repost Panel')
-                .setStyle(ButtonStyle.Primary)
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji('📌')
                 .setDisabled(disabled),
         );
@@ -81,9 +81,11 @@ async function persistPanelMessageId(client, guildId, guildConfig, messageId) {
 
 function buildPanelEmbed(config) {
     return new EmbedBuilder()
-        .setTitle('Support Tickets')
+        .setTitle('🎫 Support Tickets')
         .setDescription(config.ticketPanelMessage || 'Click the button below to create a support ticket.')
-        .setColor(getColor('info'));
+        .setColor(getColor('info'))
+        .setFooter({ text: 'Onyx' })
+        .setTimestamp();
 }
 
 function buildPanelButtonRow(config) {
@@ -91,7 +93,7 @@ function buildPanelButtonRow(config) {
         new ButtonBuilder()
             .setCustomId('create_ticket')
             .setLabel(config.ticketButtonLabel || 'Create Ticket')
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             .setEmoji('📩'),
     );
 }

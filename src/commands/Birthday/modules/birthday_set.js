@@ -1,4 +1,4 @@
-import { EmbedBuilder } from 'discord.js';
+import { successEmbed } from '../../../utils/embeds.js';
 import { setBirthday } from '../../../services/birthdayService.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -13,10 +13,10 @@ export default {
 
         const result = await setBirthday(client, guildId, userId, month, day);
 
-        const embed = new EmbedBuilder()
-            .setColor(0x00FF00)
-            .setTitle('Birthday Set!')
-            .setDescription(`Your birthday has been set to **${result.data.monthName} ${result.data.day}**!`);
+        const embed = successEmbed(
+            'Birthday Set',
+            `Your birthday is now **${result.data.monthName} ${result.data.day}**.`
+        );
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [embed]

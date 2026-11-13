@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
 import { createEmbed } from '../../utils/embeds.js';
+import { progressLabel, userMention } from '../../utils/theme.js';
 import { logger } from '../../utils/logger.js';
 
 const VERDICTS = [
@@ -25,11 +26,6 @@ function hash(text) {
 function compatibility(firstId, secondId) {
   const pair = [firstId, secondId].sort().join(':');
   return hash(pair) % 101;
-}
-
-function progressBar(percent) {
-  const filled = Math.round((percent / 100) * 10);
-  return `${'█'.repeat(filled)}${'░'.repeat(10 - filled)}`;
 }
 
 function shipName(firstName, secondName) {
@@ -75,14 +71,13 @@ function pickRandom(guild, excludeId) {
 }
 
 function shipEmbed(first, second, stats) {
-  const color = stats.percent >= 70 ? 'primary' : 'secondary';
+  const color = stats.percent >= 70 ? 'accent' : 'primary';
 
   return createEmbed({
-    title: 'Ship Meter',
+    title: '🩷 Ship Meter',
     description: [
-      `**${first.username}** + **${second.username}**`,
-      progressBar(stats.percent),
-      `**${stats.percent}%**`,
+      `${userMention(first)} + ${userMention(second)}`,
+      progressLabel(stats.percent),
       '',
       stats.verdict,
     ].join('\n'),
@@ -93,7 +88,7 @@ function shipEmbed(first, second, stats) {
 
 async function shipPayload(first, second) {
   const stats = statsFor(first, second);
-  const color = stats.percent >= 70 ? 'primary' : 'secondary';
+  const color = stats.percent >= 70 ? 'accent' : 'primary';
 
   try {
     const { createShipCard } = await import('../../utils/shipCard.js');

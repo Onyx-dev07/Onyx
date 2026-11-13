@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { successEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -57,9 +57,12 @@ export default {
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [
-                successEmbed(
-                    `🔓 **Removed timeout** from ${targetUser.tag}`,
-                ),
+                moderationEmbed({
+                    action: 'Timeout Removed',
+                    target: targetUser,
+                    moderator: interaction.user,
+                    reason: 'Timeout lifted',
+                }),
             ],
         });
     },

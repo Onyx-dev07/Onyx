@@ -59,7 +59,7 @@ export function createSelectMenu(customId, placeholder, options = [], min = 1, m
     );
 }
 
-export function createButton(customId, label, style = 'primary', emoji = null, disabled = false) {
+export function createButton(customId, label, style = 'secondary', emoji = null, disabled = false) {
     
     if (!customId || typeof customId !== 'string' || customId.length === 0) {
         throw new Error('customId must be a non-empty string');
@@ -72,7 +72,7 @@ export function createButton(customId, label, style = 'primary', emoji = null, d
     const validLabel = label.substring(0, 80);
 
     const normalizedStyle = style.charAt(0).toUpperCase() + style.slice(1).toLowerCase();
-    const buttonStyle = ButtonStyle[normalizedStyle] || ButtonStyle.Primary;
+    const buttonStyle = ButtonStyle[normalizedStyle] || ButtonStyle.Secondary;
     
     const button = new ButtonBuilder()
         .setCustomId(validCustomId)

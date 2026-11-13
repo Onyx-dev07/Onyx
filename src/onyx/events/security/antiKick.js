@@ -31,7 +31,7 @@ module.exports = {
       logger.warn(`[AntiNuke] Unauthorized kick in ${guild.name} by ${executor.tag}! Mitigating...`);
 
       // Contain the rogue kicker
-      const banned = await neutralize(guild, executor, `Unauthorized Member Kick: ${member.user.tag}`);
+      const banned = await neutralize(guild, executor, `Unauthorized Member Kick: ${member.user.username}`);
 
       await sendSecurityAlert(
         guild,
@@ -39,7 +39,7 @@ module.exports = {
         alertBody(
           executor,
           [
-            `**Kicked User:** ${member.user.tag} (\`${member.id}\`)`,
+            `**Kicked User:** <@${member.id}>`,
             `**Audit Action:** Member Kick`
           ],
           banned

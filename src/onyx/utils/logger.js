@@ -25,7 +25,7 @@ const logger = {
     console.log(timestamp(), chalk.blue('[EVENT]'), ...args);
   },
   onyx: (...args) => {
-    console.log(timestamp(), chalk.hex('#5865F2').bold('[ONYX]'), ...args);
+    console.log(timestamp(), chalk.hex('#ff8fb1').bold('[ONYX]'), ...args);
   }
 };
 

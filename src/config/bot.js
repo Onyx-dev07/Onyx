@@ -68,9 +68,9 @@ export const botConfig = {
 
     // Embed colors by application status.
     statusColors: {
-      pending: "#FFA500",
-      approved: "#00FF00",
-      denied: "#FF0000",
+      pending: "#FFC66D",
+      approved: "#6EE7A8",
+      denied: "#FF6B81",
     },
 
     // How long users must wait before submitting another application (hours).
@@ -92,51 +92,57 @@ export const botConfig = {
   // IMPORTANT: This is the SINGLE SOURCE OF TRUTH for all bot colors
   embeds: {
     colors: {
-      // Main brand colors.
-      primary: "#DC143C",
-      secondary: "#2B2D31",
+      // Onyx palette: near-black surfaces with soft pink accents.
+      primary: "#F7A8C4",
+      secondary: "#17171F",
+      accent: "#FF8FB1",
+
+      // Surface + border tokens for compact panels.
+      surface: "#17171F",
+      border: "#2A2A36",
 
       // Standard status colors for success/error/warning/info messages.
-      success: "#57F287",
-      error: "#ED4245",
-      warning: "#FEE75C",
-      info: "#3498DB",
+      success: "#6EE7A8",
+      error: "#FF6B81",
+      warning: "#FFC66D",
+      info: "#A8C7FF",
 
       // Neutral utility colors.
-      light: "#FFFFFF",
-      dark: "#202225",
-      gray: "#99AAB5",
+      light: "#F5F5F7",
+      dark: "#0B0B10",
+      gray: "#9AA0AA",
+      muted: "#7C8290",
 
       // Discord-style palette shortcuts.
-      blurple: "#5865F2",
-      green: "#57F287",
-      yellow: "#FEE75C",
-      fuchsia: "#EB459E",
-      red: "#ED4245",
+      blurple: "#8B9DFF",
+      green: "#6EE7A8",
+      yellow: "#FFC66D",
+      fuchsia: "#FF8FB1",
+      red: "#FF6B81",
       black: "#000000",
 
       // Feature-specific colors.
       giveaway: {
-        active: "#57F287",
-        ended: "#ED4245",
+        active: "#6EE7A8",
+        ended: "#FF6B81",
       },
       ticket: {
-        open: "#57F287",
-        claimed: "#FAA61A",
-        closed: "#ED4245",
-        pending: "#99AAB5",
+        open: "#6EE7A8",
+        claimed: "#FFC66D",
+        closed: "#FF6B81",
+        pending: "#9AA0AA",
       },
-      economy: "#F1C40F",
-      birthday: "#E91E63",
-      moderation: "#9B59B6",
+      economy: "#FFD27A",
+      birthday: "#F7A8C4",
+      moderation: "#FF8FB1",
 
       // Ticket priority color mapping.
       priority: {
-        none: "#95A5A6",
-        low: "#3498db",
-        medium: "#2ecc71",
-        high: "#f1c40f",
-        urgent: "#e74c3c",
+        none: "#9AA0AA",
+        low: "#A8C7FF",
+        medium: "#6EE7A8",
+        high: "#FFC66D",
+        urgent: "#FF6B81",
       },
     },
     footer: {
@@ -144,8 +150,7 @@ export const botConfig = {
       text: "Onyx",
       // Footer icon URL (null = no icon).
       icon: null,
-    },
-    // Default thumbnail URL for embeds (null = no thumbnail).
+    },    // Default thumbnail URL for embeds (null = no thumbnail).
     thumbnail: null,
     author: {
       // Optional default embed author block.
@@ -223,27 +228,27 @@ export const botConfig = {
     priorities: {
       none: {
         emoji: "⚪",
-        color: "#95A5A6",
+        color: "#9AA0AA",
         label: "None",
       },
       low: {
         emoji: "🟢",
-        color: "#2ECC71",
+        color: "#6EE7A8",
         label: "Low",
       },
       medium: {
         emoji: "🟡",
-        color: "#F1C40F",
+        color: "#FFC66D",
         label: "Medium",
       },
       high: {
         emoji: "🔴",
-        color: "#E74C3C",
+        color: "#FF6B81",
         label: "High",
       },
       urgent: {
         emoji: "🚨",
-        color: "#E91E63",
+        color: "#FF8FB1",
         label: "Urgent",
       },
     },

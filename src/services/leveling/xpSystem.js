@@ -62,7 +62,7 @@ export const addXp = wrapServiceBoundary(async function addXp(client, guild, mem
           data: {
             title: 'Level Up',
             lines: [
-              formatLogLine('Member', `${member.user.tag} (\`${member.user.id}\`)`),
+              formatLogLine('Member', `<@${member.user.id}>`),
               formatLogLine('New Level', levelData.level.toString()),
               formatLogLine('Levels Gained', (levelData.level - initialLevel).toString()),
               formatLogLine('Total XP', levelData.totalXp.toString()),

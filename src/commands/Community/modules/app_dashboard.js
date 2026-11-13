@@ -72,7 +72,7 @@ async function buildDashboardEmbed(settings, roles, guild, client) {
                 inline: false,
             },
         )
-        .setFooter({ text: 'Dashboard closes after 15 minutes of inactivity' })
+        .setFooter({ text: 'Onyx ? Dashboard closes after 15 minutes of inactivity' })
         .setTimestamp();
 }
 
@@ -321,7 +321,7 @@ async function showApplicationDashboard(rootInteraction, selectedRole, settings,
                 inline: false 
             },
         )
-        .setFooter({ text: 'Dashboard closes after 10 minutes of inactivity' })
+        .setFooter({ text: 'Onyx ? Dashboard closes after 10 minutes of inactivity' })
         .setTimestamp();
 
     const configMenu = buildApplicationSelectMenu(guildId, selectedRole.roleId);

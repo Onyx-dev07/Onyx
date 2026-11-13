@@ -1,7 +1,7 @@
-import { EmbedBuilder } from 'discord.js';
+import { MessageFlags } from 'discord.js';
+import { createEmbed } from '../../../utils/embeds.js';
 import { getTicketData, saveTicketData } from '../../../utils/database.js';
 import { logger } from '../../../utils/logger.js';
-import { getColor } from '../../../config/bot.js';
 import { logTicketFeedback } from '../../../utils/ticket/ticketLogging.js';
 
 const STAR_LABELS = {
@@ -22,10 +22,11 @@ export default {
         if (!guildId || !channelId) {
             await interaction.update({
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('⚠️ Invalid Feedback Link')
-                        .setDescription('This feedback link appears to be malformed.')
-                        .setColor(getColor('error')),
+                    createEmbed({
+                        title: '⚠️ Invalid Feedback Link',
+                        description: 'This feedback link appears to be malformed.',
+                        color: 'error',
+                    }),
                 ],
                 components: [],
             });
@@ -42,10 +43,11 @@ export default {
         if (!ticketData) {
             await interaction.update({
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('⚠️ Ticket Not Found')
-                        .setDescription('Could not find the ticket associated with this survey.')
-                        .setColor(getColor('error')),
+                    createEmbed({
+                        title: '⚠️ Ticket Not Found',
+                        description: 'Could not find the ticket associated with this survey.',
+                        color: 'error',
+                    }),
                 ],
                 components: [],
             });
@@ -55,12 +57,13 @@ export default {
         if (interaction.user.id !== ticketData.userId) {
             await interaction.reply({
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('❌ Not Allowed')
-                        .setDescription('Only the ticket creator can submit feedback for this ticket.')
-                        .setColor(getColor('error')),
+                    createEmbed({
+                        title: '❌ Not Allowed',
+                        description: 'Only the ticket creator can submit feedback for this ticket.',
+                        color: 'error',
+                    }),
                 ],
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
@@ -68,10 +71,11 @@ export default {
         if (ticketData.feedback?.rating) {
             await interaction.update({
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('✅ Already Submitted')
-                        .setDescription(`You already rated this ticket **${STAR_LABELS[String(ticketData.feedback.rating)]}**.\nThank you for your feedback!`)
-                        .setColor(getColor('success')),
+                    createEmbed({
+                        title: '✅ Already Submitted',
+                        description: `You already rated this ticket **${STAR_LABELS[String(ticketData.feedback.rating)]}**.\nThank you for your feedback!`,
+                        color: 'success',
+                    }),
                 ],
                 components: [],
             });
@@ -104,12 +108,11 @@ export default {
             logger.warn('ticketFeedback: failed to send log', { guildId, channelId, error: err.message });
         }
 
-        const thankYouEmbed = new EmbedBuilder()
-            .setTitle('✅ Thanks for your feedback!')
-            .setDescription(`You rated your support experience **${ratingLabel}**.\n\nYour feedback has been recorded and helps us improve!`)
-            .setColor(getColor('success'))
-            .setFooter({ text: 'Thank you for using our support system.' })
-            .setTimestamp();
+        const thankYouEmbed = createEmbed({
+            title: '✅ Thanks for your feedback!',
+            description: `You rated your support experience **${ratingLabel}**.\n\nYour feedback has been recorded and helps us improve!`,
+            color: 'success',
+        });
 
         await interaction.update({
             embeds: [thankYouEmbed],

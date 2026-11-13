@@ -152,9 +152,9 @@ async function handleAddNote(interaction, targetUser, notes, guildId) {
         embeds: [
             successEmbed(
                 `${typeInfo.emoji} Note Added`,
-                `Added a **${type}** note for **${targetUser.tag}**:\n\n` +
+                `Added a **${type}** note for <@${targetUser.id}>:\n\n` +
                 `> ${note}\n\n` +
-                `**Moderator:** ${interaction.user.tag}\n` +
+                `**Moderator:** <@${interaction.user.id}>\n` +
                 `**Total Notes:** ${notes.length}`
             )
         ]
@@ -167,7 +167,7 @@ async function handleViewNotes(interaction, targetUser, notes) {
             embeds: [
                 infoEmbed(
                     "📝 No Notes",
-                    `There are no notes for **${targetUser.tag}**.`
+                    `There are no notes for <@${targetUser.id}>.`
                 ),
             ],
         });
@@ -175,14 +175,14 @@ async function handleViewNotes(interaction, targetUser, notes) {
 
     const sortedNotes = [...notes].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    let description = `**Notes for ${targetUser.tag} (${targetUser.id}):**\n\n`;
+    let description = `**Notes for ${targetUser.username}** (<@${targetUser.id}>)\n\n`;
     
     sortedNotes.forEach((note, index) => {
         const typeInfo = getNoteTypeInfo(note.type);
         const date = new Date(note.timestamp).toLocaleDateString();
         description += `${typeInfo.emoji} **Note #${index + 1}** (${note.type}) - ${date}\n`;
         description += `> ${note.content}\n`;
-        description += `*Added by ${note.author}*\n\n`;
+        description += `*Added by ${note.authorId ? `<@${note.authorId}>` : note.author}*\n\n`;
     });
 
     if (description.length > 4000) {
@@ -222,7 +222,7 @@ async function handleRemoveNote(interaction, targetUser, notes, guildId) {
         embeds: [
             successEmbed(
                 `${typeInfo.emoji} Note Removed`,
-                `Removed note #${index + 1} from **${targetUser.tag}**:\n\n` +
+                `Removed note #${index + 1} from <@${targetUser.id}>:\n\n` +
                 `> ${removedNote.content}\n\n` +
                 `**Remaining Notes:** ${notes.length}`
             )
@@ -238,7 +238,7 @@ async function handleClearNotes(interaction, targetUser, notes, guildId) {
             embeds: [
                 infoEmbed(
                     "No Notes to Clear",
-                    `There are no notes for **${targetUser.tag}** to clear.`
+                    `There are no notes for <@${targetUser.id}> to clear.`
                 ),
             ],
         });
@@ -253,7 +253,7 @@ async function handleClearNotes(interaction, targetUser, notes, guildId) {
         embeds: [
             successEmbed(
                 "🗑️ Notes Cleared",
-                `Cleared **${noteCount}** notes from **${targetUser.tag}**.`
+                `Cleared **${noteCount}** notes from <@${targetUser.id}>.`
             )
         ]
     });
@@ -261,10 +261,10 @@ async function handleClearNotes(interaction, targetUser, notes, guildId) {
 
 function getNoteTypeInfo(type) {
     const types = {
-        warning: { emoji: "⚠️", color: "#FF6B6B" },
-        positive: { emoji: "✅", color: "#51CF66" },
-        neutral: { emoji: "📝", color: "#74C0FC" },
-        alert: { emoji: "🚨", color: "#FFD43B" }
+        warning: { emoji: "⚠️", color: "warning" },
+        positive: { emoji: "✅", color: "success" },
+        neutral: { emoji: "📝", color: "info" },
+        alert: { emoji: "🚨", color: "error" }
     };
     
     return types[type] || types.neutral;

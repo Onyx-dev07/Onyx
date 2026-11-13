@@ -1,7 +1,7 @@
-import { EmbedBuilder, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
+import { createEmbed } from '../../../utils/embeds.js';
 import { getTicketData, saveTicketData } from '../../../utils/database.js';
 import { logger } from '../../../utils/logger.js';
-import { getColor } from '../../../config/bot.js';
 import { logTicketFeedback } from '../../../utils/ticket/ticketLogging.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 
@@ -23,10 +23,11 @@ const feedbackHandler = {
         if (!guildId || !channelId || !ratingStr) {
             await InteractionHelper.safeReply(interaction, {
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('⚠️ Invalid Feedback Link')
-                        .setDescription('This feedback link appears to be malformed.')
-                        .setColor(getColor('error')),
+                    createEmbed({
+                        title: '⚠️ Invalid Feedback Link',
+                        description: 'This feedback link appears to be malformed.',
+                        color: 'error',
+                    }),
                 ],
                 components: [],
             });
@@ -50,10 +51,11 @@ const feedbackHandler = {
         if (!ticketData) {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('⚠️ Ticket Not Found')
-                        .setDescription('Could not find the ticket associated with this survey.')
-                        .setColor(getColor('error')),
+                    createEmbed({
+                        title: '⚠️ Ticket Not Found',
+                        description: 'Could not find the ticket associated with this survey.',
+                        color: 'error',
+                    }),
                 ],
                 components: [],
             });
@@ -63,10 +65,11 @@ const feedbackHandler = {
         if (interaction.user.id !== ticketData.userId) {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('❌ Not Allowed')
-                        .setDescription('Only the ticket creator can submit feedback for this ticket.')
-                        .setColor(getColor('error')),
+                    createEmbed({
+                        title: '❌ Not Allowed',
+                        description: 'Only the ticket creator can submit feedback for this ticket.',
+                        color: 'error',
+                    }),
                 ],
                 components: [],
             });
@@ -76,10 +79,11 @@ const feedbackHandler = {
         if (ticketData.feedback?.rating) {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('✅ Already Submitted')
-                        .setDescription(`You already rated this ticket **${STAR_LABELS[String(ticketData.feedback.rating)]}**.\nThank you for your feedback!`)
-                        .setColor(getColor('success')),
+                    createEmbed({
+                        title: '✅ Already Submitted',
+                        description: `You already rated this ticket **${STAR_LABELS[String(ticketData.feedback.rating)]}**.\nThank you for your feedback!`,
+                        color: 'success',
+                    }),
                 ],
                 components: [],
             });
@@ -114,12 +118,11 @@ const feedbackHandler = {
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [
-                new EmbedBuilder()
-                    .setTitle('✅ Thanks for your feedback!')
-                    .setDescription(`You rated your support experience **${ratingLabel}**.\n\nYour feedback has been recorded and helps us improve!`)
-                    .setColor(getColor('success'))
-                    .setFooter({ text: 'Thank you for using our support system.' })
-                    .setTimestamp(),
+                createEmbed({
+                    title: '✅ Thanks for your feedback!',
+                    description: `You rated your support experience **${ratingLabel}**.\n\nYour feedback has been recorded and helps us improve!`,
+                    color: 'success',
+                }),
             ],
             components: [],
         });
@@ -142,10 +145,11 @@ const commentHandler = {
         if (!guildId || !channelId) {
             await interaction.update({
                 embeds: [
-                    new EmbedBuilder()
-                        .setTitle('⚠️ Invalid Feedback Link')
-                        .setDescription('This feedback action appears to be malformed.')
-                        .setColor(getColor('error')),
+                    createEmbed({
+                        title: '⚠️ Invalid Feedback Link',
+                        description: 'This feedback action appears to be malformed.',
+                        color: 'error',
+                    }),
                 ],
                 components: [],
             });
@@ -176,10 +180,11 @@ const declineHandler = {
     async execute(interaction) {
         await interaction.update({
             embeds: [
-                new EmbedBuilder()
-                    .setTitle('👋 No problem!')
-                    .setDescription('You can always reach out again if you need further support.')
-                    .setColor(getColor('default')),
+                createEmbed({
+                    title: '👋 No problem!',
+                    description: 'You can always reach out again if you need further support.',
+                    color: 'info',
+                }),
             ],
             components: [],
         });

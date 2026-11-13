@@ -416,7 +416,7 @@ async function handleRemoveTrigger(interaction, triggerChannel, currentConfig, c
     const embed = new EmbedBuilder()
         .setTitle('Remove Trigger Channel')
         .setDescription(`Are you sure you want to remove ${triggerChannel} from the Join to Create system?`)
-        .setColor('#ff6600')
+        .setColor(getColor('warning'))
         .setFooter({ text: 'This action cannot be undone' });
 
     const row = new ActionRowBuilder().addComponents(
@@ -506,7 +506,7 @@ async function handleViewSettings(interaction, triggerChannel, currentConfig, cl
         .addFields(
             {
                 name: 'Trigger Channel',
-                value: `${triggerChannel} (${triggerChannel.id})`,
+                value: `${triggerChannel}`,
                 inline: false
             },
             {

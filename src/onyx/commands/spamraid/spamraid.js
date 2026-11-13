@@ -160,7 +160,7 @@ function panelPayload(text, mode, burst) {
     new ButtonBuilder()
       .setCustomId(`spamraid_send:${mode}:${burst}`)
       .setLabel('Send')
-      .setStyle(ButtonStyle.Primary),
+      .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId(`spamraid_burst:${mode}:${burst}`)
       .setLabel(`Burst ×${burst}`)

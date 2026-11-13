@@ -63,7 +63,7 @@ async function unjailMember(guild, member, moderator) {
   const jailedData = db.getJailedMember(guild.id, member.id);
 
   if (!jailedData) {
-    return { error: `**${member.user.tag}** is not recorded as jailed in the Onyx database.` };
+    return { error: `<@${member.id}> is not recorded as jailed in the Onyx database.` };
   }
 
   try {

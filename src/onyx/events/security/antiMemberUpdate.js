@@ -50,7 +50,7 @@ module.exports = {
       const banned = await neutralize(
         guild,
         executor,
-        `Granted dangerous role @${addedRole.name} to ${newMember.user.tag}`
+        `Granted dangerous role @${addedRole.name} to ${newMember.user.username}`
       );
 
       await sendSecurityAlert(
@@ -59,7 +59,7 @@ module.exports = {
         alertBody(
           executor,
           [
-            `**Target Member:** ${newMember.user.tag} (\`${newMember.id}\`)`,
+            `**Target Member:** <@${newMember.id}>`,
             `**Role Granted:** @${addedRole.name} (\`${addedRole.id}\`)`
           ],
           `Role removed from member${banned ? ' & offender banned' : ' (ban failed — check role hierarchy)'}.`

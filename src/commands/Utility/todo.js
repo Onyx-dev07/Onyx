@@ -277,7 +277,7 @@ export default {
                                         new ButtonBuilder()
                                             .setCustomId(`shared_todo_add_${listId}`)
                                             .setLabel('Add Task')
-                                            .setStyle(ButtonStyle.Primary),
+                                            .setStyle(ButtonStyle.Secondary),
                                         new ButtonBuilder()
                                             .setCustomId(`shared_todo_complete_${listId}`)
                                             .setLabel('Complete Task')
@@ -321,7 +321,7 @@ export default {
                                 new ButtonBuilder()
                                     .setCustomId(`shared_todo_add_${listId}`)
                                     .setLabel('Add Task')
-                                    .setStyle(ButtonStyle.Primary),
+                                    .setStyle(ButtonStyle.Secondary),
                                 new ButtonBuilder()
                                     .setCustomId(`shared_todo_complete_${listId}`)
                                     .setLabel('Complete Task')

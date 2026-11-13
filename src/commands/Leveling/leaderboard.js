@@ -1,7 +1,9 @@
-import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
 import { getLeaderboard, getLevelingConfig, getXpForLevel } from '../../services/leveling/leveling.js';
+import { createEmbed, warningEmbed } from '../../utils/embeds.js';
+import { userMention } from '../../utils/theme.js';
 
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 export default {
@@ -19,11 +21,8 @@ export default {
     if (!levelingConfig?.enabled) {
       await InteractionHelper.safeEditReply(interaction, {
         embeds: [
-          new EmbedBuilder()
-            .setColor('#f1c40f')
-            .setDescription('The leveling system is currently disabled on this server.')
-        ],
-        flags: MessageFlags.Ephemeral
+          warningEmbed('Leveling Disabled', 'The leveling system is currently disabled on this server.')
+        ]
       });
       return;
     }
@@ -38,17 +37,11 @@ export default {
       );
     }
 
-    const embed = new EmbedBuilder()
-      .setTitle('Level Leaderboard')
-      .setColor('#2ecc71')
-      .setDescription("Top 10 most active members in this server:")
-      .setTimestamp();
-
     const leaderboardText = await Promise.all(
       leaderboard.map(async (user, index) => {
         try {
           const member = await interaction.guild.members.fetch(user.userId).catch(() => null);
-          const userMention = member?.user.toString() || `<@${user.userId}>`;
+          const mention = member?.user.toString() || userMention(user.userId);
           const xpForNextLevel = getXpForLevel(user.level + 1);
 
           let rankPrefix = `${index + 1}.`;
@@ -57,16 +50,17 @@ export default {
           else if (index === 2) rankPrefix = '🥉';
           else rankPrefix = `**${index + 1}.**`;
 
-          return `${rankPrefix} ${userMention} - Level ${user.level} (${user.xp}/${xpForNextLevel} XP)`;
+          return `${rankPrefix} ${mention} · Level **${user.level}** · ${user.xp}/${xpForNextLevel} XP`;
         } catch {
           return `**${index + 1}.** Error loading user ${user.userId}`;
         }
       })
     );
 
-    embed.addFields({
-      name: 'Rankings',
-      value: leaderboardText.join('\n')
+    const embed = createEmbed({
+      title: 'Level Leaderboard',
+      description: `Top 10 most active members in this server.\n\n${leaderboardText.join('\n')}`,
+      color: 'primary'
     });
 
     await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });

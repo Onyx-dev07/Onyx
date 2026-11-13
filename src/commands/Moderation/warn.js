@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags } from 'discord.js';
-import { createEmbed, errorEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
+import { createEmbed, errorEmbed, infoEmbed, warningEmbed, moderationEmbed } from '../../utils/embeds.js';
 import { logModerationAction } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { WarningService } from '../../services/moderation/warningService.js';
@@ -83,8 +83,8 @@ export default {
             guild: interaction.guild,
             event: {
                 action: "User Warned",
-                target: `${target.tag} (${target.id})`,
-                executor: `${moderator.tag} (${moderator.id})`,
+                target: `<@${target.id}>`,
+                executor: `<@${moderator.id}>`,
                 reason,
                 metadata: {
                     userId: target.id,
@@ -98,10 +98,13 @@ export default {
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [
-                successEmbed(
-                    `⚠️ **Warned** ${target.tag}`,
-                    `**Reason:** ${reason}\n**Total Warns:** ${totalCount}`,
-                ),
+                moderationEmbed({
+                    action: 'Member Warned',
+                    target,
+                    moderator,
+                    reason,
+                    fields: [{ name: 'Total Warnings', value: `**${totalCount}**`, inline: true }],
+                }),
             ],
         });
     }

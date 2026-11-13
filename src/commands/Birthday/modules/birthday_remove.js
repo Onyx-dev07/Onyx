@@ -1,4 +1,4 @@
-import { EmbedBuilder } from 'discord.js';
+import { successEmbed, warningEmbed } from '../../../utils/embeds.js';
 import { deleteBirthday } from '../../../services/birthdayService.js';
 
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
@@ -12,20 +12,14 @@ export default {
         const result = await deleteBirthday(client, guildId, userId);
 
         if (result.status === 'not_found') {
-            const embed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle('No Birthday Found')
-                .setDescription('You don\'t have a birthday set to remove.');
+            const embed = warningEmbed('No Birthday Found', "You don't have a birthday set to remove.");
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [embed]
             });
             return;
         }
 
-        const embed = new EmbedBuilder()
-            .setColor(0x00FF00)
-            .setTitle('Birthday Removed')
-            .setDescription('Your birthday has been successfully removed from the server.');
+        const embed = successEmbed('Birthday Removed', 'Your birthday has been removed from this server.');
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [embed]
         });

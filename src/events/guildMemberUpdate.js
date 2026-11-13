@@ -18,7 +18,7 @@ export default {
           data: {
             title: 'Nickname changed',
             lines: [
-              `**User:** ${newMember.user.toString()} (${newMember.user.tag})`,
+              `**User:** <@${newMember.user.id}>`,
               `**ID:** \`${newMember.user.id}\``,
               `**Before:** ${oldMember.nickname || '*(no nickname)*'}`,
               `**After:** ${newMember.nickname || '*(no nickname)*'}`,

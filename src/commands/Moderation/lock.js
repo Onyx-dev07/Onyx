@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
+import { createEmbed, successEmbed, infoEmbed, warningEmbed, moderationEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { getColor } from '../../config/bot.js';
@@ -38,7 +38,7 @@ export default {
       await channel.permissionOverwrites.edit(
         everyoneRole,
         { SendMessages: false },
-{ type: 0, reason: `Channel locked by ${interaction.user.tag}` },
+{ type: 0, reason: `Channel locked by ${interaction.user.username}` },
       );
 
       await logEvent({
@@ -47,7 +47,7 @@ export default {
         event: {
           action: "Channel Locked",
           target: channel.toString(),
-          executor: `${interaction.user.tag} (${interaction.user.id})`,
+          executor: `<@${interaction.user.id}>`,
           metadata: {
             channelId: channel.id,
             category: channel.parent?.name || 'None',
@@ -58,10 +58,12 @@ export default {
 
       await InteractionHelper.safeEditReply(interaction, {
         embeds: [
-          successEmbed(
-            `🔒 **Channel Locked**`,
-            `${channel} is now locked down. No one can speak here now.`,
-          ),
+          moderationEmbed({
+            action: 'Channel Locked',
+            target: channel,
+            moderator: interaction.user,
+            reason: 'Channel locked for @everyone',
+          }),
         ],
       });
     } catch (error) {

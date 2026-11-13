@@ -105,7 +105,7 @@ export default {
                 new ButtonBuilder()
                     .setCustomId(`randomuser_${interaction.user.id}_again`)
                     .setLabel('🎲 Pick Another User')
-                    .setStyle(ButtonStyle.Primary)
+                    .setStyle(ButtonStyle.Secondary)
             );
 
         const response = await interaction.editReply({

@@ -57,7 +57,7 @@ export default {
                         .setColor(welcomeConfig.leaveEmbed?.color || getColor('error'))
                         .setThumbnail(user.displayAvatarURL())
                         .addFields(
-                            { name: 'User', value: `${user.tag} (${user.id})`, inline: true },
+                            { name: 'User', value: `<@${user.id}>`, inline: true },
                             { name: 'Member Count', value: guild.memberCount.toString(), inline: true }
                         )
                         .setTimestamp()
@@ -86,7 +86,7 @@ export default {
                 data: {
                     title: 'User left',
                     lines: [
-                        `**User:** ${user.toString()} (${user.tag})`,
+                        `**User:** <@${user.id}> (${user.username})`,
                         `**ID:** \`${user.id}\``,
                         `**Joined:** <t:${Math.floor((member.joinedTimestamp || Date.now()) / 1000)}:R>`,
                         `**Members:** ${guild.memberCount}`,

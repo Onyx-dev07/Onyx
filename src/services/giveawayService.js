@@ -159,6 +159,7 @@ export function createGiveawayEmbed(giveaway, status, winners = []) {
         }
 
         embed.setTimestamp();
+        embed.setFooter({ text: 'Onyx' });
         
         return embed;
     } catch (error) {

@@ -10,7 +10,8 @@ function createAutoroleInfoEmbed(description) {
     return new EmbedBuilder()
         .setColor(getColor('primary'))
         .setDescription(description)
-        .setFooter({ text: new Date().toLocaleString() });
+        .setFooter({ text: 'Onyx' })
+        .setTimestamp();
 }
 
 export default {

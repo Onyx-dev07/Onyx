@@ -1,7 +1,9 @@
-import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
 import { getUserLevelData, getLevelingConfig, getXpForLevel } from '../../services/leveling/leveling.js';
+import { createEmbed, warningEmbed } from '../../utils/embeds.js';
+import { progressLabel, userMention } from '../../utils/theme.js';
 
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 export default {
@@ -24,9 +26,7 @@ export default {
     if (!levelingConfig?.enabled) {
       await InteractionHelper.safeEditReply(interaction, {
         embeds: [
-          new EmbedBuilder()
-            .setColor('#f1c40f')
-            .setDescription('The leveling system is currently disabled on this server.')
+          warningEmbed('Leveling Disabled', 'The leveling system is currently disabled on this server.')
         ],
         flags: MessageFlags.Ephemeral
       });
@@ -56,44 +56,24 @@ export default {
 
     const xpNeeded = getXpForLevel(safeUserData.level + 1);
     const progress = xpNeeded > 0 ? Math.floor((safeUserData.xp / xpNeeded) * 100) : 0;
-    const progressBar = createProgressBar(progress, 20);
 
-    const embed = new EmbedBuilder()
-      .setTitle(`${member.displayName}'s Rank`)
-      .setThumbnail(member.displayAvatarURL({ dynamic: true }))
-      .addFields(
-        {
-          name: 'Level',
-          value: safeUserData.level.toString(),
-          inline: true
-        },
-        {
-          name: 'XP',
-          value: `${safeUserData.xp}/${xpNeeded}`,
-          inline: true
-        },
-        {
-          name: 'Total XP',
-          value: safeUserData.totalXp.toString(),
-          inline: true
-        },
+    const embed = createEmbed({
+      title: `${member.displayName}'s Rank`,
+      description: `${userMention(targetUser)} · **Level ${safeUserData.level}**`,
+      fields: [
+        { name: 'Level', value: `**${safeUserData.level}**`, inline: true },
+        { name: 'XP', value: `**${safeUserData.xp}** / ${xpNeeded}`, inline: true },
+        { name: 'Total XP', value: `**${safeUserData.totalXp}**`, inline: true },
         {
           name: `Progress to Level ${safeUserData.level + 1}`,
-          value: `${progressBar} ${progress}%`
+          value: progressLabel(progress)
         }
-      )
-      .setColor('#2ecc71')
-      .setTimestamp();
+      ],
+      thumbnail: member.displayAvatarURL({ dynamic: true }),
+      color: 'primary'
+    });
 
     await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     logger.debug(`Rank checked for user ${targetUser.id} in guild ${interaction.guildId}`);
   }
 };
-
-function createProgressBar(percentage, length = 10) {
-  if (percentage < 0 || percentage > 100) {
-    percentage = Math.max(0, Math.min(100, percentage));
-  }
-  const filled = Math.round((percentage / 100) * length);
-  return '█'.repeat(filled) + '░'.repeat(length - filled);
-}

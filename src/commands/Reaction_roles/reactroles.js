@@ -311,7 +311,7 @@ async function handleSetup(interaction) {
             guildId: interaction.guildId,
             eventType: EVENT_TYPES.REACTION_ROLE_CREATE,
             data: {
-                description: `Reaction role panel created by ${interaction.user.tag}`,
+                description: `Reaction role panel created by <@${interaction.user.id}>`,
                 userId: interaction.user.id,
                 channelId: channel.id,
                 fields: [
@@ -455,7 +455,7 @@ function buildReactionRoleDashboardPayload(panelData, discordMsg, guildId, guild
             new ButtonBuilder()
                 .setCustomId(`rr_repost_${guildId}`)
                 .setLabel('Repost Panel')
-                .setStyle(ButtonStyle.Primary)
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji('📌'),
         );
     }
@@ -464,7 +464,7 @@ function buildReactionRoleDashboardPayload(panelData, discordMsg, guildId, guild
         new ButtonBuilder()
             .setCustomId(`rr_edit_text_${guildId}`)
             .setLabel('Edit Panel Text')
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             .setEmoji('✏️'),
         new ButtonBuilder()
             .setCustomId(`rr_delete_${guildId}`)
@@ -1047,7 +1047,7 @@ async function handleDeletePanel(btnInteraction, rootInteraction, panelData, pan
             guildId,
             eventType: EVENT_TYPES.REACTION_ROLE_DELETE,
             data: {
-                description: `Reaction role panel deleted by ${submitted.user.tag}`,
+                description: `Reaction role panel deleted by <@${submitted.user.id}>`,
                 userId: submitted.user.id,
                 channelId: panelData.channelId,
                 fields: [

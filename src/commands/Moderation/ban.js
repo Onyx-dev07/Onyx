@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { successEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -57,10 +57,13 @@ export default {
 
         await InteractionHelper.universalReply(interaction, {
             embeds: [
-                successEmbed(
-                    `🚫 **Banned** ${user.tag}`,
-                    `**Reason:** ${reason}\n**Case ID:** #${result.caseId}`,
-                ),
+                moderationEmbed({
+                    action: 'Member Banned',
+                    target: user,
+                    moderator: interaction.user,
+                    reason,
+                    caseId: result.caseId,
+                }),
             ],
         });
     },

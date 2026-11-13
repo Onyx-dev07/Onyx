@@ -64,7 +64,7 @@ export default {
             await dmChannel.send({
                 embeds: [
                     successEmbed(
-                        anonymous ? "Message from the Staff Team" : `Message from ${interaction.user.tag}`,
+                        anonymous ? "Message from the Staff Team" : `Message from ${interaction.user.username}`,
                         sanitized
                     ).setFooter({
                         text: `You cannot reply to this message. | Logger ID: ${interaction.id}`
@@ -77,8 +77,8 @@ export default {
                 guild: interaction.guild,
                 event: {
                     action: "DM Sent",
-                    target: `${targetUser.tag} (${targetUser.id})`,
-                    executor: `${interaction.user.tag} (${interaction.user.id})`,
+                    target: `<@${targetUser.id}>`,
+                    executor: `<@${interaction.user.id}>`,
                     reason: `Anonymous: ${anonymous ? 'Yes' : 'No'}`,
                     metadata: {
                         userId: targetUser.id,
@@ -93,7 +93,7 @@ export default {
                 embeds: [
                     successEmbed(
                         "DM Sent",
-                        `Successfully sent a message to ${targetUser.tag}`
+                        `Successfully sent a message to <@${targetUser.id}>.`
                     ),
                 ],
             });
@@ -101,7 +101,7 @@ export default {
             logger.error('DM command error:', error);
             
 if (error.code === 50007) {
-                return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Could not send a DM to ${targetUser.tag}. They may have DMs disabled.` });
+                return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Could not send a DM to ${targetUser.username}. They may have DMs disabled.` });
             }
             
             return await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: `Failed to send DM: ${error.message}` });

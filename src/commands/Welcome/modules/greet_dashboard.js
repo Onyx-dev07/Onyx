@@ -54,7 +54,7 @@ function buildDashboardEmbed(cfg, guild) {
     const goodbyeChannel = cfg.goodbyeChannelId ? `<#${cfg.goodbyeChannelId}>` : '`Not set`';
 
     const rawWelcome = cfg.welcomeMessage || 'Welcome {user} to {server}!';
-    const rawGoodbye = cfg.leaveMessage || '{user.tag} has left the server.';
+    const rawGoodbye = cfg.leaveMessage || '{user.mention} has left the server.';
     const welcomePreview = `\`${rawWelcome.length > 55 ? rawWelcome.substring(0, 55) + '…' : rawWelcome}\``;
     const goodbyePreview = `\`${rawGoodbye.length > 55 ? rawGoodbye.substring(0, 55) + '…' : rawGoodbye}\``;
 
@@ -74,7 +74,7 @@ function buildDashboardEmbed(cfg, guild) {
             { name: 'Welcome Message', value: welcomePreview, inline: false },
             { name: 'Goodbye Message', value: goodbyePreview, inline: false },
         )
-        .setFooter({ text: 'Dashboard closes after 10 minutes of inactivity' })
+        .setFooter({ text: 'Onyx ? Dashboard closes after 10 minutes of inactivity' })
         .setTimestamp();
 }
 
@@ -141,13 +141,13 @@ function buildButtonRow(cfg, guildId, disabled = false) {
             new ButtonBuilder()
                 .setCustomId(`greet_cfg_ping_welcome_${guildId}`)
                 .setLabel('Ping Welcome')
-                .setStyle(welcomePingOn ? ButtonStyle.Primary : ButtonStyle.Secondary)
+                .setStyle(welcomePingOn ? ButtonStyle.Success : ButtonStyle.Secondary)
                 .setEmoji('🔔')
                 .setDisabled(disabled),
             new ButtonBuilder()
                 .setCustomId(`greet_cfg_ping_goodbye_${guildId}`)
                 .setLabel('Ping Goodbye')
-                .setStyle(goodbyePingOn ? ButtonStyle.Primary : ButtonStyle.Secondary)
+                .setStyle(goodbyePingOn ? ButtonStyle.Success : ButtonStyle.Secondary)
                 .setEmoji('🔔')
                 .setDisabled(disabled),
         ),
@@ -631,7 +631,7 @@ async function handleGoodbyeMessage(selectInteraction, rootInteraction, cfg, gui
                     .setCustomId('message_input')
                     .setLabel('Message (variables: {user}, {server}, etc)')
                     .setStyle(TextInputStyle.Paragraph)
-                    .setValue(cfg.leaveMessage || '{user.tag} has left the server.')
+                    .setValue(cfg.leaveMessage || '{user.mention} has left the server.')
                     .setMaxLength(2000)
                     .setMinLength(1)
                     .setRequired(true),

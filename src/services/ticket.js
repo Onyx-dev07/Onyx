@@ -274,8 +274,8 @@ export async function closeTicket(channel, closer, reason = 'No reason provided'
         if (ticketCreator) {
           const dmEmbed = createEmbed({
             title: '🎫 Your Ticket Has Been Closed',
-            description: `Your ticket **${channel.name}** has been closed.\n\n**Reason:** ${reason}\n**Closed by:** ${closer.tag}\n**Closed at:** <t:${Math.floor(Date.now() / 1000)}:F>\n\nThank you for using our support system! If you have any further questions, feel free to create a new ticket.`,
-            color: '#e74c3c',
+            description: `Your ticket **${channel.name}** has been closed.\n\n**Reason:** ${reason}\n**Closed by:** ${closer.username}\n**Closed at:** <t:${Math.floor(Date.now() / 1000)}:F>\n\nThank you for using our support system! If you have any further questions, feel free to create a new ticket.`,
+            color: 'error',
             footer: { text: `Ticket ID: ${ticketData.id}` }
           });
 
@@ -285,7 +285,7 @@ export async function closeTicket(channel, closer, reason = 'No reason provided'
             const feedbackEmbed = createEmbed({
               title: '⭐ How was your support experience?',
               description: `We'd love to know how we did with **${channel.name}**.\nSelect a rating below — it only takes a second!`,
-              color: '#F1C40F',
+              color: 'warning',
               footer: { text: 'Your feedback helps us improve.' },
             });
 
@@ -360,7 +360,7 @@ export async function closeTicket(channel, closer, reason = 'No reason provided'
       const updatedEmbed = createEmbed({
         title: embed.title || 'Ticket',
         description: embed.description || 'Ticket discussion',
-        color: '#e74c3c',
+        color: 'error',
         fields: embed.fields || [],
         footer: embed.footer
       });
@@ -374,7 +374,7 @@ components: []
     const closeEmbed = createEmbed({
       title: 'Ticket Closed',
       description: `This ticket has been closed by ${closer}.\n**Reason:** ${reason}${dmOnClose ? '\n\n📩 A DM has been sent to the ticket creator.' : ''}`,
-      color: '#e74c3c',
+      color: 'error',
       footer: { text: `Ticket ID: ${ticketData.id}` }
     });
     
@@ -461,7 +461,7 @@ export async function claimTicket(channel, claimer) {
     const claimEmbed = createEmbed({
       title: 'Ticket Claimed',
       description: `🎉 ${claimer} has claimed this ticket!`,
-      color: '#2ecc71'
+      color: 'success'
     });
     
     const unclaimRow = new ActionRowBuilder().addComponents(
@@ -587,7 +587,7 @@ export async function reopenTicket(channel, reopener) {
     const reopenEmbed = createEmbed({
       title: 'Ticket Reopened',
       description: `🔓 ${reopener} has reopened this ticket!`,
-      color: '#2ecc71'
+      color: 'success'
     });
 
     const closeStatusMessage = messages.find(m =>
@@ -660,19 +660,19 @@ async function generateTranscript(channel) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Transcript – #${escape(channel.name)}</title>
 <style>
-body{font-family:sans-serif;background:#36393f;color:#dcddde;margin:0;padding:16px}
-h1{color:#fff;font-size:1.2rem;margin-bottom:8px}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0b10;color:#f5f5f7;margin:0;padding:16px}
+h1{color:#f7a8c4;font-size:1.2rem;margin-bottom:8px}
 table{width:100%;border-collapse:collapse;font-size:0.85rem}
-th{background:#2f3136;color:#8e9297;padding:6px 8px;text-align:left;border-bottom:2px solid #202225}
-td{padding:4px 8px;border-bottom:1px solid #40444b;vertical-align:top}
-.ts{color:#72767d;white-space:nowrap;width:160px}
-.author{color:#7289da;white-space:nowrap;width:160px}
+th{background:#17171f;color:#9aa0aa;padding:6px 8px;text-align:left;border-bottom:2px solid #2a2a36}
+td{padding:4px 8px;border-bottom:1px solid #2a2a36;vertical-align:top}
+.ts{color:#7c8290;white-space:nowrap;width:160px}
+.author{color:#f7a8c4;white-space:nowrap;width:160px}
 .msg{word-break:break-word}
 </style>
 </head>
 <body>
 <h1>📜 Transcript – #${escape(channel.name)}</h1>
-<p style="color:#72767d">${messages.length} message(s) exported on ${new Date().toUTCString()}</p>
+<p style="color:#7c8290">${messages.length} message(s) exported on ${new Date().toUTCString()}</p>
 <table>
 <thead><tr><th>Timestamp (UTC)</th><th>Author</th><th>Message</th></tr></thead>
 <tbody>
@@ -712,7 +712,7 @@ export async function deleteTicket(channel, deleter) {
     const deleteEmbed = createEmbed({
       title: 'Ticket Deleted',
       description: `🗑️ This ticket will be permanently deleted in ${TICKET_DELETE_DELAY_SECONDS} seconds.`,
-      color: '#e74c3c',
+      color: 'error',
       footer: { text: `Ticket ID: ${ticketData.id}` }
     });
     
@@ -915,7 +915,7 @@ export async function unclaimTicket(channel, unclaimer) {
       const unclaimEmbed = createEmbed({
         title: 'Ticket Unclaimed',
         description: `🔓 ${unclaimer} has unclaimed this ticket!`,
-        color: '#f39c12'
+        color: 'warning'
       });
       
       await claimMessage.edit({ 
@@ -926,7 +926,7 @@ export async function unclaimTicket(channel, unclaimer) {
       const unclaimEmbed = createEmbed({
         title: 'Ticket Unclaimed',
         description: `🔓 ${unclaimer} has unclaimed this ticket!`,
-        color: '#f39c12'
+        color: 'warning'
       });
       
       await channel.send({ embeds: [unclaimEmbed] });

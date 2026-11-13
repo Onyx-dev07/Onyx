@@ -79,7 +79,7 @@ async function sendRaidAlert(guild, user, triggerReason, action) {
   if (!channel) return;
 
   const embed = errorEmbed(
-    `**AntiRaid protection triggered**\n\n• **User:** ${user.tag} (\`${user.id}\`)\n• **Reason:** ${triggerReason}\n• **Action taken:** ${action.toUpperCase()}`
+    `**AntiRaid protection triggered**\n\n• **User:** <@${user.id}>\n• **Reason:** ${triggerReason}\n• **Action taken:** ${action.toUpperCase()}`
   );
   await channel.send({ embeds: [embed] }).catch(() => {});
 }

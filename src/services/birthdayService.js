@@ -4,6 +4,7 @@ import { getGuildConfig } from './config/guildConfig.js';
 import { getGuildBirthdays, setBirthday as dbSetBirthday, deleteBirthday as dbDeleteBirthday, getMonthName, getBirthdayTrackingKey } from '../utils/database.js';
 import { logger } from '../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../utils/errorHandler.js';
+import { getColor } from '../config/bot.js';
 
 export function validateBirthday(month, day) {
   
@@ -346,8 +347,8 @@ export async function checkBirthdays(client) {
           embeds: [{
             title: '🎉 Happy Birthday! 🎂',
             description: `A very happy birthday to ${mentionList}! Wishing you an amazing day! 🎈`,
-            color: 0xff69b4,
-            footer: { text: 'Birthday Bot' },
+            color: getColor('birthday'),
+            footer: { text: 'Onyx' },
             timestamp: new Date()
           }]
         });

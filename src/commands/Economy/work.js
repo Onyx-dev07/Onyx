@@ -114,7 +114,7 @@ export default {
                     }
                 )
                 .setFooter({
-                    text: `Requested by ${interaction.user.tag}`,
+                    text: `Requested by ${interaction.user.username}`,
                     iconURL: interaction.user.displayAvatarURL(),
                 });
 

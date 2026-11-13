@@ -108,7 +108,7 @@ export default {
             event: {
                 action: 'Bot Message Sent',
                 target: `${channel} (${channel.id})`,
-                executor: `${interaction.user.tag} (${interaction.user.id})`,
+                executor: `<@${interaction.user.id}>`,
                 reason: message.length > 200
                     ? `${message.slice(0, 197)}...`
                     : message,

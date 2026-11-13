@@ -1,4 +1,5 @@
-import { EmbedBuilder } from 'discord.js';
+import { createEmbed, warningEmbed } from '../../../utils/embeds.js';
+import { avatarURL } from '../../../utils/theme.js';
 import { getUserBirthday } from '../../../services/birthdayService.js';
 import { logger } from '../../../utils/logger.js';
 
@@ -14,21 +15,26 @@ export default {
         const birthdayData = await getUserBirthday(client, guildId, userId);
 
         if (!birthdayData) {
-            const embed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle('No Birthday Found')
-                .setDescription(targetUser.id === interaction.user.id 
+            const embed = warningEmbed(
+                'No Birthday Found',
+                targetUser.id === interaction.user.id
                     ? "You haven't set your birthday yet. Use `/birthday set` to add it!"
-                    : `${targetUser.username} hasn't set their birthday yet.`);
+                    : `<@${targetUser.id}> hasn't set their birthday yet.`
+            );
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [embed]
             });
         }
 
-        const embed = new EmbedBuilder()
-            .setColor(0x00FF00)
-            .setTitle('Birthday Information')
-            .setDescription(`**Date:** ${birthdayData.monthName} ${birthdayData.day}\n**User:** ${targetUser.toString()}`);
+        const embed = createEmbed({
+            title: '🎂 Birthday Information',
+            description: [
+                `**User:** <@${targetUser.id}>`,
+                `**Date:** ${birthdayData.monthName} ${birthdayData.day}`
+            ].join('\n'),
+            color: 'primary',
+            thumbnail: avatarURL(targetUser)
+        });
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [embed]

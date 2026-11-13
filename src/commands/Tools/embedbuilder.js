@@ -27,16 +27,15 @@ const MAX_FIELDS = 25;
 const IDLE_TIMEOUT = 900_000; 
 
 const COLOR_PRESETS = [
-    { label: 'Primary (Blue)',        value: '#336699', emoji: '' },
-    { label: 'Success (Green)',       value: '#57F287', emoji: '' },
-    { label: 'Error (Red)',           value: '#ED4245', emoji: '' },
-    { label: 'Warning (Yellow)',      value: '#FEE75C', emoji: '' },
-    { label: 'Info (Bright Blue)',    value: '#3498DB', emoji: '' },
-    { label: 'Blurple (Discord)',     value: '#5865F2', emoji: '' },
-    { label: 'Fuchsia',              value: '#EB459E', emoji: '' },
-    { label: 'Gold',                  value: '#F1C40F', emoji: '' },
-    { label: 'White',                 value: '#FFFFFF', emoji: '' },
-    { label: 'Dark',                  value: '#202225', emoji: '' },
+    { label: 'Pink (Primary)',        value: '#F7A8C4', emoji: '' },
+    { label: 'Rose (Accent)',         value: '#FF8FB1', emoji: '' },
+    { label: 'Success',               value: '#6EE7A8', emoji: '' },
+    { label: 'Error',                 value: '#FF6B81', emoji: '' },
+    { label: 'Warning',               value: '#FFC66D', emoji: '' },
+    { label: 'Info',                  value: '#A8C7FF', emoji: '' },
+    { label: 'Charcoal',              value: '#17171F', emoji: '' },
+    { label: 'White',                 value: '#F5F5F7', emoji: '' },
+    { label: 'Dark',                  value: '#0B0B10', emoji: '' },
     { label: 'Custom Hex...',         value: '__custom__', emoji: '' },
 ];
 
@@ -54,6 +53,11 @@ function isValidHex(str) {
 }
 
 function resolveEmbedColor(value) {
+    // Preserve exact custom hex values; only resolve semantic tokens.
+    if (isValidHex(value)) {
+        return value;
+    }
+
     try {
         const resolved = getColor(value || 'primary');
         if (typeof resolved === 'number' && Number.isFinite(resolved) && resolved >= 0 && resolved <= 0xffffff) {
@@ -132,7 +136,7 @@ function buildMainMenu(state) {
         new ButtonBuilder()
             .setCustomId('eb_main_edit_content')
             .setLabel('Edit Content')
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             .setEmoji('✏️'),
         new ButtonBuilder()
             .setCustomId('eb_main_set_color')
@@ -155,7 +159,7 @@ function buildMainMenu(state) {
         new ButtonBuilder()
             .setCustomId('eb_main_add_field')
             .setLabel(`Add Field (${state.fields.length}/${MAX_FIELDS})`)
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             .setEmoji('➕'),
         new ButtonBuilder()
             .setCustomId('eb_main_edit_field')
@@ -303,7 +307,7 @@ async function handleSetColor(selectInteraction, rootInteraction, state) {
                             .setCustomId('hex_value')
                             .setLabel('Hex Color Code')
                             .setStyle(TextInputStyle.Short)
-                            .setPlaceholder('#5865F2')
+                            .setPlaceholder('#F7A8C4')
                             .setMaxLength(7)
                             .setMinLength(7)
                             .setRequired(true),
@@ -327,7 +331,7 @@ async function handleSetColor(selectInteraction, rootInteraction, state) {
             if (!isValidHex(hex)) {
                 await replyUserError(hexSubmit, {
                     type: ErrorTypes.USER_INPUT,
-                    message: `\`${hex}\` is not a valid hex color. Use the format \`#RRGGBB\` (e.g. \`#5865F2\`).`,
+                    message: `\`${hex}\` is not a valid hex color. Use the format \`#RRGGBB\` (e.g. \`#F7A8C4\`).`,
                 });
                 return;
             }
@@ -870,14 +874,14 @@ async function handleReorderFields(selectInteraction, rootInteraction, state) {
         const upBtn = new ButtonBuilder()
             .setCustomId('eb_reorder_up')
             .setLabel('Move Up')
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             .setEmoji('⬆️')
             .setDisabled(sourceIdx === 0);
 
         const downBtn = new ButtonBuilder()
             .setCustomId('eb_reorder_down')
             .setLabel('Move Down')
-            .setStyle(ButtonStyle.Primary)
+            .setStyle(ButtonStyle.Secondary)
             .setEmoji('⬇️')
             .setDisabled(sourceIdx === state.fields.length - 1);
 

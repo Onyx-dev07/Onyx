@@ -71,7 +71,7 @@ export function applyLogFooter(embed, { guild, executorId, executorTag, executor
 
   if (executorId && executorTag) {
     embed.setFooter({
-      text: `${executorTag} • `,
+      text: `${executorTag} • Onyx`,
       iconURL: executorAvatar || undefined,
     });
     return embed;
@@ -115,7 +115,7 @@ export async function resolveUserAuthor(client, userId) {
   try {
     const user = await client.users.fetch(userId);
     return {
-      name: user.tag,
+      name: user.username,
       iconURL: user.displayAvatarURL({ dynamic: true }),
     };
   } catch {
@@ -168,6 +168,8 @@ export function buildStandardLogEmbed({
       text: footer.text.slice(0, 2048),
       iconURL: footer.iconURL || undefined,
     });
+  } else {
+    embed.setFooter({ text: 'Onyx' });
   }
 
   return embed;

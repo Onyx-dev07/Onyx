@@ -68,7 +68,7 @@ async function buildDashboardEmbed(guild, client) {
             { name: '💱 Currency Symbol', value: `\`${currencySymbol}\``, inline: true },
             { name: '📝 Currency Name', value: `\`${currencyName}\``, inline: true },
         )
-        .setFooter({ text: 'Dashboard closes after 10 minutes of inactivity' })
+        .setFooter({ text: 'Onyx ? Dashboard closes after 10 minutes of inactivity' })
         .setTimestamp();
 }
 
@@ -306,7 +306,7 @@ async function handleAddCurrency(selectInteraction, rootInteraction, guild, clie
     const currencySymbol = BotConfig.economy.currency.symbol;
 
     await submitted.reply({
-        embeds: [successEmbed('Currency Added', `Successfully added ${currencySymbol}${amount.toLocaleString()} to ${member.user.tag}'s ${type}.\n**New Balance:** ${currencySymbol}${newBalance.toLocaleString()}`)],
+        embeds: [successEmbed('Currency Added', `Added **${currencySymbol}${amount.toLocaleString()}** to <@${member.user.id}>'s ${type}.\n**New Balance:** ${currencySymbol}${newBalance.toLocaleString()}`)],
         flags: MessageFlags.Ephemeral,
     });
 
@@ -403,7 +403,7 @@ async function handleRemoveCurrency(selectInteraction, rootInteraction, guild, c
     const currencySymbol = BotConfig.economy.currency.symbol;
 
     await submitted.reply({
-        embeds: [successEmbed('Currency Removed', `Successfully removed ${currencySymbol}${amount.toLocaleString()} from ${member.user.tag}'s ${type}.\n**New Balance:** ${currencySymbol}${newBalance.toLocaleString()}`)],
+        embeds: [successEmbed('Currency Removed', `Removed **${currencySymbol}${amount.toLocaleString()}** from <@${member.user.id}>'s ${type}.\n**New Balance:** ${currencySymbol}${newBalance.toLocaleString()}`)],
         flags: MessageFlags.Ephemeral,
     });
 

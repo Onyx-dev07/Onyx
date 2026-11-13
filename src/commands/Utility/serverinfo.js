@@ -27,7 +27,7 @@ export default {
     const embed = createEmbed({ title: `Server Info: ${guild.name}`, description: `Server ID: ${guild.id}` })
       .setThumbnail(guild.iconURL({ size: 256 }))
       .addFields(
-        { name: "Owner", value: owner.user.tag, inline: true },
+        { name: "Owner", value: `<@${owner.id}>`, inline: true },
         { name: "Members", value: `${guild.memberCount}`, inline: true },
         {
           name: "Channels",

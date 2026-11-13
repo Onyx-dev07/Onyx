@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
+import { createEmbed, successEmbed, infoEmbed, warningEmbed, moderationEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { getColor } from '../../config/bot.js';
@@ -45,7 +45,7 @@ export default {
                 { SendMessages: true },
                 {
                     type: 0,
-                    reason: `Channel unlocked by ${interaction.user.tag}`,
+                    reason: `Channel unlocked by ${interaction.user.username}`,
 },
             );
 
@@ -55,7 +55,7 @@ export default {
                 event: {
                     action: "Channel Unlocked",
                     target: channel.toString(),
-                    executor: `${interaction.user.tag} (${interaction.user.id})`,
+                    executor: `<@${interaction.user.id}>`,
                     metadata: {
                         channelId: channel.id,
                         category: channel.parent?.name || 'None'
@@ -65,10 +65,12 @@ export default {
 
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
-                    successEmbed(
-                        `🔓 **Channel Unlocked**`,
-                        `${channel} is now unlocked. You may speak now.`,
-                    ),
+                    moderationEmbed({
+                        action: 'Channel Unlocked',
+                        target: channel,
+                        moderator: interaction.user,
+                        reason: 'Channel unlocked for @everyone',
+                    }),
                 ],
             });
         } catch (error) {

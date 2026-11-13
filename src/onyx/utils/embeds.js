@@ -1,10 +1,9 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
-// TitanBot visual language: crimson accent, title-case status headings, and
-// typographic separators instead of decoration. Onyx keeps its name on the
-// security-specific labels and footers.
-const DEFAULT_COLOR = 0xdc143c;
+// Onyx visual language: near-black surfaces, soft pink accents, title-case
+// status headings, and typographic separators instead of decoration.
+const DEFAULT_COLOR = 0xf7a8c4;
 const BRAND_NAME = String(config.botName || 'Onyx');
 
 // Every card carries the same small status heading so tone is readable
@@ -14,6 +13,13 @@ const STATUS_TITLES = {
   error: 'Error',
   warning: 'Warning',
   info: 'Information'
+};
+
+const STATUS_EMOJI = {
+  success: '✅',
+  error: '❌',
+  warning: '⚠️',
+  info: 'ℹ️'
 };
 
 // Action receipts read as one sentence, so every title maps to the verb that
@@ -131,7 +137,6 @@ function receiptEmbed(options = {}) {
   return createEmbed({
     description: receiptText(options),
     color: options.active === false ? config.colors.muted : config.colors.success,
-    footer: false
   });
 }
 
@@ -232,7 +237,7 @@ function footerPayload(options) {
 /**
  * Base embed builder.
  *
- * Matches the native TitanBot embed theme: no implicit author row, title-case
+ * Matches the native Onyx embed theme: no implicit author row, title-case
  * titles, and the global protocol colors. Onyx security cards that need a
  * brand row pass one explicitly.
  *
@@ -256,7 +261,7 @@ function createEmbed(options = {}) {
   if (options.thumbnail) embed.setThumbnail(options.thumbnail);
   if (options.image) embed.setImage(options.image);
 
-  if (options.timestamp === true) embed.setTimestamp();
+  if (options.timestamp !== false) embed.setTimestamp();
 
   const footer = footerPayload(options);
   if (footer) embed.setFooter(footer);
@@ -264,13 +269,12 @@ function createEmbed(options = {}) {
   return embed;
 }
 
-// Thin action replies: a TitanBot-style status title, one line, one accent.
+// Thin action replies: status emoji, title-case heading, one line, one accent.
 function actionReply(kind, description, color) {
   return createEmbed({
-    title: STATUS_TITLES[kind],
+    title: `${STATUS_EMOJI[kind] || ''} ${STATUS_TITLES[kind] || ''}`.trim(),
     description: String(description || ''),
-    color,
-    footer: false
+    color
   });
 }
 
@@ -357,8 +361,7 @@ function actionEmbed(options = {}) {
 
     return createEmbed({
       description: [sentence, description, ...meta.map(muted)].filter(Boolean).join('\n'),
-      color,
-      footer: false
+      color
     });
   }
 
@@ -367,8 +370,7 @@ function actionEmbed(options = {}) {
       description: [`${deny()} **${title}**`, description, ...meta.map(muted)]
         .filter(Boolean)
         .join('\n'),
-      color,
-      footer: false
+      color
     });
   }
 
@@ -388,8 +390,7 @@ function actionEmbed(options = {}) {
     title: title ? withEmoji(icon || '', title) : undefined,
     description,
     fields: embedFields,
-    color,
-    footer: false
+    color
   });
 }
 
@@ -397,6 +398,7 @@ module.exports = {
   DEFAULT_COLOR,
   BRAND_NAME,
   STATUS_TITLES,
+  STATUS_EMOJI,
   UI,
   emoji,
   withEmoji,

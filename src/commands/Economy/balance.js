@@ -55,30 +55,27 @@ export default {
         const bank = typeof userData.bank === 'number' ? userData.bank : 0;
 
             const embed = createEmbed({
-                title: `${targetUser.username}'s Balance`,
-                description: `Here is the current financial status for ${targetUser.username}.`,
+                title: '💰 Balance',
+                description: `Financial overview for <@${targetUser.id}>.`,
+                color: 'economy',
             })
                 .addFields(
                     {
                         name: "💵 Cash",
-                        value: `$${wallet.toLocaleString()}`,
+                        value: `**$${wallet.toLocaleString()}**`,
                         inline: true,
                     },
                     {
                         name: "🏦 Bank",
-                        value: `$${bank.toLocaleString()} / $${maxBank.toLocaleString()}`,
+                        value: `**$${bank.toLocaleString()}** / $${maxBank.toLocaleString()}`,
                         inline: true,
                     },
                     {
                         name: "💰 Total",
-                        value: `$${(wallet + bank).toLocaleString()}`,
+                        value: `**$${(wallet + bank).toLocaleString()}**`,
                         inline: true,
                     }
-                )
-                .setFooter({
-                    text: `Requested by ${interaction.user.tag}`,
-                    iconURL: interaction.user.displayAvatarURL(),
-                });
+                );
 
             logger.info(`[ECONOMY] Balance retrieved`, { userId: targetUser.id, wallet, bank });
 

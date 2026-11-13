@@ -344,7 +344,7 @@ function normalizeWelcomeConfig(raw = {}) {
     const goodbyeChannelId = base.goodbyeChannelId ?? null;
 
     const welcomeMessage = base.welcomeMessage ?? "Welcome {user} to {server}!";
-    const leaveMessage = base.leaveMessage ?? "{user.tag} has left the server.";
+    const leaveMessage = base.leaveMessage ?? "{user.mention} has left the server.";
 
     const welcomeEmbed = base.welcomeEmbed ?? {
         title: "🎉 Welcome!",
@@ -356,7 +356,7 @@ function normalizeWelcomeConfig(raw = {}) {
 
     const leaveEmbed = base.leaveEmbed ?? {
         title: "👋 Goodbye",
-        description: "{user.tag} has left the server.",
+        description: "{user.mention} has left the server.",
         color: getColor("error"),
         thumbnail: true,
         footer: "Goodbye from {server}!"

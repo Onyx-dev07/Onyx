@@ -46,7 +46,7 @@ module.exports = {
         alertBody(
           executor,
           [
-            `**Rogue Bot:** ${member.user.tag} (\`${member.id}\`)`,
+            `**Rogue Bot:** <@${member.id}>`,
             `**Bot Removed:** ${botRemoved ? 'Yes' : 'No'}`
           ],
           banned

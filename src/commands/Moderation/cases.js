@@ -60,7 +60,7 @@ export default {
 
             if (cases.length === 0) {
                 throw new Error(targetUser 
-                    ? `No moderation cases found for ${targetUser.tag}`
+                    ? `No moderation cases found for ${targetUser.username}`
                     : `No ${filterType === 'all' ? '' : filterType} cases found in this server.`
                 );
             }
@@ -91,7 +91,7 @@ export default {
                 });
 
                 embed.setFooter({
-                    text: `Total cases: ${cases.length} | Filter: ${filterType}${targetUser ?` | User: ${targetUser.tag}`: ''}`
+                    text: `Total cases: ${cases.length} | Filter: ${filterType}${targetUser ? ` | User: ${targetUser.username}` : ''}`
                 });
 
                 return embed;
@@ -109,7 +109,7 @@ export default {
                 const pageInfoButton = new ButtonBuilder()
                     .setCustomId('page_info')
                     .setLabel(`Page ${page}/${totalPages}`)
-                    .setStyle(ButtonStyle.Primary)
+                    .setStyle(ButtonStyle.Secondary)
                     .setDisabled(true);
 
                 const nextButton = new ButtonBuilder()

@@ -101,11 +101,11 @@ export default {
             await setEconomyData(client, guildId, userId, userData);
 
             const rarityColors = {
-                common: '#95A5A6',
-                uncommon: '#2ECC71',
-                rare: '#3498DB',
-                epic: '#9B59B6',
-                legendary: '#F1C40F'
+                common: 'gray',
+                uncommon: 'success',
+                rare: 'info',
+                epic: 'accent',
+                legendary: 'warning'
             };
 
             const embed = createEmbed({

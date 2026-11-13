@@ -3,6 +3,7 @@
 import { EmbedBuilder } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { getGuildConfig, setGuildConfig } from '../config/guildConfig.js';
+import { getColor } from '../../config/bot.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
 import { addXp } from './xpSystem.js';
 import { getUserLevelKey } from '../../utils/database/keys.js';
@@ -120,7 +121,7 @@ export async function getLeaderboard(client, guildId, limit = 10) {
 export function createLeaderboardEmbed(leaderboard, guild) {
   const embed = new EmbedBuilder()
     .setTitle(`🏆 ${guild.name} Leaderboard`)
-    .setColor('#2ecc71')
+    .setColor(getColor('primary'))
     .setTimestamp();
     
   if (!leaderboard || leaderboard.length === 0) {

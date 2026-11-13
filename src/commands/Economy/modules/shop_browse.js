@@ -26,7 +26,7 @@ export default {
                         inline: false,
                     });
                 });
-                embed.setFooter({ text: `Page ${page}/${totalPages}` });
+                embed.setFooter({ text: `Onyx • Page ${page}/${totalPages}` });
                 return embed;
             };
 

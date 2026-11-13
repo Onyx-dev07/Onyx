@@ -1,8 +1,8 @@
-import { EmbedBuilder, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
+import { createEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logger } from '../../utils/logger.js';
 import { handleInteractionError, createError, ErrorTypes } from '../../utils/errorHandler.js';
-import { getColor } from '../../config/bot.js';
 import { logEvent, EVENT_TYPES } from '../../services/loggingService.js';
 import { getReactionRoleMessage } from '../../services/reactionRoleService.js';
 
@@ -20,7 +20,7 @@ export async function handleReactionRolesSelectMenu(interaction, client) {
             );
         }
 
-        logger.debug(`Reaction role select menu interaction by ${interaction.user.tag} on message ${interaction.message.id}`);
+        logger.debug(`Reaction role select menu interaction by ${interaction.user.username} on message ${interaction.message.id}`);
 
         const reactionRoleData = await getReactionRoleMessage(client, interaction.guildId, interaction.message.id);
 
@@ -28,9 +28,11 @@ export async function handleReactionRolesSelectMenu(interaction, client) {
             logger.warn(`Reaction role data not found for message ${interaction.message.id} in guild ${interaction.guildId}`);
             return interaction.editReply({
                 embeds: [
-                    new EmbedBuilder()
-                        .setDescription('❌ This reaction role message is no longer active.')
-                        .setColor(getColor('error'))
+                    createEmbed({
+                        title: '❌ Inactive Panel',
+                        description: 'This reaction role message is no longer active.',
+                        color: 'error',
+                    })
                 ]
             });
         }
@@ -108,9 +110,9 @@ export async function handleReactionRolesSelectMenu(interaction, client) {
                 try {
                     await member.roles.add(role);
                     addedRoles.push(role.name);
-                    logger.debug(`Added role ${role.name} to ${member.user.tag}`);
+                    logger.debug(`Added role ${role.name} to ${member.user.username}`);
                 } catch (roleError) {
-                    logger.error(`Failed to add role ${role.name} to ${member.user.tag}:`, roleError);
+                    logger.error(`Failed to add role ${role.name} to ${member.user.username}:`, roleError);
                     skippedRoles.push(role.name);
                 }
             }
@@ -128,9 +130,9 @@ export async function handleReactionRolesSelectMenu(interaction, client) {
                 try {
                     await member.roles.remove(role);
                     removedRoles.push(role.name);
-                    logger.debug(`Removed role ${role.name} from ${member.user.tag}`);
+                    logger.debug(`Removed role ${role.name} from ${member.user.username}`);
                 } catch (roleError) {
-                    logger.error(`Failed to remove role ${role.name} from ${member.user.tag}:`, roleError);
+                    logger.error(`Failed to remove role ${role.name} from ${member.user.username}:`, roleError);
                 }
             }
         }
@@ -153,10 +155,11 @@ export async function handleReactionRolesSelectMenu(interaction, client) {
             description += `\n⚠️ **Skipped:** ${skippedRoles.length} role${skippedRoles.length !== 1 ? 's' : ''} (permission issues)`;
         }
 
-        const responseEmbed = new EmbedBuilder()
-            .setDescription(description)
-            .setColor(getColor('success'))
-            .setTimestamp();
+        const responseEmbed = createEmbed({
+            title: '🎭 Roles Updated',
+            description,
+            color: addedRoles.length === 0 && removedRoles.length === 0 ? 'info' : 'success',
+        });
 
         await interaction.editReply({ embeds: [responseEmbed] });
 
@@ -167,13 +170,13 @@ export async function handleReactionRolesSelectMenu(interaction, client) {
                     guildId: interaction.guildId,
                     eventType: EVENT_TYPES.REACTION_ROLE_UPDATE,
                     data: {
-                        description: `Reaction roles updated for ${member.user.tag}`,
+                        description: `Reaction roles updated for <@${member.user.id}>`,
                         userId: member.user.id,
                         channelId: interaction.channelId,
                         fields: [
                             {
                                 name: '👤 Member',
-                                value: `${member.user.tag} (${member.user.id})`,
+                                value: `<@${member.user.id}>`,
                                 inline: false
                             },
                             ...(addedRoles.length > 0 ? [{
@@ -194,7 +197,7 @@ export async function handleReactionRolesSelectMenu(interaction, client) {
             }
         }
 
-        logger.info(`Reaction roles updated for ${member.user.tag}: +${addedRoles.length}, -${removedRoles.length}`);
+        logger.info(`Reaction roles updated for ${member.user.username}: +${addedRoles.length}, -${removedRoles.length}`);
 
     } catch (error) {
         await handleInteractionError(interaction, error, {

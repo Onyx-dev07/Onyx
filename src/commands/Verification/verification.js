@@ -233,7 +233,7 @@ async function handleRemove(interaction, guild, client) {
 
     if (result.status === 'not_verified') {
         return await InteractionHelper.safeReply(interaction, {
-            embeds: [infoEmbed('Not Verified', `${targetUser.tag} does not currently have the verified role.`)],
+            embeds: [infoEmbed('Not Verified', `<@${targetUser.id}> does not currently have the verified role.`)],
             flags: MessageFlags.Ephemeral
         });
     }
@@ -245,6 +245,6 @@ async function handleRemove(interaction, guild, client) {
     });
 
     return await InteractionHelper.safeReply(interaction, {
-        embeds: [successEmbed('Verification Removed', `Verification removed from ${targetUser.tag}.`)]
+        embeds: [successEmbed('Verification Removed', `Verification removed from <@${targetUser.id}>.`)]
     });
 }

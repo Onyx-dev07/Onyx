@@ -253,23 +253,23 @@ async function handleConfigSubcommand(interaction, client) {
                     inline: true
                 }
             )
-            .setFooter({ text: 'Use the buttons below to modify settings • Only one trigger channel is supported per guild' })
+            .setFooter({ text: 'Onyx • Use the buttons below to modify settings • Only one trigger channel is supported per guild' })
             .setTimestamp();
 
         const nameButton = new ButtonBuilder()
             .setCustomId(`jtc_config_name_${triggerChannel.id}`)
             .setLabel('📝 Name Template')
-            .setStyle(ButtonStyle.Primary);
+            .setStyle(ButtonStyle.Secondary);
 
         const limitButton = new ButtonBuilder()
             .setCustomId(`jtc_config_limit_${triggerChannel.id}`)
             .setLabel('👥 User Limit')
-            .setStyle(ButtonStyle.Primary);
+            .setStyle(ButtonStyle.Secondary);
 
         const bitrateButton = new ButtonBuilder()
             .setCustomId(`jtc_config_bitrate_${triggerChannel.id}`)
             .setLabel('🎵 Bitrate')
-            .setStyle(ButtonStyle.Primary);
+            .setStyle(ButtonStyle.Secondary);
 
         const deleteButton = new ButtonBuilder()
             .setCustomId(`jtc_config_delete_${triggerChannel.id}`)

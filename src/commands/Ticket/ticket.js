@@ -146,7 +146,7 @@ description: panelMessage,
                 new ButtonBuilder()
                     .setCustomId("create_ticket")
 .setLabel(buttonLabel)
-                    .setStyle(ButtonStyle.Primary)
+                    .setStyle(ButtonStyle.Secondary)
                     .setEmoji("📩"),
             );
 
@@ -267,7 +267,7 @@ description: panelMessage,
                         },
                         {
                             name: "Moderator",
-                            value: `${interaction.user.tag} (${interaction.user.id})`,
+                            value: `<@${interaction.user.id}>`,
                             inline: false,
                         },
                     );

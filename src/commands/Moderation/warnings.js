@@ -1,4 +1,3 @@
-import { getColor } from '../../config/bot.js';
 import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { createEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
@@ -40,18 +39,22 @@ export default {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
                     createEmbed({
-                        title: `Warnings: ${target.tag}`,
-                        description: "This user has no recorded warnings.",
-                    }).setColor(getColor('success')),
+                        title: '✅ No Warnings',
+                        description: `<@${target.id}> has no recorded warnings.`,
+                        color: 'success',
+                        thumbnail: target.displayAvatarURL({ size: 256 }),
+                    }),
                 ],
             });
             return;
         }
 
         const embed = createEmbed({
-            title: `Warnings: ${target.tag}`,
-            description: `Total Warnings: **${totalWarns}**`,
-        }).setColor(getColor('warning'));
+            title: `Warnings: ${target.username}`,
+            description: `<@${target.id}> has **${totalWarns}** warning${totalWarns === 1 ? '' : 's'} on record.`,
+            color: 'warning',
+            thumbnail: target.displayAvatarURL({ size: 256 }),
+        });
 
         const warningFields = validWarnings
             .map((w, i) => {
@@ -82,8 +85,8 @@ export default {
             guild: interaction.guild,
             event: {
                 action: "Warnings Viewed",
-                target: `${target.tag} (${target.id})`,
-                executor: `${interaction.user.tag} (${interaction.user.id})`,
+                target: `<@${target.id}>`,
+                executor: `<@${interaction.user.id}>`,
                 reason: `Viewed ${totalWarns} warnings`,
                 metadata: {
                     userId: target.id,

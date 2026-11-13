@@ -1,14 +1,12 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { createEmbed } from '../../utils/embeds.js';
+import { avatarURL, progressLabel, userMention } from '../../utils/theme.js';
 
 const MIN_SIZE = 1;
 const MAX_SIZE = 12;
 
 function randomSize() {
   return Math.floor(Math.random() * (MAX_SIZE - MIN_SIZE + 1)) + MIN_SIZE;
-}
-
-function mention(user) {
-  return user?.id ? `<@${user.id}>` : String(user);
 }
 
 export default {
@@ -25,6 +23,20 @@ export default {
 
   async execute(interaction) {
     const user = interaction.options.getUser('user') || interaction.user;
-    return interaction.reply({ content: `${mention(user)}: Your dih is \`${randomSize()} inches\`` });
+    const size = randomSize();
+    const percent = Math.round((size / MAX_SIZE) * 100);
+
+    const embed = createEmbed({
+      title: '📏 Dih Meter',
+      description: [
+        `**${userMention(user)}** measured **${size} inches**.`,
+        '',
+        progressLabel(percent),
+      ].join('\n'),
+      color: size >= 9 ? 'accent' : 'primary',
+      thumbnail: avatarURL(user),
+    });
+
+    return interaction.reply({ embeds: [embed] });
   },
 };

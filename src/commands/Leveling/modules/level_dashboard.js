@@ -59,7 +59,7 @@ function buildDashboardEmbed(cfg, guild) {
             { name: 'Ignored Channels', value: ignoredChValue, inline: true },
             { name: 'Ignored Roles', value: ignoredRoValue, inline: true },
         )
-        .setFooter({ text: 'Dashboard closes after 10 minutes of inactivity' })
+        .setFooter({ text: 'Onyx ? Dashboard closes after 10 minutes of inactivity' })
         .setTimestamp();
 }
 

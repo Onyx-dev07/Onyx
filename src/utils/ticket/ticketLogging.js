@@ -98,14 +98,14 @@ function getLogChannelForEventType(config, eventType) {
 }
 
 const TICKET_EVENT_STYLES = {
-  open: { color: 0x5865F2, title: 'Ticket Created' },
-  close: { color: 0xED4245, title: 'Ticket Closed' },
-  delete: { color: 0x8b0000, title: 'Ticket Deleted' },
-  claim: { color: 0x5865F2, title: 'Ticket Claimed' },
-  unclaim: { color: 0xFAA61A, title: 'Ticket Unclaimed' },
-  priority: { color: 0x9b59b6, title: 'Priority Updated' },
-  transcript: { color: 0x57F287, title: 'Transcript Generated' },
-  feedback: { color: 0x57F287, title: 'Feedback Received' },
+  open: { color: 0x5865F2, title: '🎫 Ticket Created' },
+  close: { color: 0xED4245, title: '🔒 Ticket Closed' },
+  delete: { color: 0x8b0000, title: '🗑️ Ticket Deleted' },
+  claim: { color: 0x5865F2, title: '📌 Ticket Claimed' },
+  unclaim: { color: 0xFAA61A, title: '🔓 Ticket Unclaimed' },
+  priority: { color: 0x9b59b6, title: '🎯 Priority Updated' },
+  transcript: { color: 0x57F287, title: '📜 Transcript Generated' },
+  feedback: { color: 0x57F287, title: '⭐ Feedback Received' },
 };
 
 async function createTicketLogEmbed(guild, event) {
@@ -119,7 +119,7 @@ async function createTicketLogEmbed(guild, event) {
   let inlineFields = [];
   let fields = [];
   let author = null;
-  let footer = { text: 'Onyx Ticketing' };
+  let footer = { text: 'Onyx' };
 
   switch (event.type) {
     case 'open':

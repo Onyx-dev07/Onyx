@@ -108,7 +108,7 @@ async function jailMember(guild, member, reason, moderator) {
     if (jailChannel) {
       const jailAlert = createEmbed({
         title: 'Member Jailed',
-        description: `<@${member.id}> has been detained.\n**Reason:** ${reason}\n**Moderator:** ${moderator.tag}`,
+        description: `<@${member.id}> has been detained.\n**Reason:** ${reason}\n**Moderator:** <@${moderator.id}>`,
         color: config.colors.error
       });
       await jailChannel.send({ content: `<@${member.id}>`, embeds: [jailAlert] });

@@ -1,4 +1,4 @@
-import { EmbedBuilder } from 'discord.js';
+import { createEmbed, warningEmbed } from '../../../utils/embeds.js';
 import { getAllBirthdays } from '../../../services/birthdayService.js';
 import { deleteBirthday } from '../../../utils/database.js';
 import { logger } from '../../../utils/logger.js';
@@ -13,10 +13,10 @@ export default {
         const sortedBirthdays = await getAllBirthdays(client, guildId);
 
         if (sortedBirthdays.length === 0) {
-            const embed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle('No Birthdays')
-                .setDescription('No birthdays have been set in this server yet.');
+            const embed = warningEmbed(
+                'No Birthdays',
+                'No birthdays have been set in this server yet.'
+            );
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [embed]
             });
@@ -35,7 +35,7 @@ export default {
                 continue;
             }
             displayIndex++;
-            birthdayList += `${displayIndex}. <@${birthday.userId}> - ${birthday.monthName} ${birthday.day}\n`;
+            birthdayList += `${displayIndex}. <@${birthday.userId}> · ${birthday.monthName} ${birthday.day}\n`;
         }
 
         if (fetchedMembers && staleUserIds.length > 0) {
@@ -45,21 +45,24 @@ export default {
         }
 
         if (displayIndex === 0) {
-            const embed = new EmbedBuilder()
-                .setColor(0xFF0000)
-                .setTitle('No Birthdays')
-                .setDescription('No birthdays have been set by current server members.');
+            const embed = warningEmbed(
+                'No Birthdays',
+                'No birthdays have been set by current server members.'
+            );
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [embed]
             });
         }
 
-        birthdayList = `**${displayIndex} birthday${displayIndex !== 1 ? 's' : ''} in ${interaction.guild.name}**\n\n` + birthdayList;
-
-        const embed = new EmbedBuilder()
-            .setColor(0x00FF00)
-            .setTitle('Server Birthdays')
-            .setDescription(`${birthdayList}\n\nTotal: ${displayIndex} birthday${displayIndex !== 1 ? 's' : ''}`);
+        const embed = createEmbed({
+            title: '🎂 Server Birthdays',
+            description: [
+                `**${displayIndex}** birthday${displayIndex !== 1 ? 's' : ''} in ${interaction.guild.name}`,
+                '',
+                birthdayList.trim()
+            ].join('\n'),
+            color: 'primary'
+        });
 
         await InteractionHelper.safeEditReply(interaction, {
             embeds: [embed]

@@ -121,8 +121,8 @@ export default {
                         guild: interaction.guild,
                         event: {
                             action: "Member Banned",
-                            target: `${user.tag} (${user.id})`,
-                            executor: `${interaction.user.tag} (${interaction.user.id})`,
+                            target: `<@${user.id}>`,
+                            executor: `<@${interaction.user.id}>`,
                             reason: `${reason} (Mass Ban)`,
                             metadata: {
                                 userId: user.id,
@@ -150,7 +150,7 @@ export default {
             if (results.successful.length > 0) {
                 description += `✅ **Successfully Banned (${results.successful.length}):**\n`;
                 results.successful.forEach(result => {
-                    description += `• ${result.user} (${result.userId})\n`;
+                    description += `• <@${result.userId}>\n`;
                 });
                 description += '\n';
             }
@@ -158,7 +158,7 @@ export default {
             if (results.skipped.length > 0) {
                 description += `⚠️ **Skipped (${results.skipped.length}):**\n`;
                 results.skipped.forEach(result => {
-                    description += `• ${result.user} - ${result.reason}\n`;
+                    description += `• <@${result.userId}> — ${result.reason}\n`;
                 });
                 description += '\n';
             }
@@ -166,7 +166,7 @@ export default {
             if (results.failed.length > 0) {
                 description += `❌ **Failed (${results.failed.length}):**\n`;
                 results.failed.forEach(result => {
-                    description += `• ${result.userId} - ${result.reason}\n`;
+                    description += `• <@${result.userId}> — ${result.reason}\n`;
                 });
             }
 

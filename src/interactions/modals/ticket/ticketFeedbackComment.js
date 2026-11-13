@@ -1,15 +1,12 @@
-import { EmbedBuilder, MessageFlags } from 'discord.js';
+import { MessageFlags } from 'discord.js';
+import { createEmbed } from '../../../utils/embeds.js';
 import { getTicketData, saveTicketData } from '../../../utils/database.js';
 import { logger } from '../../../utils/logger.js';
-import { getColor } from '../../../config/bot.js';
 import { logTicketFeedback } from '../../../utils/ticket/ticketLogging.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
 
 function buildEmbed(title, description, color) {
-    return new EmbedBuilder()
-        .setTitle(title)
-        .setDescription(description)
-        .setColor(color);
+    return createEmbed({ title, description, color });
 }
 
 export default {
@@ -23,7 +20,7 @@ export default {
                 embeds: [buildEmbed(
                     '⚠️ Invalid Feedback Submission',
                     'This feedback form appears to be malformed.',
-                    getColor('error'),
+                    'error',
                 )],
                 flags: MessageFlags.Ephemeral,
             });
@@ -36,7 +33,7 @@ export default {
                 embeds: [buildEmbed(
                     '⚠️ Empty Feedback',
                     'Please enter a comment before submitting your feedback.',
-                    getColor('warning'),
+                    'warning',
                 )],
                 flags: MessageFlags.Ephemeral,
             });
@@ -60,7 +57,7 @@ export default {
                 embeds: [buildEmbed(
                     '⚠️ Ticket Not Found',
                     'Could not find the ticket associated with this feedback.',
-                    getColor('error'),
+                    'error',
                 )],
             });
             return;
@@ -71,7 +68,7 @@ export default {
                 embeds: [buildEmbed(
                     '❌ Not Allowed',
                     'Only the ticket creator can submit feedback for this ticket.',
-                    getColor('error'),
+                    'error',
                 )],
             });
             return;
@@ -107,7 +104,7 @@ export default {
             embeds: [buildEmbed(
                 '✅ Feedback Submitted',
                 'Your written feedback has been recorded. Thank you for helping us improve!',
-                getColor('success'),
+                'success',
             )],
         });
 

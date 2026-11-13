@@ -83,7 +83,7 @@ function buildDashboardEmbed(cfg, guild, verifiedUserCount = 0, conflictSummary 
     }
 
     return embed
-        .setFooter({ text: 'Dashboard closes after 10 minutes of inactivity' })
+        .setFooter({ text: 'Onyx ? Dashboard closes after 10 minutes of inactivity' })
         .setTimestamp();
 }
 
@@ -127,7 +127,7 @@ function buildButtonRow(cfg, guildId, disabled = false, panelStatus = null) {
             new ButtonBuilder()
                 .setCustomId(`verif_cfg_repost_${guildId}`)
                 .setLabel('Repost Panel')
-                .setStyle(ButtonStyle.Primary)
+                .setStyle(ButtonStyle.Secondary)
                 .setEmoji('📌')
                 .setDisabled(disabled),
         );

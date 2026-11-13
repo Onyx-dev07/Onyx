@@ -101,11 +101,13 @@ export async function startDashboardSession({
             }
 
             const timeoutEmbed = new EmbedBuilder()
-                .setTitle('Dashboard Timed Out')
+                .setTitle('⌛ Dashboard Timed Out')
                 .setDescription(
                     'This dashboard has been closed due to inactivity. Please run the command again to continue.',
                 )
-                .setColor(getColor('error'));
+                .setColor(getColor('error'))
+                .setFooter({ text: 'Onyx' })
+                .setTimestamp();
 
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [timeoutEmbed],

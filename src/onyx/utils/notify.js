@@ -42,8 +42,7 @@ async function sendModerationDM(user, { action, guild, reason, moderator }) {
           { name: 'Reason', value: reasonText, inline: false },
           ...(moderator ? [{ name: 'Moderator', value: moderator, inline: true }] : [])
         ],
-        color: config.colors.error,
-        footer: false
+        color: config.colors.error
       })]
     });
     return true;

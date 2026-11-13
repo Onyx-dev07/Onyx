@@ -15,10 +15,10 @@ const RIGHT_X = 680;
 const CENTER_X = WIDTH / 2;
 const FRAME_COUNT = 14;
 const FRAME_DELAY = 70;
-const CRIMSON = '#dc143c';
-const CRIMSON_LIGHT = '#ff5c7a';
-const TEXT = '#f2f3f5';
-const MUTED = '#8a8f99';
+const ACCENT = '#ff8fb1';
+const ACCENT_LIGHT = '#f7a8c4';
+const TEXT = '#f5f5f7';
+const MUTED = '#7c8290';
 
 function roundedRect(ctx, x, y, width, height, radius) {
   const r = Math.min(radius, width / 2, height / 2);
@@ -46,9 +46,9 @@ function fitText(ctx, text, maxWidth) {
 
 function drawBackground(ctx, phase) {
   const surface = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  surface.addColorStop(0, '#0a0b0d');
-  surface.addColorStop(0.55, '#111216');
-  surface.addColorStop(1, '#0a0b0d');
+  surface.addColorStop(0, '#0b0b10');
+  surface.addColorStop(0.55, '#13131b');
+  surface.addColorStop(1, '#0b0b10');
   ctx.fillStyle = surface;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -69,13 +69,13 @@ function drawBackground(ctx, phase) {
 
   const pulse = (Math.sin(phase) + 1) / 2;
   const glow = ctx.createRadialGradient(CENTER_X, 150, 20, CENTER_X, 150, 330);
-  glow.addColorStop(0, `rgba(220, 20, 60, ${0.16 + pulse * 0.14})`);
-  glow.addColorStop(0.55, `rgba(220, 20, 60, ${0.04 + pulse * 0.05})`);
-  glow.addColorStop(1, 'rgba(220, 20, 60, 0)');
+  glow.addColorStop(0, `rgba(255, 143, 177, ${0.16 + pulse * 0.14})`);
+  glow.addColorStop(0.55, `rgba(255, 143, 177, ${0.04 + pulse * 0.05})`);
+  glow.addColorStop(1, 'rgba(255, 143, 177, 0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  ctx.fillStyle = CRIMSON;
+  ctx.fillStyle = ACCENT;
   ctx.fillRect(48, 42, 8, 8);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
@@ -109,17 +109,17 @@ function drawHeart(ctx, cx, cy, size, percent, phase) {
   const beat = 1 + Math.sin(phase) * 0.08;
 
   ctx.save();
-  ctx.shadowColor = 'rgba(220, 20, 60, 0.65)';
+  ctx.shadowColor = 'rgba(255, 143, 177, 0.65)';
   ctx.shadowBlur = 26 + (Math.sin(phase) + 1) * 12;
   heartPath(ctx, cx, cy, size * beat);
 
   const fill = ctx.createLinearGradient(0, cy - size / 2, 0, cy + size * 0.35);
   if (percent >= 70) {
-    fill.addColorStop(0, CRIMSON_LIGHT);
-    fill.addColorStop(1, CRIMSON);
+    fill.addColorStop(0, ACCENT_LIGHT);
+    fill.addColorStop(1, ACCENT);
   } else {
-    fill.addColorStop(0, '#b4545b');
-    fill.addColorStop(1, '#7d2731');
+    fill.addColorStop(0, '#b07a8a');
+    fill.addColorStop(1, '#7a4252');
   }
   ctx.fillStyle = fill;
   ctx.fill();
@@ -133,15 +133,15 @@ function drawHeart(ctx, cx, cy, size, percent, phase) {
     const y = cy + Math.sin(angle) * radius * 0.7;
     ctx.beginPath();
     ctx.arc(x, y, 2.4, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 92, 122, ${0.35 + (Math.sin(phase + i) + 1) * 0.2})`;
+    ctx.fillStyle = `rgba(247, 168, 196, ${0.35 + (Math.sin(phase + i) + 1) * 0.2})`;
     ctx.fill();
   }
 }
 
 function drawPlaceholderAvatar(ctx, cx, cy, radius, label) {
   const gradient = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
-  gradient.addColorStop(0, '#2c2f36');
-  gradient.addColorStop(1, '#17181c');
+  gradient.addColorStop(0, '#1b1b24');
+  gradient.addColorStop(1, '#101017');
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -177,7 +177,7 @@ function drawAvatar(ctx, avatar, user, cx, percent, phase) {
   ctx.beginPath();
   ctx.arc(cx, AVATAR_Y, (AVATAR_RADIUS + 5) * ringPulse, 0, Math.PI * 2);
   ctx.lineWidth = 2;
-  ctx.strokeStyle = percent >= 70 ? 'rgba(220, 20, 60, 0.65)' : 'rgba(255, 255, 255, 0.16)';
+  ctx.strokeStyle = percent >= 70 ? 'rgba(255, 143, 177, 0.65)' : 'rgba(255, 255, 255, 0.16)';
   ctx.stroke();
   ctx.restore();
 }
@@ -204,8 +204,8 @@ function drawMeter(ctx, percent) {
   if (filled > 0) {
     roundedRect(ctx, barX, barY, filled, barHeight, barHeight / 2);
     const fill = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
-    fill.addColorStop(0, CRIMSON_LIGHT);
-    fill.addColorStop(1, CRIMSON);
+    fill.addColorStop(0, ACCENT_LIGHT);
+    fill.addColorStop(1, ACCENT);
     ctx.fillStyle = fill;
     ctx.fill();
   }
@@ -247,8 +247,8 @@ function drawFrame(ctx, { first, second, percent, name, verdict, firstAvatar, se
   drawName(ctx, second, RIGHT_X);
 
   const score = ctx.createLinearGradient(0, 180, 0, 236);
-  score.addColorStop(0, CRIMSON_LIGHT);
-  score.addColorStop(1, CRIMSON);
+  score.addColorStop(0, ACCENT_LIGHT);
+  score.addColorStop(1, ACCENT);
   ctx.fillStyle = score;
   ctx.font = 'bold 50px sans-serif';
   ctx.textAlign = 'center';

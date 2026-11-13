@@ -270,29 +270,32 @@ The Onyx security suite reads identity, colors, emoji slots, and security defaul
 <a name="design-language"></a>
 ## Design Language
 
-Onyx deliberately avoids noisy Unicode decoration. The interface is built from typography, neutral surfaces, hairlines, and one consistent accent.
+Onyx uses one dark, minimal visual language across every module: near-black surfaces, charcoal embed cards, a single soft-pink accent, and restrained emoji.
 
-- **Two accents.** ONYX crimson for actions and attention; dark charcoal for passive information.
-- **Written status.** Headings such as `SUCCESS`, `ERROR`, `WARNING`, and `NOTICE` carry the meaning, so color never has to.
-- **Action cards.** Completed actions read as one approve-marked sentence: the staff member first, the action and target next, then duration. Blocked actions lead with a deny marker and the blocked title. Reason, expiry, and DM status drop to muted subtext.
-- **Quiet chrome.** Routine replies carry no footer or timestamp. Panels and paginated lists use one muted footer line.
-- **Interactive controls.** Long lists paginate with Previous, Next, and Close buttons. Giveaways use buttons instead of reactions.
+- **Pink accent.** `primary` `#f7a8c4` and `accent` `#ff8fb1` drive titles, highlights, progress bars, and important values.
+- **Near-black surfaces.** `dark` `#0b0b10`, `surface` `#17171f`, and `border` `#2a2a36` keep cards compact and quiet.
+- **Status color.** `success` `#6ee7a8`, `warning` `#ffc66d`, `error` `#ff6b81`, and `info` `#a8c7ff`. Status replies lead with a single emoji (✅ ❌ ⚠️ ℹ️) and a clear title.
+- **One embed builder.** Every response is built through [`src/utils/embeds.js`](src/utils/embeds.js), which centralizes colors, footers, timestamps, truncation, and the shared moderation receipt (`target`, `moderator`, `duration`, `case ID`, `reason`).
+- **Mentions over raw IDs.** User, role, and channel references render as Discord mentions; raw IDs stay in diagnostics and audit logs.
+- **Onyx footer.** Embeds carry the Onyx footer and timestamp by default, and individual embeds may still override the footer.
 
 Colors and optional emoji live in [`src/config.json`](src/config.json):
 
 ```json
 {
   "colors": {
-    "accent": "#2b2d31",
-    "crimson": "#dc143c",
-    "primary": "#2b2d31",
-    "success": "#43b581",
-    "error": "#f04747",
-    "warning": "#faa61a",
-    "info": "#5865f2",
-    "dark": "#1b1c1e",
-    "charcoal": "#24262a",
-    "muted": "#72767d"
+    "accent": "#ff8fb1",
+    "crimson": "#ff8fb1",
+    "primary": "#f7a8c4",
+    "surface": "#17171f",
+    "border": "#2a2a36",
+    "success": "#6ee7a8",
+    "error": "#ff6b81",
+    "warning": "#ffc66d",
+    "info": "#a8c7ff",
+    "dark": "#0b0b10",
+    "charcoal": "#17171f",
+    "muted": "#7c8290"
   }
 }
 ```
