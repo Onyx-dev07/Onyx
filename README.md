@@ -94,7 +94,8 @@ Every command works as both a **slash command** (`/ban`) and a **prefix command*
 - **Todo Lists** — Personal task management
 - **First Message** — Jump to a channel's first message
 - **Search & Tools** — Lookup and quality-of-life commands
-- **Fun Commands** — Random facts, wanted posters, and more
+- **Prefix Control** — View or change the server prefix with `/setprefix` (or `!prefix`)
+- **Fun Commands** — `dih`, `puh`, `lesbian`, and an animated `ship` meter with a custom heart banner
 
 </td>
 </tr>
@@ -312,7 +313,7 @@ Onyx exposes two command suites:
 
 | Category | Commands | Examples |
 | --- | --- | --- |
-| **Native core** | 94 global slash commands | `/help`, `/ban`, `/economy`, `/level`, `/giveaway`, `/ticket`, `/logging`, `/birthday`, `/verify`, `/stats` |
+| **Native core** | 99 global slash commands | `/help`, `/ship`, `/setprefix`, `/ban`, `/economy`, `/level`, `/giveaway`, `/ticket`, `/logging`, `/birthday`, `/verify`, `/stats` |
 | **Onyx security** | 28 per-guild slash commands | `/antinuke`, `/antiraid`, `/automod`, `/whitelist`, `/security`, `/fortress`, `/jail`, `/vc`, `/spamraid` |
 
 Use `/help` to browse every category in Discord. The **Onyx** category appears automatically when the security suite is loaded.
