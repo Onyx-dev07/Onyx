@@ -93,13 +93,13 @@ async function shipPayload(first, second) {
   try {
     const { createShipCard } = await import('../../utils/shipCard.js');
     const buffer = await createShipCard({ first, second, ...stats });
-    const attachment = new AttachmentBuilder(buffer, { name: 'onyx-ship.gif' });
+    const attachment = new AttachmentBuilder(buffer, { name: 'onyx-ship.png' });
 
     return {
       files: [attachment],
       embeds: [
         createEmbed({
-          image: 'attachment://onyx-ship.gif',
+          image: 'attachment://onyx-ship.png',
           color,
         }),
       ],

@@ -1,11 +1,8 @@
 import { createCanvas, loadImage } from '@napi-rs/canvas';
-import gifenc from 'gifenc';
 
-const { GIFEncoder, quantize, applyPalette } = gifenc;
-
-// Animated ship card: charcoal surface, faint grid, one crimson accent, and a
-// pulsing heart between the two avatars. Rendered as a looping GIF so the card
-// feels alive without any external image service.
+// Static ship card: soft pink background, a single heart between the two
+// avatars, and the same names, score, meter, and verdict as before. Rendered
+// as a PNG so there is no animation loop or GIF encoding.
 const WIDTH = 900;
 const HEIGHT = 400;
 const AVATAR_RADIUS = 82;
@@ -13,12 +10,11 @@ const AVATAR_Y = 180;
 const LEFT_X = 220;
 const RIGHT_X = 680;
 const CENTER_X = WIDTH / 2;
-const FRAME_COUNT = 14;
-const FRAME_DELAY = 70;
-const ACCENT = '#ff8fb1';
-const ACCENT_LIGHT = '#f7a8c4';
-const TEXT = '#f5f5f7';
-const MUTED = '#7c8290';
+const TEXT = '#3d1524';
+const MUTED = '#8a4a60';
+const ACCENT = '#d6336c';
+const ACCENT_LIGHT = '#a61e4d';
+const SURFACE = 'rgba(255, 255, 255, 0.55)';
 
 function roundedRect(ctx, x, y, width, height, radius) {
   const r = Math.min(radius, width / 2, height / 2);
@@ -44,15 +40,15 @@ function fitText(ctx, text, maxWidth) {
   return `${clipped.trimEnd()}…`;
 }
 
-function drawBackground(ctx, phase) {
-  const surface = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  surface.addColorStop(0, '#0b0b10');
-  surface.addColorStop(0.55, '#13131b');
-  surface.addColorStop(1, '#0b0b10');
+function drawBackground(ctx) {
+  const surface = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+  surface.addColorStop(0, '#ffd3e0');
+  surface.addColorStop(0.55, '#ffb3c9');
+  surface.addColorStop(1, '#ff8fb1');
   ctx.fillStyle = surface;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
   ctx.lineWidth = 1;
   for (let x = 0; x <= WIDTH; x += 50) {
     ctx.beginPath();
@@ -67,11 +63,10 @@ function drawBackground(ctx, phase) {
     ctx.stroke();
   }
 
-  const pulse = (Math.sin(phase) + 1) / 2;
   const glow = ctx.createRadialGradient(CENTER_X, 150, 20, CENTER_X, 150, 330);
-  glow.addColorStop(0, `rgba(255, 143, 177, ${0.16 + pulse * 0.14})`);
-  glow.addColorStop(0.55, `rgba(255, 143, 177, ${0.04 + pulse * 0.05})`);
-  glow.addColorStop(1, 'rgba(255, 143, 177, 0)');
+  glow.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+  glow.addColorStop(0.55, 'rgba(255, 255, 255, 0.16)');
+  glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -87,7 +82,7 @@ function drawBackground(ctx, phase) {
   ctx.fillStyle = MUTED;
   ctx.fillText('SHIP METER', WIDTH - 48, 52);
 
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+  ctx.strokeStyle = 'rgba(61, 21, 36, 0.18)';
   ctx.beginPath();
   ctx.moveTo(48, 70);
   ctx.lineTo(WIDTH - 48, 70);
@@ -105,56 +100,42 @@ function heartPath(ctx, cx, cy, size) {
   ctx.closePath();
 }
 
-function drawHeart(ctx, cx, cy, size, percent, phase) {
-  const beat = 1 + Math.sin(phase) * 0.08;
-
+function drawHeart(ctx, cx, cy, size, percent) {
   ctx.save();
-  ctx.shadowColor = 'rgba(255, 143, 177, 0.65)';
-  ctx.shadowBlur = 26 + (Math.sin(phase) + 1) * 12;
-  heartPath(ctx, cx, cy, size * beat);
+  ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+  ctx.shadowBlur = 28;
+  heartPath(ctx, cx, cy, size);
 
   const fill = ctx.createLinearGradient(0, cy - size / 2, 0, cy + size * 0.35);
   if (percent >= 70) {
-    fill.addColorStop(0, ACCENT_LIGHT);
+    fill.addColorStop(0, '#ff7aa2');
     fill.addColorStop(1, ACCENT);
   } else {
-    fill.addColorStop(0, '#b07a8a');
-    fill.addColorStop(1, '#7a4252');
+    fill.addColorStop(0, '#c98a9c');
+    fill.addColorStop(1, '#9c6474');
   }
   ctx.fillStyle = fill;
   ctx.fill();
   ctx.restore();
-
-  // Small orbiting sparks around the heart.
-  for (let i = 0; i < 3; i += 1) {
-    const angle = phase + (i * Math.PI * 2) / 3;
-    const radius = size * 0.72;
-    const x = cx + Math.cos(angle) * radius;
-    const y = cy + Math.sin(angle) * radius * 0.7;
-    ctx.beginPath();
-    ctx.arc(x, y, 2.4, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(247, 168, 196, ${0.35 + (Math.sin(phase + i) + 1) * 0.2})`;
-    ctx.fill();
-  }
 }
 
 function drawPlaceholderAvatar(ctx, cx, cy, radius, label) {
   const gradient = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
-  gradient.addColorStop(0, '#1b1b24');
-  gradient.addColorStop(1, '#101017');
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0.55)');
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.fillStyle = TEXT;
   ctx.font = `bold ${Math.round(radius * 0.75)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(String(label || '?').charAt(0).toUpperCase(), cx, cy + 2);
 }
 
-function drawAvatar(ctx, avatar, user, cx, percent, phase) {
+function drawAvatar(ctx, avatar, user, cx, percent) {
   ctx.save();
   ctx.beginPath();
   ctx.arc(cx, AVATAR_Y, AVATAR_RADIUS, 0, Math.PI * 2);
@@ -172,12 +153,11 @@ function drawAvatar(ctx, avatar, user, cx, percent, phase) {
   }
   ctx.restore();
 
-  const ringPulse = 1 + Math.sin(phase + 0.6) * 0.02;
   ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, AVATAR_Y, (AVATAR_RADIUS + 5) * ringPulse, 0, Math.PI * 2);
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = percent >= 70 ? 'rgba(255, 143, 177, 0.65)' : 'rgba(255, 255, 255, 0.16)';
+  ctx.arc(cx, AVATAR_Y, AVATAR_RADIUS + 5, 0, Math.PI * 2);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = percent >= 70 ? 'rgba(255, 255, 255, 0.95)' : 'rgba(61, 21, 36, 0.28)';
   ctx.stroke();
   ctx.restore();
 }
@@ -197,15 +177,15 @@ function drawMeter(ctx, percent) {
   const barHeight = 8;
 
   roundedRect(ctx, barX, barY, barWidth, barHeight, barHeight / 2);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.fillStyle = SURFACE;
   ctx.fill();
 
   const filled = Math.max(percent === 0 ? 0 : barHeight, (barWidth * percent) / 100);
   if (filled > 0) {
     roundedRect(ctx, barX, barY, filled, barHeight, barHeight / 2);
     const fill = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
-    fill.addColorStop(0, ACCENT_LIGHT);
-    fill.addColorStop(1, ACCENT);
+    fill.addColorStop(0, ACCENT);
+    fill.addColorStop(1, ACCENT_LIGHT);
     ctx.fillStyle = fill;
     ctx.fill();
   }
@@ -234,21 +214,19 @@ async function fetchAvatar(user) {
   }
 }
 
-function drawFrame(ctx, { first, second, percent, name, verdict, firstAvatar, secondAvatar, frame }) {
-  const phase = (frame / FRAME_COUNT) * Math.PI * 2;
+function drawCard(ctx, { first, second, percent, name, verdict, firstAvatar, secondAvatar }) {
+  drawBackground(ctx);
 
-  drawBackground(ctx, phase);
-
-  drawAvatar(ctx, firstAvatar, first, LEFT_X, percent, phase);
-  drawAvatar(ctx, secondAvatar, second, RIGHT_X, percent, phase);
-  drawHeart(ctx, CENTER_X, 138, 78, percent, phase);
+  drawAvatar(ctx, firstAvatar, first, LEFT_X, percent);
+  drawAvatar(ctx, secondAvatar, second, RIGHT_X, percent);
+  drawHeart(ctx, CENTER_X, 138, 78, percent);
 
   drawName(ctx, first, LEFT_X);
   drawName(ctx, second, RIGHT_X);
 
   const score = ctx.createLinearGradient(0, 180, 0, 236);
-  score.addColorStop(0, ACCENT_LIGHT);
-  score.addColorStop(1, ACCENT);
+  score.addColorStop(0, ACCENT);
+  score.addColorStop(1, ACCENT_LIGHT);
   ctx.fillStyle = score;
   ctx.font = 'bold 50px sans-serif';
   ctx.textAlign = 'center';
@@ -262,7 +240,7 @@ function drawFrame(ctx, { first, second, percent, name, verdict, firstAvatar, se
   drawMeter(ctx, percent);
 
   ctx.font = '16px sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.fillStyle = 'rgba(61, 21, 36, 0.72)';
   ctx.fillText(fitText(ctx, verdict, 720), CENTER_X, 372);
 }
 
@@ -275,33 +253,17 @@ async function createShipCard({ first, second, percent, name, verdict }) {
     fetchAvatar(second),
   ]);
 
-  const gif = GIFEncoder();
+  drawCard(ctx, {
+    first,
+    second,
+    percent,
+    name,
+    verdict,
+    firstAvatar,
+    secondAvatar,
+  });
 
-  for (let frame = 0; frame < FRAME_COUNT; frame += 1) {
-    drawFrame(ctx, {
-      first,
-      second,
-      percent,
-      name,
-      verdict,
-      firstAvatar,
-      secondAvatar,
-      frame,
-    });
-
-    const { data } = ctx.getImageData(0, 0, WIDTH, HEIGHT);
-    const palette = quantize(data, 256);
-    const index = applyPalette(data, palette);
-
-    gif.writeFrame(index, WIDTH, HEIGHT, {
-      palette,
-      delay: FRAME_DELAY,
-      ...(frame === 0 ? { repeat: 0 } : {}),
-    });
-  }
-
-  gif.finish();
-  return Buffer.from(gif.bytes());
+  return canvas.encode('png');
 }
 
 export { createShipCard, WIDTH, HEIGHT };
