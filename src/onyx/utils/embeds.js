@@ -1,18 +1,19 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
 
-// Onyx visual language: dark charcoal cards, one ONYX red accent stripe,
-// typographic separators instead of decoration.
-const DEFAULT_COLOR = 0x2b2d31;
-const BRAND_NAME = String(config.botName || 'ONYX').toUpperCase();
+// TitanBot visual language: crimson accent, title-case status headings, and
+// typographic separators instead of decoration. Onyx keeps its name on the
+// security-specific labels and footers.
+const DEFAULT_COLOR = 0xdc143c;
+const BRAND_NAME = String(config.botName || 'Onyx');
 
 // Every card carries the same small status heading so tone is readable
 // without relying on color.
-const STATUS_HEADINGS = {
-  success: 'SUCCESS',
-  error: 'ERROR',
-  warning: 'WARNING',
-  info: 'NOTICE'
+const STATUS_TITLES = {
+  success: 'Success',
+  error: 'Error',
+  warning: 'Warning',
+  info: 'Information'
 };
 
 // Action receipts read as one sentence, so every title maps to the verb that
@@ -200,13 +201,13 @@ function bullets(items) {
 function keyValues(entries) {
   return entries
     .filter(Boolean)
-    .map(([label, value]) => `**${label.toUpperCase()}**\n${value}`)
+    .map(([label, value]) => `**${label}**\n${value}`)
     .join('\n\n');
 }
 
-// A labeled block: small caps label above a value.
+// A labeled block: bold label above a value.
 function section(label, value) {
-  return `**${String(label).toUpperCase()}**\n${value}`;
+  return `**${label}**\n${value}`;
 }
 
 // Compact status row used by configuration panels.
@@ -231,16 +232,19 @@ function footerPayload(options) {
 /**
  * Base embed builder.
  *
- * Every card inherits the same ONYX author row and the same accent stripe.
+ * Matches the native TitanBot embed theme: no implicit author row, title-case
+ * titles, and the global protocol colors. Onyx security cards that need a
+ * brand row pass one explicitly.
+ *
  * Quiet by default: no timestamp, no marketing footer. Cards that need a
  * timestamp pass `timestamp: true`; replies that need context pass a footer.
  */
 function createEmbed(options = {}) {
   const embed = new EmbedBuilder()
-    .setColor(options.color || config.colors.accent || DEFAULT_COLOR);
+    .setColor(options.color || config.colors.primary || DEFAULT_COLOR);
 
-  if (options.author !== false) {
-    embed.setAuthor(options.author || brandAuthor());
+  if (options.author) {
+    embed.setAuthor(options.author);
   }
 
   if (options.title) {
@@ -260,13 +264,11 @@ function createEmbed(options = {}) {
   return embed;
 }
 
-// Thin action replies: a small status heading, one line, one accent, no footer.
-function actionReply(emojiName, description, color) {
-  const heading = STATUS_HEADINGS[emojiName];
-  const body = withEmoji(emojiName, description);
-
+// Thin action replies: a TitanBot-style status title, one line, one accent.
+function actionReply(kind, description, color) {
   return createEmbed({
-    description: heading ? `${muted(heading)}\n${body}` : body,
+    title: STATUS_TITLES[kind],
+    description: String(description || ''),
     color,
     footer: false
   });
@@ -288,11 +290,11 @@ function infoEmbed(description) {
   return actionReply('info', description, config.colors.info);
 }
 
-// Core security cards use the accent color by default.
+// Core security cards use the bot's primary color by default.
 function securityEmbed(options = {}) {
   return createEmbed({
     ...options,
-    color: options.color || config.colors.accent || config.colors.primary || DEFAULT_COLOR
+    color: options.color || config.colors.primary || config.colors.accent || DEFAULT_COLOR
   });
 }
 
@@ -333,7 +335,7 @@ function actionEmbed(options = {}) {
     dmDelivered,
     fields = [],
     description,
-    color = config.colors.accent || config.colors.primary || DEFAULT_COLOR
+    color = config.colors.primary || config.colors.accent || DEFAULT_COLOR
   } = options;
 
   const meta = [];
@@ -394,7 +396,7 @@ function actionEmbed(options = {}) {
 module.exports = {
   DEFAULT_COLOR,
   BRAND_NAME,
-  STATUS_HEADINGS,
+  STATUS_TITLES,
   UI,
   emoji,
   withEmoji,
