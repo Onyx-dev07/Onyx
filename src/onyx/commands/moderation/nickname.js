@@ -14,7 +14,9 @@ function nicknamePayload({ member, moderator, nickname }) {
   if (!nickname) {
     return {
       embeds: [createEmbed({
-        description: `${approve()} **<@${moderator.id}>**: Cleared the nickname of <@${member.id}>.`
+        description: `${approve()} **<@${moderator.id}>**: Cleared the nickname of <@${member.id}>.`,
+        footer: false,
+        timestamp: false
       })],
       components: [actionButtons()]
     };
@@ -24,7 +26,9 @@ function nicknamePayload({ member, moderator, nickname }) {
 
   return {
     embeds: [createEmbed({
-      description: `${approve()} **<@${moderator.id}>**: Set the nickname of <@${member.id}> to \`${safeNickname}\`.`
+      description: `${approve()} **<@${moderator.id}>**: Set the nickname of <@${member.id}> to \`${safeNickname}\`.`,
+      footer: false,
+      timestamp: false
     })],
     components: [actionButtons()]
   };
