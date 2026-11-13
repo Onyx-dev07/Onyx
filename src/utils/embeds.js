@@ -372,6 +372,20 @@ function mentionOrText(value, kind = 'user') {
 }
 
 /**
+ * One-line, chrome-free notice used by commands that only need a quick
+ * confirmation (lock/unlock, mute/unmute). No title, fields, footer, or
+ * timestamp, so Discord renders a compact box.
+ */
+export function compactEmbed(description, color = 'primary') {
+  return createEmbed({
+    description,
+    color,
+    footer: false,
+    timestamp: false,
+  });
+}
+
+/**
  * Build a clean moderation receipt: target, moderator, optional duration and
  * case id, and the reason. Every moderation command uses the same shape.
  */

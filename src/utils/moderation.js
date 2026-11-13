@@ -70,6 +70,11 @@ function buildModerationLogData(event) {
   };
 }
 
+export function extractUserId(value) {
+  const match = String(value ?? '').match(/\d{17,20}/);
+  return match ? match[0] : null;
+}
+
 export async function logEvent({ client, guild, guildId, event }) {
   try {
     if (!guild && guildId) {
