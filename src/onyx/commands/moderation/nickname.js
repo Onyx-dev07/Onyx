@@ -1,13 +1,34 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { errorEmbed } = require('../../utils/embeds');
+const { approve, createEmbed, errorEmbed } = require('../../utils/embeds');
 const {
-  actionPayload,
+  actionButtons,
   failurePayload,
   moderationBlock,
   moderationFailure
 } = require('../../utils/moderation');
 
 const ACTION = 'change the nickname of';
+
+// One action sentence, matching the mute receipt: no title, no metadata block.
+function nicknamePayload({ member, moderator, nickname }) {
+  if (!nickname) {
+    return {
+      embeds: [createEmbed({
+        description: `${approve()} **<@${moderator.id}>**: Cleared the nickname of <@${member.id}>.`
+      })],
+      components: [actionButtons()]
+    };
+  }
+
+  const safeNickname = String(nickname).replace(/`/g, "'");
+
+  return {
+    embeds: [createEmbed({
+      description: `${approve()} **<@${moderator.id}>**: Set the nickname of <@${member.id}> to \`${safeNickname}\`.`
+    })],
+    components: [actionButtons()]
+  };
+}
 
 module.exports = {
   name: 'nickname',
@@ -40,22 +61,18 @@ module.exports = {
     try {
       if (nickname) {
         await member.setNickname(nickname, `[Onyx] Nickname set by ${interaction.user.tag}`);
-        return interaction.editReply(actionPayload({
-          title: 'Nickname Set',
-          icon: 'check',
-          target: `<@${member.user.id}>`,
-          moderator: `<@${interaction.user.id}>`,
-          reason: `New nickname: ${nickname}`
+        return interaction.editReply(nicknamePayload({
+          member,
+          moderator: interaction.user,
+          nickname
         }));
       }
 
       await member.setNickname(null, `[Onyx] Nickname cleared by ${interaction.user.tag}`);
-      return interaction.editReply(actionPayload({
-        title: 'Nickname Cleared',
-        icon: 'check',
-        target: `<@${member.user.id}>`,
-        moderator: `<@${interaction.user.id}>`,
-        reason: 'Nickname reset to default'
+      return interaction.editReply(nicknamePayload({
+        member,
+        moderator: interaction.user,
+        nickname: null
       }));
     } catch (err) {
       return interaction.editReply(failurePayload('Nickname Blocked', moderationFailure(ACTION, err)));
@@ -88,22 +105,18 @@ module.exports = {
     try {
       if (nickname) {
         await member.setNickname(nickname, `[Onyx] Nickname set by ${message.author.tag}`);
-        return message.reply(actionPayload({
-          title: 'Nickname Set',
-          icon: 'check',
-          target: `<@${member.user.id}>`,
-          moderator: `<@${message.author.id}>`,
-          reason: `New nickname: ${nickname}`
+        return message.reply(nicknamePayload({
+          member,
+          moderator: message.author,
+          nickname
         }));
       }
 
       await member.setNickname(null, `[Onyx] Nickname cleared by ${message.author.tag}`);
-      return message.reply(actionPayload({
-        title: 'Nickname Cleared',
-        icon: 'check',
-        target: `<@${member.user.id}>`,
-        moderator: `<@${message.author.id}>`,
-        reason: 'Nickname reset to default'
+      return message.reply(nicknamePayload({
+        member,
+        moderator: message.author,
+        nickname: null
       }));
     } catch (err) {
       return message.reply(failurePayload('Nickname Blocked', moderationFailure(ACTION, err)));
