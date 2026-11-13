@@ -10,7 +10,7 @@ import { getPrefixRestriction } from '../config/commands/prefixRestrictions.js';
 import { getGuildConfig } from '../services/config/guildConfig.js';
 import { getCommandPrefix, getBotMessage, isBotOwner, isCommandCategoryEnabled, isMaintenanceMode } from '../config/bot.js';
 import { enforceAbuseProtection, formatCooldownDuration } from '../utils/abuseProtection.js';
-import { createEmbed } from '../utils/embeds.js';
+import { createEmbed, compactEmbed } from '../utils/embeds.js';
 import { isCommandEnabled } from '../services/commandAccessService.js';
 import {
   getCountingGameConfig,
@@ -64,7 +64,13 @@ async function handlePrefixCommand(message, client) {
 
     if (!command) {
       logger.warn(`Command not found: ${resolvedCommandName}`);
-      return; 
+      await message.channel.send({
+        embeds: [compactEmbed(
+          `No command available for \`${prefix}${commandName}\`. Try \`${prefix}help\` to see what I can do.`,
+          'error',
+        )],
+      }).catch(() => {});
+      return;
     }
 
     if (isMaintenanceMode() && !isBotOwner(message.author.id)) {
