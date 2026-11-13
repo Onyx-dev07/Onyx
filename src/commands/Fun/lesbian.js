@@ -23,6 +23,8 @@ export default {
         createEmbed({
           description: `${userMention(user)} is ${percent}% lesbian.`,
           color: 'primary',
+          footer: false,
+          timestamp: false,
         }),
       ],
     });

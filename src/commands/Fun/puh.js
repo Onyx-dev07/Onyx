@@ -29,6 +29,8 @@ export default {
         createEmbed({
           description: `${userMention(user)}'s puh is ${color}.`,
           color: 'primary',
+          footer: false,
+          timestamp: false,
         }),
       ],
     });

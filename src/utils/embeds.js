@@ -6,6 +6,8 @@ import { DEFAULT_FOOTER, EMOJI, statusTitle } from './theme.js';
 
 const EMBED_FOOTER_SYMBOL = Symbol('OnyxFooterText');
 const EMBED_BASE_DESCRIPTION_SYMBOL = Symbol('OnyxBaseDescription');
+const EMBED_NO_FOOTER_SYMBOL = Symbol('OnyxNoFooter');
+const EMBED_NO_TIMESTAMP_SYMBOL = Symbol('OnyxNoTimestamp');
 
 function sanitizeEmbedText(text = '') {
   if (typeof text !== 'string') {
@@ -178,11 +180,13 @@ EmbedBuilder.prototype.setFooter = function(footer) {
     return this;
   }
 
+  delete this[EMBED_NO_FOOTER_SYMBOL];
   this[EMBED_FOOTER_SYMBOL] = payload.text;
   return originalSetFooter.call(this, payload);
 };
 
 EmbedBuilder.prototype.setTimestamp = function(timestamp = new Date()) {
+  delete this[EMBED_NO_TIMESTAMP_SYMBOL];
   return originalSetTimestamp.call(this, timestamp);
 };
 
@@ -192,7 +196,7 @@ EmbedBuilder.prototype.setTimestamp = function(timestamp = new Date()) {
 const originalToJSON = EmbedBuilder.prototype.toJSON;
 
 EmbedBuilder.prototype.toJSON = function onyxSerializedEmbed() {
-  if (!this.data?.footer?.text) {
+  if (!this[EMBED_NO_FOOTER_SYMBOL] && !this.data?.footer?.text) {
     try {
       originalSetFooter.call(this, { ...DEFAULT_FOOTER });
     } catch {
@@ -200,7 +204,7 @@ EmbedBuilder.prototype.toJSON = function onyxSerializedEmbed() {
     }
   }
 
-  if (!this.data?.timestamp) {
+  if (!this[EMBED_NO_TIMESTAMP_SYMBOL] && !this.data?.timestamp) {
     try {
       originalSetTimestamp.call(this, new Date());
     } catch {
@@ -224,6 +228,14 @@ export function createEmbed({
   url = null
 } = {}) {
   const embed = new EmbedBuilder();
+
+  if (footer === false) {
+    embed[EMBED_NO_FOOTER_SYMBOL] = true;
+  }
+
+  if (timestamp === false) {
+    embed[EMBED_NO_TIMESTAMP_SYMBOL] = true;
+  }
 
   if (title && typeof title === 'string' && title.length > 0) {
     embed.setTitle(title.substring(0, 256));
