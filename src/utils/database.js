@@ -443,7 +443,7 @@ export async function getLevelingConfig(client, guildId) {
             xpPerMinute: 60,
             cooldownEnabled: true,
             messageLengthMultiplier: true,
-            levelUpMessages: true,
+            levelUpMessages: false,
             levelUpChannel: null,
             roles: {},
             milestones: {}
@@ -458,7 +458,7 @@ export async function getLevelingConfig(client, guildId) {
             xpPerMinute: 60,
             cooldownEnabled: true,
             messageLengthMultiplier: true,
-            levelUpMessages: true,
+            levelUpMessages: false,
             levelUpChannel: null,
             roles: {},
             milestones: {}

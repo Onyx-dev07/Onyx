@@ -147,37 +147,33 @@ export function createLeaderboardEmbed(leaderboard, guild) {
   return embed;
 }
 
+function createDefaultLevelingConfig() {
+  // Leveling is opt-in. Guilds must run `/level setup` (or enable it from the
+  // dashboard) before XP is awarded or any level-up message is posted.
+  return {
+    configured: false,
+    enabled: false,
+    xpRange: { min: 15, max: 25 },
+    xpPerMessage: { min: 15, max: 25 },
+    xpCooldown: 20,
+    levelUpMessage: '{user} has leveled up to level {level}!',
+    levelUpChannel: null,
+    ignoredChannels: [],
+    ignoredRoles: [],
+    blacklistedUsers: [],
+    roleRewards: {},
+    announceLevelUp: false,
+    xpMultiplier: 1
+  };
+}
+
 export async function getLevelingConfig(client, guildId) {
   try {
     const guildConfig = await getGuildConfig(client, guildId);
-    return guildConfig.leveling || {
-      enabled: true,
-      xpPerMessage: { min: 15, max: 25 },
-      xpCooldown: 20,
-      levelUpMessage: '{user} has leveled up to level {level}!',
-      levelUpChannel: null,
-      ignoredChannels: [],
-      ignoredRoles: [],
-      blacklistedUsers: [],
-      roleRewards: {},
-      announceLevelUp: true,
-      xpMultiplier: 1
-    };
+    return guildConfig.leveling || createDefaultLevelingConfig();
   } catch (error) {
     logger.error(`Error getting leveling config for guild ${guildId}:`, error);
-    return {
-      enabled: true,
-      xpPerMessage: { min: 15, max: 25 },
-      xpCooldown: 20,
-      levelUpMessage: '{user} has leveled up to level {level}!',
-      levelUpChannel: null,
-      ignoredChannels: [],
-      ignoredRoles: [],
-      blacklistedUsers: [],
-      roleRewards: {},
-      announceLevelUp: true,
-      xpMultiplier: 1
-    };
+    return createDefaultLevelingConfig();
   }
 }
 

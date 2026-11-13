@@ -48,7 +48,9 @@ export const addXp = wrapServiceBoundary(async function addXp(client, guild, mem
     }
 
     if (didLevelUp) {
-      if (config.announceLevelUp) {
+      // Announcements are opt-in and only go to an explicitly configured
+      // channel. Never fall back to the guild's system channel.
+      if (config.announceLevelUp && config.levelUpChannel) {
         await sendLevelUpAnnouncement(guild, member, levelData, config);
       }
 
@@ -111,9 +113,11 @@ async function awardRoleReward(guild, member, roleId, level) {
 
 async function sendLevelUpAnnouncement(guild, member, levelData, config) {
   try {
-    const levelUpChannel = config.levelUpChannel
-      ? guild.channels.cache.get(config.levelUpChannel)
-      : guild.systemChannel;
+    if (!config.levelUpChannel) {
+      return;
+    }
+
+    const levelUpChannel = guild.channels.cache.get(config.levelUpChannel);
 
     if (!levelUpChannel || !levelUpChannel.isTextBased()) {
       return;

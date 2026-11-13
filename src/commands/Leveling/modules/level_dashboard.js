@@ -17,7 +17,7 @@ import {
     EmbedBuilder,
 } from 'discord.js';
 import { InteractionHelper } from '../../../utils/interactionHelper.js';
-import { successEmbed } from '../../../utils/embeds.js';
+import { errorEmbed, successEmbed } from '../../../utils/embeds.js';
 import { logger } from '../../../utils/logger.js';
 import { OnyxError, ErrorTypes, replyUserError } from '../../../utils/errorHandler.js';
 import { getLevelingConfig, saveLevelingConfig } from '../../../services/leveling/leveling.js';
@@ -50,7 +50,7 @@ function buildDashboardEmbed(cfg, guild) {
         .addFields(
             { name: 'Level-up Channel', value: channel, inline: true },
             { name: 'System Status', value: cfg.enabled ? '**Enabled**' : '**Disabled**', inline: true },
-            { name: 'Announcements', value: cfg.announceLevelUp !== false ? '**Enabled**' : '**Disabled**', inline: true },
+            { name: 'Announcements', value: cfg.announceLevelUp === true ? '**Enabled**' : '**Disabled**', inline: true },
             { name: 'XP per Message', value: `\`${xpMin} – ${xpMax}\``, inline: true },
             { name: 'XP Cooldown', value: `\`${cooldown}s\``, inline: true },
             { name: '\u200B', value: '\u200B', inline: true },
@@ -112,7 +112,7 @@ function buildSelectMenu(guildId) {
 }
 
 function buildButtonRow(cfg, guildId, disabled = false) {
-    const announceOn = cfg.announceLevelUp !== false;
+    const announceOn = cfg.announceLevelUp === true;
     const systemOn = cfg.enabled !== false;
     return new ActionRowBuilder().addComponents(
         new ButtonBuilder()
@@ -201,7 +201,23 @@ export default {
                     const isAnnounce = btnInteraction.customId === `level_cfg_toggle_announce_${guildId}`;
 
                     if (isAnnounce) {
-                        cfg.announceLevelUp = cfg.announceLevelUp === false;
+                        const enabling = cfg.announceLevelUp !== true;
+
+                        if (enabling && !cfg.levelUpChannel) {
+                            await btnInteraction.followUp({
+                                embeds: [
+                                    errorEmbed(
+                                        'Channel Required',
+                                        'Set a **Level-up Channel** before enabling announcements. Onyx never posts level-up messages automatically to an unconfigured channel.',
+                                    ),
+                                ],
+                                flags: MessageFlags.Ephemeral,
+                            });
+                            await refreshDashboard(interaction, cfg, guildId);
+                            return;
+                        }
+
+                        cfg.announceLevelUp = enabling;
                         await saveLevelingConfig(client, guildId, cfg);
                         await btnInteraction.followUp({
                             embeds: [
