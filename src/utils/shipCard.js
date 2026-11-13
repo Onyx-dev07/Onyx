@@ -16,6 +16,15 @@ const ACCENT = '#d6336c';
 const ACCENT_LIGHT = '#a61e4d';
 const SURFACE = 'rgba(255, 255, 255, 0.55)';
 
+// Avatars are immutable per URL (the hash changes when a user updates it), so
+// buffering them for an hour avoids repeat CDN round-trips for popular members.
+const AVATAR_TIMEOUT_MS = 2500;
+const AVATAR_CACHE_TTL_MS = 60 * 60 * 1000;
+const AVATAR_CACHE_LIMIT = 500;
+const avatarCache = new Map();
+const avatarRequests = new Map();
+let backgroundCanvas = null;
+
 function roundedRect(ctx, x, y, width, height, radius) {
   const r = Math.min(radius, width / 2, height / 2);
   ctx.beginPath();
@@ -191,6 +200,28 @@ function drawMeter(ctx, percent) {
   }
 }
 
+function getCachedAvatar(url) {
+  const entry = avatarCache.get(url);
+  if (!entry) {
+    return null;
+  }
+  if (Date.now() - entry.cachedAt > AVATAR_CACHE_TTL_MS) {
+    avatarCache.delete(url);
+    return null;
+  }
+  return entry.buffer;
+}
+
+function cacheAvatar(url, buffer) {
+  if (avatarCache.size >= AVATAR_CACHE_LIMIT) {
+    const oldest = avatarCache.keys().next().value;
+    if (oldest !== undefined) {
+      avatarCache.delete(oldest);
+    }
+  }
+  avatarCache.set(url, { buffer, cachedAt: Date.now() });
+}
+
 async function fetchAvatar(user) {
   try {
     if (!user || typeof user.displayAvatarURL !== 'function') {
@@ -202,20 +233,49 @@ async function fetchAvatar(user) {
       return null;
     }
 
-    const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!response.ok) {
-      return null;
+    const cached = getCachedAvatar(url);
+    if (cached) {
+      return await loadImage(cached);
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-    return await loadImage(buffer);
+    let request = avatarRequests.get(url);
+    if (!request) {
+      request = (async () => {
+        try {
+          const response = await fetch(url, { signal: AbortSignal.timeout(AVATAR_TIMEOUT_MS) });
+          if (!response.ok) {
+            return null;
+          }
+
+          const buffer = Buffer.from(await response.arrayBuffer());
+          cacheAvatar(url, buffer);
+          return buffer;
+        } catch {
+          return null;
+        } finally {
+          avatarRequests.delete(url);
+        }
+      })();
+      avatarRequests.set(url, request);
+    }
+
+    const buffer = await request;
+    return buffer ? await loadImage(buffer) : null;
   } catch {
     return null;
   }
 }
 
+function getBackground() {
+  if (!backgroundCanvas) {
+    backgroundCanvas = createCanvas(WIDTH, HEIGHT);
+    drawBackground(backgroundCanvas.getContext('2d'));
+  }
+  return backgroundCanvas;
+}
+
 function drawCard(ctx, { first, second, percent, name, verdict, firstAvatar, secondAvatar }) {
-  drawBackground(ctx);
+  ctx.drawImage(getBackground(), 0, 0);
 
   drawAvatar(ctx, firstAvatar, first, LEFT_X, percent);
   drawAvatar(ctx, secondAvatar, second, RIGHT_X, percent);

@@ -3,6 +3,13 @@ import { createEmbed } from '../../utils/embeds.js';
 import { progressLabel, userMention } from '../../utils/theme.js';
 import { logger } from '../../utils/logger.js';
 
+// Begin loading the canvas renderer during startup so the first /ship does not
+// pay the native module import cost.
+const shipCardModule = import('../../utils/shipCard.js').catch((error) => {
+  logger.warn('Ship card renderer unavailable:', error.message);
+  return null;
+});
+
 const VERDICTS = [
   { max: 9, text: 'The algorithm has filed a restraining order.' },
   { max: 24, text: 'Rough seas ahead.' },
@@ -91,8 +98,11 @@ async function shipPayload(first, second) {
   const color = stats.percent >= 70 ? 'accent' : 'primary';
 
   try {
-    const { createShipCard } = await import('../../utils/shipCard.js');
-    const buffer = await createShipCard({ first, second, ...stats });
+    const renderer = await shipCardModule;
+    if (!renderer?.createShipCard) {
+      throw new Error('ship card renderer failed to load');
+    }
+    const buffer = await renderer.createShipCard({ first, second, ...stats });
     const attachment = new AttachmentBuilder(buffer, { name: 'onyx-ship.png' });
 
     return {
