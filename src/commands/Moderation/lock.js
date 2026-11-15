@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { moderationEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -31,14 +31,7 @@ export default {
       const currentPermissions = channel.permissionsFor(everyoneRole);
       if (currentPermissions.has(PermissionFlagsBits.SendMessages) === false) {
         return await InteractionHelper.safeEditReply(interaction, {
-          embeds: [moderationEmbed({
-            action: 'Channel Already Locked',
-            target: channel,
-            targetKind: 'channel',
-            moderator: interaction.user,
-            color: 'warning',
-            description: 'This channel is already locked for @everyone.',
-          })],
+          embeds: [compactEmbed(`${channel} is already locked.`, 'warning')],
         });
       }
 
@@ -64,22 +57,12 @@ export default {
       });
 
       await InteractionHelper.safeEditReply(interaction, {
-        embeds: [moderationEmbed({
-          action: 'Channel Locked',
-          target: channel,
-          targetKind: 'channel',
-          moderator: interaction.user,
-          description: 'Messages are now restricted to staff.',
-        })],
+        embeds: [compactEmbed(`🔒 ${channel} locked for @everyone.`, 'success')],
       });
     } catch (error) {
       logger.error('Lock command error:', error);
       await InteractionHelper.safeEditReply(interaction, {
-        embeds: [moderationEmbed({
-          action: 'Lock Blocked',
-          color: 'error',
-          description: `Could not lock ${channel}. Check that I have **Manage Channels** and try again.`,
-        })],
+        embeds: [compactEmbed(`Could not lock ${channel}. Check that I have **Manage Channels** and try again.`, 'error')],
       });
     }
   }
