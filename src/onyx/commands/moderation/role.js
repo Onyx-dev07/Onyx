@@ -2,7 +2,7 @@ const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('disc
 const db = require('../../database');
 const config = require('../../../config.json');
 const { createEmbed, UI } = require('../../utils/embeds');
-const { actionButtons, actionPayload, failurePayload } = require('../../utils/moderation');
+const { failurePayload } = require('../../utils/moderation');
 
 const ACTION_WORDS = {
   add: 'add',
@@ -59,15 +59,11 @@ async function changeRole({ guild, member, role, action, moderator, client }) {
     return {
       payload: {
         embeds: [createEmbed({
-          description: [
-            `⚠️ **Role Unchanged**`,
-            `**${member.user.username}** ${shouldAdd ? 'already has' : 'does not have'} ${role}.`
-          ].join('\n'),
+          description: `<@${member.id}> ${shouldAdd ? 'already has' : 'does not have'} ${role}.`,
           color: config.colors.warning,
           footer: false,
           timestamp: false
-        })],
-        components: [actionButtons()]
+        })]
       }
     };
   }
@@ -78,19 +74,15 @@ async function changeRole({ guild, member, role, action, moderator, client }) {
     return { payload: failurePayload('Role Blocked', `Could not update ${role} ${UI.separator} ${err.message}`) };
   }
 
-  const roleCount = member.roles.cache.filter(entry => entry.id !== guild.id).size;
-
   return {
-    payload: actionPayload({
-      title: shouldAdd ? 'Role Added' : 'Role Removed',
-      icon: 'check',
-      target: `<@${member.id}>`,
-      moderator: `<@${moderator.id}>`,
-      fields: [
-        { name: 'Role', value: `${role}` },
-        { name: 'Roles', value: `${roleCount}` }
-      ]
-    })
+    payload: {
+      embeds: [createEmbed({
+        description: `${role} ${shouldAdd ? 'added to' : 'removed from'} <@${member.id}>.`,
+        color: config.colors.success,
+        footer: false,
+        timestamp: false
+      })]
+    }
   };
 }
 
