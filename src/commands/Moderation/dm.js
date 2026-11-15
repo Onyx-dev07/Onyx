@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
+import { createEmbed, moderationEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { sanitizeMarkdown } from '../../utils/validation.js';
@@ -63,11 +63,12 @@ export default {
             
             await dmChannel.send({
                 embeds: [
-                    successEmbed(
-                        anonymous ? "Message from the Staff Team" : `Message from ${interaction.user.username}`,
-                        sanitized
-                    ).setFooter({
-                        text: `You cannot reply to this message. | Logger ID: ${interaction.id}`
+                    createEmbed({
+                        title: anonymous ? 'Message from the Staff Team' : `Message from ${interaction.user.username}`,
+                        description: sanitized,
+                        color: 'primary',
+                        footer: `You cannot reply to this message. | Logger ID: ${interaction.id}`,
+                        timestamp: false,
                     })
                 ]
             });
@@ -91,10 +92,12 @@ export default {
 
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
-                    successEmbed(
-                        "DM Sent",
-                        `Successfully sent a message to <@${targetUser.id}>.`
-                    ),
+                    moderationEmbed({
+                        action: 'Direct Message Sent',
+                        target: targetUser,
+                        moderator: interaction.user,
+                        fields: [{ name: 'Anonymous', value: anonymous ? 'Yes' : 'No' }],
+                    }),
                 ],
             });
         } catch (error) {

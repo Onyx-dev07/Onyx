@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -82,14 +82,23 @@ export default {
             await removeTimeout(interaction, targetUser.id);
 
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(`🔊 <@${targetUser.id}> unmuted.`, 'success')],
+                embeds: [moderationEmbed({
+                    action: 'Timeout Removed',
+                    target: targetUser,
+                    moderator: interaction.user,
+                    reason: 'Timeout removed',
+                })],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
                 logger.error('Untimeout command error:', error);
             }
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(errorText(error), 'error')],
+                embeds: [moderationEmbed({
+                    action: 'Untimeout Blocked',
+                    color: 'error',
+                    description: errorText(error),
+                })],
             });
         }
     },
@@ -100,21 +109,34 @@ export default {
 
         if (!targetId) {
             return interaction.reply({
-                embeds: [compactEmbed('Mention a member to unmute. Usage: `!unmute @user`.', 'error')],
+                embeds: [moderationEmbed({
+                    action: 'Untimeout Blocked',
+                    color: 'error',
+                    description: 'Mention a member to unmute. Usage: `!unmute @user`.',
+                })],
             });
         }
 
         try {
             await removeTimeout(interaction, targetId);
             return interaction.reply({
-                embeds: [compactEmbed(`🔊 <@${targetId}> unmuted.`, 'success')],
+                embeds: [moderationEmbed({
+                    action: 'Timeout Removed',
+                    target: { id: targetId },
+                    moderator: interaction.user,
+                    reason: 'Timeout removed',
+                })],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
                 logger.error('Prefix unmute command error:', error);
             }
             return interaction.reply({
-                embeds: [compactEmbed(errorText(error), 'error')],
+                embeds: [moderationEmbed({
+                    action: 'Untimeout Blocked',
+                    color: 'error',
+                    description: errorText(error),
+                })],
             });
         }
     },

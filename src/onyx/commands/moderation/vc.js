@@ -13,7 +13,30 @@ const {
 } = require('discord.js');
 const db = require('../../database');
 const config = require('../../../config.json');
-const { securityEmbed, errorEmbed, successEmbed, infoEmbed, UI } = require('../../utils/embeds');
+const { securityEmbed, createEmbed, UI } = require('../../utils/embeds');
+
+// Compact moderation receipts: no title row, no footer, no timestamp.
+function actionReply(text) {
+  return createEmbed({ description: `✅ ${text}`, footer: false, timestamp: false });
+}
+
+function blockedReply(text) {
+  return createEmbed({
+    description: `❌ **Blocked**\n${text}`,
+    color: config.colors.error,
+    footer: false,
+    timestamp: false
+  });
+}
+
+function noteReply(text) {
+  return createEmbed({
+    description: `ℹ️ ${text}`,
+    color: config.colors.info,
+    footer: false,
+    timestamp: false
+  });
+}
 
 function canManageChannels(interaction) {
   return interaction.member?.permissions?.has(PermissionFlagsBits.ManageChannels);
@@ -176,7 +199,7 @@ module.exports = {
 
     if (!guild || !member) {
       return interaction.editReply({
-        embeds: [errorEmbed('This command can only be used in a server.')],
+        embeds: [blockedReply('This command can only be used in a server.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -190,7 +213,7 @@ module.exports = {
     if (sub === 'setup') {
       if (!member.permissions.has(PermissionFlagsBits.ManageChannels)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need **Manage Channels** to configure Join-to-Create.')],
+          embeds: [blockedReply('You need **Manage Channels** to configure Join-to-Create.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -202,7 +225,7 @@ module.exports = {
       });
 
       return interaction.editReply({
-        embeds: [successEmbed(`Join-to-Create enabled for <#${channel.id}>. Members who join it will get their own private voice channel.`)],
+        embeds: [actionReply(`Join-to-Create enabled for <#${channel.id}>. Members who join it will get their own private voice channel.`)],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -211,14 +234,14 @@ module.exports = {
       const voiceChannel = getMemberVoiceChannel(interaction);
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need to be in a voice channel to open its panel.')],
+          embeds: [blockedReply('You need to be in a voice channel to open its panel.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, voiceChannel.id)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+          embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -233,7 +256,7 @@ module.exports = {
     if (sub === 'interface') {
       if (!member.permissions.has(PermissionFlagsBits.ManageChannels)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need **Manage Channels** to create the interface panel.')],
+          embeds: [blockedReply('You need **Manage Channels** to create the interface panel.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -298,12 +321,12 @@ module.exports = {
         });
 
         return interaction.editReply({
-          embeds: [successEmbed(`Interface panel posted in <#${textChannel.id}>.`)],
+          embeds: [actionReply(`Interface panel posted in <#${textChannel.id}>.`)],
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Failed to create interface: ${err.message}`)],
+          embeds: [blockedReply(`Failed to create interface: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -313,14 +336,14 @@ module.exports = {
       const voiceChannel = getMemberVoiceChannel(interaction);
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need to be in a voice channel to rename it.')],
+          embeds: [blockedReply('You need to be in a voice channel to rename it.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, voiceChannel.id)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+          embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -328,7 +351,7 @@ module.exports = {
       const name = interaction.options.getString('name').trim();
       if (!name) {
         return interaction.editReply({
-          embeds: [errorEmbed('Please provide a channel name.')],
+          embeds: [blockedReply('Please provide a channel name.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -336,12 +359,12 @@ module.exports = {
       try {
         await voiceChannel.setName(name, '[Onyx VC] Rename via /vc');
         return interaction.editReply({
-          embeds: [successEmbed(`Renamed <#${voiceChannel.id}> to **${name}**.`)],
+          embeds: [actionReply(`Renamed <#${voiceChannel.id}> to **${name}**.`)],
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Failed to rename channel: ${err.message}`)],
+          embeds: [blockedReply(`Failed to rename channel: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -351,14 +374,14 @@ module.exports = {
       const voiceChannel = getMemberVoiceChannel(interaction);
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need to be in a voice channel to lock it.')],
+          embeds: [blockedReply('You need to be in a voice channel to lock it.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, voiceChannel.id)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+          embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -368,12 +391,12 @@ module.exports = {
           Connect: false
         }, '[Onyx VC] Lock via /vc');
         return interaction.editReply({
-          embeds: [successEmbed(`<#${voiceChannel.id}> is now **locked**.`)],
+          embeds: [actionReply(`<#${voiceChannel.id}> is now **locked**.`)],
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Failed to lock channel: ${err.message}`)],
+          embeds: [blockedReply(`Failed to lock channel: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -383,14 +406,14 @@ module.exports = {
       const voiceChannel = getMemberVoiceChannel(interaction);
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need to be in a voice channel to unlock it.')],
+          embeds: [blockedReply('You need to be in a voice channel to unlock it.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, voiceChannel.id)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+          embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -400,12 +423,12 @@ module.exports = {
           Connect: null
         }, '[Onyx VC] Unlock via /vc');
         return interaction.editReply({
-          embeds: [successEmbed(`<#${voiceChannel.id}> is now **unlocked**.`)],
+          embeds: [actionReply(`<#${voiceChannel.id}> is now **unlocked**.`)],
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Failed to unlock channel: ${err.message}`)],
+          embeds: [blockedReply(`Failed to unlock channel: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -415,14 +438,14 @@ module.exports = {
       const voiceChannel = getMemberVoiceChannel(interaction);
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need to be in a voice channel to set a limit.')],
+          embeds: [blockedReply('You need to be in a voice channel to set a limit.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, voiceChannel.id)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+          embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -431,12 +454,12 @@ module.exports = {
       try {
         await voiceChannel.setUserLimit(limit, '[Onyx VC] Limit via /vc');
         return interaction.editReply({
-          embeds: [successEmbed(`User limit for <#${voiceChannel.id}> set to ${limit === 0 ? 'unlimited' : limit}.`)],
+          embeds: [actionReply(`User limit for <#${voiceChannel.id}> set to ${limit === 0 ? 'unlimited' : limit}.`)],
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Failed to set limit: ${err.message}`)],
+          embeds: [blockedReply(`Failed to set limit: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -446,7 +469,7 @@ module.exports = {
       const voiceChannel = getMemberVoiceChannel(interaction);
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need to be in a voice channel to claim it.')],
+          embeds: [blockedReply('You need to be in a voice channel to claim it.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -454,7 +477,7 @@ module.exports = {
       const existingOwner = db.getVoiceOwner(guild.id, voiceChannel.id);
       if (existingOwner) {
         return interaction.editReply({
-          embeds: [errorEmbed(`This voice channel is already owned by <@${existingOwner}>.`)],
+          embeds: [blockedReply(`This voice channel is already owned by <@${existingOwner}>.`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -462,12 +485,12 @@ module.exports = {
       try {
         db.setVoiceOwner(guild.id, voiceChannel.id, member.id);
         return interaction.editReply({
-          embeds: [successEmbed(`You now own <#${voiceChannel.id}>. Use /vc panel to manage it.`)],
+          embeds: [actionReply(`You now own <#${voiceChannel.id}>. Use /vc panel to manage it.`)],
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Failed to claim channel: ${err.message}`)],
+          embeds: [blockedReply(`Failed to claim channel: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -477,14 +500,14 @@ module.exports = {
       const voiceChannel = getMemberVoiceChannel(interaction);
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need to be in a voice channel to transfer it.')],
+          embeds: [blockedReply('You need to be in a voice channel to transfer it.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, voiceChannel.id)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+          embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -492,7 +515,7 @@ module.exports = {
       const target = interaction.options.getUser('member');
       if (target.id === member.id) {
         return interaction.editReply({
-          embeds: [errorEmbed('You cannot transfer ownership to yourself.')],
+          embeds: [blockedReply('You cannot transfer ownership to yourself.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -500,12 +523,12 @@ module.exports = {
       try {
         db.setVoiceOwner(guild.id, voiceChannel.id, target.id);
         return interaction.editReply({
-          embeds: [successEmbed(`Ownership of <#${voiceChannel.id}> transferred to <@${target.id}>.`)],
+          embeds: [actionReply(`Ownership of <#${voiceChannel.id}> transferred to <@${target.id}>.`)],
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Failed to transfer ownership: ${err.message}`)],
+          embeds: [blockedReply(`Failed to transfer ownership: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -515,14 +538,14 @@ module.exports = {
       const voiceChannel = getMemberVoiceChannel(interaction);
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return interaction.editReply({
-          embeds: [errorEmbed('You need to be in a voice channel to delete it.')],
+          embeds: [blockedReply('You need to be in a voice channel to delete it.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, voiceChannel.id)) {
         return interaction.editReply({
-          embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+          embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -531,19 +554,19 @@ module.exports = {
         await voiceChannel.delete('[Onyx VC] Delete via /vc');
         db.removeVoiceOwner(guild.id, voiceChannel.id);
         return interaction.editReply({
-          embeds: [successEmbed(`Voice channel deleted.`)],
+          embeds: [actionReply(`Voice channel deleted.`)],
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Failed to delete channel: ${err.message}`)],
+          embeds: [blockedReply(`Failed to delete channel: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
     }
 
     return interaction.editReply({
-      embeds: [errorEmbed('Unknown /vc subcommand.')],
+      embeds: [blockedReply('Unknown /vc subcommand.')],
       flags: MessageFlags.Ephemeral
     });
   },
@@ -561,12 +584,12 @@ module.exports = {
       const channel = message.mentions.channels.first();
       if (!channel) {
         return message.reply({
-          embeds: [errorEmbed('Usage: `!vc setup <voice-channel>` or `!vc panel`')]
+          embeds: [blockedReply('Usage: `!vc setup <voice-channel>` or `!vc panel`')]
         });
       }
       db.setVoiceConfig(guild.id, { enabled: true, joinToCreateChannelId: channel.id });
       return message.reply({
-        embeds: [successEmbed(`Join-to-Create enabled for <#${channel.id}>.`)],
+        embeds: [actionReply(`Join-to-Create enabled for <#${channel.id}>.`)],
       });
     }
 
@@ -574,12 +597,12 @@ module.exports = {
       const voiceChannel = member.voice?.channel || null;
       if (!voiceChannel || voiceChannel.type !== ChannelType.GuildVoice) {
         return message.reply({
-          embeds: [errorEmbed('You need to be in a voice channel to open its panel.')]
+          embeds: [blockedReply('You need to be in a voice channel to open its panel.')]
         });
       }
       if (!isChannelOwner(guild, member, voiceChannel.id)) {
         return message.reply({
-          embeds: [errorEmbed('You do not own this voice channel.')]
+          embeds: [blockedReply('You do not own this voice channel.')]
         });
       }
       return message.reply({
@@ -589,7 +612,7 @@ module.exports = {
     }
 
     return message.reply({
-      embeds: [errorEmbed('Usage: `!vc setup <voice-channel>` or `!vc panel`')]
+      embeds: [blockedReply('Usage: `!vc setup <voice-channel>` or `!vc panel`')]
     });
   },
 
@@ -607,14 +630,14 @@ module.exports = {
 
     if (!channel || channel.type !== ChannelType.GuildVoice) {
       return interaction.reply({
-        embeds: [errorEmbed('That voice channel no longer exists.')],
+        embeds: [blockedReply('That voice channel no longer exists.')],
         flags: MessageFlags.Ephemeral
       });
     }
 
     if (action !== 'vc_claim' && !isChannelOwner(guild, member, channel.id)) {
       return interaction.reply({
-        embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+        embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -797,7 +820,7 @@ module.exports = {
 
       if (action === 'vc_waiting') {
         return interaction.reply({
-          embeds: [infoEmbed('Waiting room feature is not yet configured for this server.')],
+          embeds: [noteReply('Waiting room feature is not yet configured for this server.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -806,7 +829,7 @@ module.exports = {
         const existingOwner = db.getVoiceOwner(guild.id, channel.id);
         if (existingOwner) {
           return interaction.reply({
-            embeds: [errorEmbed(`This voice channel is already owned by <@${existingOwner}>.`)],
+            embeds: [blockedReply(`This voice channel is already owned by <@${existingOwner}>.`)],
             flags: MessageFlags.Ephemeral
           });
         }
@@ -835,7 +858,7 @@ module.exports = {
       return false;
     } catch (err) {
       return interaction.reply({
-        embeds: [errorEmbed(`Failed: ${err.message}`)],
+        embeds: [blockedReply(`Failed: ${err.message}`)],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -852,14 +875,14 @@ module.exports = {
 
       if (!channel || channel.type !== ChannelType.GuildVoice) {
         return interaction.reply({
-          embeds: [errorEmbed('That voice channel no longer exists.')],
+          embeds: [blockedReply('That voice channel no longer exists.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, channel.id)) {
         return interaction.reply({
-          embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+          embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -890,14 +913,14 @@ module.exports = {
 
       if (!channel || channel.type !== ChannelType.GuildVoice) {
         return interaction.reply({
-          embeds: [errorEmbed('That voice channel no longer exists.')],
+          embeds: [blockedReply('That voice channel no longer exists.')],
           flags: MessageFlags.Ephemeral
         });
       }
 
       if (!isChannelOwner(guild, member, channel.id)) {
         return interaction.reply({
-          embeds: [errorEmbed('You do not own this voice channel.')],
+          embeds: [blockedReply('You do not own this voice channel.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -911,7 +934,7 @@ module.exports = {
         });
       } catch (err) {
         return interaction.reply({
-          embeds: [errorEmbed(`Failed to set region: ${err.message}`)],
+          embeds: [blockedReply(`Failed to set region: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -934,14 +957,14 @@ module.exports = {
 
     if (!channel || channel.type !== ChannelType.GuildVoice) {
       return interaction.reply({
-        embeds: [errorEmbed('That voice channel no longer exists.')],
+        embeds: [blockedReply('That voice channel no longer exists.')],
         flags: MessageFlags.Ephemeral
       });
     }
 
     if (!isChannelOwner(guild, member, channel.id)) {
       return interaction.reply({
-        embeds: [errorEmbed('You do not own this voice channel and are not an administrator.')],
+        embeds: [blockedReply('You do not own this voice channel and are not an administrator.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -952,13 +975,13 @@ module.exports = {
         const limit = parseInt(value, 10);
         if (isNaN(limit) || limit < 0 || limit > 99) {
           return interaction.reply({
-            embeds: [errorEmbed('Please enter a valid number between 0 and 99.')],
+            embeds: [blockedReply('Please enter a valid number between 0 and 99.')],
             flags: MessageFlags.Ephemeral
           });
         }
         await channel.setUserLimit(limit, '[Onyx VC] Limit via panel');
         await interaction.reply({
-          embeds: [successEmbed(`User limit set to ${limit === 0 ? 'unlimited' : limit}.`)],
+          embeds: [actionReply(`User limit set to ${limit === 0 ? 'unlimited' : limit}.`)],
           flags: MessageFlags.Ephemeral
         });
         return;
@@ -970,13 +993,13 @@ module.exports = {
         const target = guild.members.cache.get(targetId) || await guild.members.fetch(targetId).catch(() => null);
         if (!target) {
           return interaction.reply({
-            embeds: [errorEmbed('Member not found.')],
+            embeds: [blockedReply('Member not found.')],
             flags: MessageFlags.Ephemeral
           });
         }
         await channel.permissionOverwrites.edit(target.id, { Connect: true, ViewChannel: true }, '[Onyx VC] Invite');
         await interaction.reply({
-          embeds: [successEmbed(`Invited <@${target.id}> to <#${channel.id}>.`)],
+          embeds: [actionReply(`Invited <@${target.id}> to <#${channel.id}>.`)],
           flags: MessageFlags.Ephemeral
         });
         return;
@@ -988,7 +1011,7 @@ module.exports = {
         const target = guild.members.cache.get(targetId) || await guild.members.fetch(targetId).catch(() => null);
         if (!target) {
           return interaction.reply({
-            embeds: [errorEmbed('Member not found.')],
+            embeds: [blockedReply('Member not found.')],
             flags: MessageFlags.Ephemeral
           });
         }
@@ -997,7 +1020,7 @@ module.exports = {
           await target.voice.disconnect('[Onyx VC] Banned from channel').catch(() => {});
         }
         await interaction.reply({
-          embeds: [successEmbed(`Banned <@${target.id}> from <#${channel.id}>.`)],
+          embeds: [actionReply(`Banned <@${target.id}> from <#${channel.id}>.`)],
           flags: MessageFlags.Ephemeral
         });
         return;
@@ -1009,13 +1032,13 @@ module.exports = {
         const target = guild.members.cache.get(targetId) || await guild.members.fetch(targetId).catch(() => null);
         if (!target) {
           return interaction.reply({
-            embeds: [errorEmbed('Member not found.')],
+            embeds: [blockedReply('Member not found.')],
             flags: MessageFlags.Ephemeral
           });
         }
         await channel.permissionOverwrites.edit(target.id, { Connect: true, ViewChannel: true }, '[Onyx VC] Permit');
         await interaction.reply({
-          embeds: [successEmbed(`Permitted <@${target.id}> to <#${channel.id}>.`)],
+          embeds: [actionReply(`Permitted <@${target.id}> to <#${channel.id}>.`)],
           flags: MessageFlags.Ephemeral
         });
         return;
@@ -1025,13 +1048,13 @@ module.exports = {
         const value = interaction.fields.getTextInputValue('vc_rename_input').trim();
         if (!value) {
           return interaction.reply({
-            embeds: [errorEmbed('Please provide a channel name.')],
+            embeds: [blockedReply('Please provide a channel name.')],
             flags: MessageFlags.Ephemeral
           });
         }
         await channel.setName(value, '[Onyx VC] Rename via panel');
         await interaction.reply({
-          embeds: [successEmbed(`Renamed to **${value}**.`)],
+          embeds: [actionReply(`Renamed to **${value}**.`)],
           flags: MessageFlags.Ephemeral
         });
         return;
@@ -1042,13 +1065,13 @@ module.exports = {
         const bitrate = parseInt(value, 10);
         if (isNaN(bitrate) || bitrate < 8000 || bitrate > 96000) {
           return interaction.reply({
-            embeds: [errorEmbed('Bitrate must be between 8000 and 96000 kbps.')],
+            embeds: [blockedReply('Bitrate must be between 8000 and 96000 kbps.')],
             flags: MessageFlags.Ephemeral
           });
         }
         await channel.setBitrate(bitrate * 1000, '[Onyx VC] Bitrate via panel');
         await interaction.reply({
-          embeds: [successEmbed(`Bitrate set to ${bitrate}kbps.`)],
+          embeds: [actionReply(`Bitrate set to ${bitrate}kbps.`)],
           flags: MessageFlags.Ephemeral
         });
         return;
@@ -1056,7 +1079,7 @@ module.exports = {
 
       if (modalType === 'template') {
         await interaction.reply({
-          embeds: [infoEmbed('Template save/load will be available in a future update.')],
+          embeds: [noteReply('Template save/load will be available in a future update.')],
           flags: MessageFlags.Ephemeral
         });
         return;
@@ -1070,12 +1093,12 @@ module.exports = {
           await channel.permissionOverwrites.edit(guild.roles.everyone.id, { SendMessages: false }, '[Onyx VC] Chat');
         } else {
           return interaction.reply({
-            embeds: [errorEmbed('Use "allow" or "deny".')],
+            embeds: [blockedReply('Use "allow" or "deny".')],
             flags: MessageFlags.Ephemeral
           });
         }
         await interaction.reply({
-          embeds: [successEmbed(`Chat ${value}ed for @everyone in <#${channel.id}>.`)],
+          embeds: [actionReply(`Chat ${value}ed for @everyone in <#${channel.id}>.`)],
           flags: MessageFlags.Ephemeral
         });
         return;
@@ -1086,32 +1109,32 @@ module.exports = {
         const targetId = value.replace(/[<@!>]/g, '');
         if (targetId === member.id) {
           return interaction.reply({
-            embeds: [errorEmbed('You cannot transfer ownership to yourself.')],
+            embeds: [blockedReply('You cannot transfer ownership to yourself.')],
             flags: MessageFlags.Ephemeral
           });
         }
         const target = guild.members.cache.get(targetId) || await guild.members.fetch(targetId).catch(() => null);
         if (!target) {
           return interaction.reply({
-            embeds: [errorEmbed('Member not found.')],
+            embeds: [blockedReply('Member not found.')],
             flags: MessageFlags.Ephemeral
           });
         }
         db.setVoiceOwner(guild.id, channel.id, target.id);
         await interaction.reply({
-          embeds: [successEmbed(`Ownership transferred to <@${target.id}>.`)],
+          embeds: [actionReply(`Ownership transferred to <@${target.id}>.`)],
           flags: MessageFlags.Ephemeral
         });
         return;
       }
 
       return interaction.reply({
-        embeds: [errorEmbed('Unknown form action.')],
+        embeds: [blockedReply('Unknown form action.')],
         flags: MessageFlags.Ephemeral
       });
     } catch (err) {
       return interaction.reply({
-        embeds: [errorEmbed(`Failed: ${err.message}`)],
+        embeds: [blockedReply(`Failed: ${err.message}`)],
         flags: MessageFlags.Ephemeral
       });
     }

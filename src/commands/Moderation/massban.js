@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
-import { createEmbed, successEmbed, warningEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logModerationAction } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
@@ -145,40 +145,34 @@ export default {
                 }
             }
 
-            let description = `**Mass Ban Results:**\n\n`;
-            
+            const sections = [];
+
             if (results.successful.length > 0) {
-                description += `✅ **Successfully Banned (${results.successful.length}):**\n`;
-                results.successful.forEach(result => {
-                    description += `• <@${result.userId}>\n`;
-                });
-                description += '\n';
+                sections.push(`**Banned**\n${results.successful.map(result => `• <@${result.userId}>`).join('\n')}`);
             }
 
             if (results.skipped.length > 0) {
-                description += `⚠️ **Skipped (${results.skipped.length}):**\n`;
-                results.skipped.forEach(result => {
-                    description += `• <@${result.userId}> — ${result.reason}\n`;
-                });
-                description += '\n';
+                sections.push(`**Skipped**\n${results.skipped.map(result => `• <@${result.userId}> — ${result.reason}`).join('\n')}`);
             }
 
             if (results.failed.length > 0) {
-                description += `❌ **Failed (${results.failed.length}):**\n`;
-                results.failed.forEach(result => {
-                    description += `• <@${result.userId}> — ${result.reason}\n`;
-                });
+                sections.push(`**Failed**\n${results.failed.map(result => `• <@${result.userId}> — ${result.reason}`).join('\n')}`);
             }
 
-            const embed = results.successful.length > 0 ? successEmbed : warningEmbed;
-            
             return await InteractionHelper.safeEditReply(interaction, {
-                embeds: [
-                    embed(
-                        `🔨 Mass Ban Completed`,
-                        description
-                    )
-                ]
+                embeds: [moderationEmbed({
+                    action: 'Mass Ban Completed',
+                    target: `${results.successful.length} member${results.successful.length === 1 ? '' : 's'}`,
+                    moderator: interaction.user,
+                    reason,
+                    description: sections.join('\n\n'),
+                    color: results.successful.length > 0 ? 'primary' : 'warning',
+                    fields: [
+                        { name: 'Banned', value: `${results.successful.length}` },
+                        { name: 'Skipped', value: `${results.skipped.length}` },
+                        { name: 'Failed', value: `${results.failed.length}` },
+                    ],
+                })],
             });
 
         } catch (error) {

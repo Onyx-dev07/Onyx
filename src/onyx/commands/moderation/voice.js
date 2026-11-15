@@ -10,7 +10,21 @@ const {
 } = require('discord.js');
 const db = require('../../database');
 const config = require('../../../config.json');
-const { createEmbed, errorEmbed, successEmbed, infoEmbed, UI } = require('../../utils/embeds');
+const { createEmbed, UI } = require('../../utils/embeds');
+
+// Compact moderation receipts: no title row, no footer, no timestamp.
+function actionReply(text) {
+  return createEmbed({ description: `✅ ${text}`, footer: false, timestamp: false });
+}
+
+function blockedReply(text) {
+  return createEmbed({
+    description: `❌ **Blocked**\n${text}`,
+    color: config.colors.error,
+    footer: false,
+    timestamp: false
+  });
+}
 
 function canManage(interaction) {
   return interaction.member?.permissions?.has(PermissionFlagsBits.ManageChannels);
@@ -100,7 +114,7 @@ module.exports = {
   async executeSlash(interaction) {
     if (!canManage(interaction)) {
       return interaction.reply({
-        embeds: [errorEmbed('You need Manage Channels to use voice controls.')],
+        embeds: [blockedReply('You need Manage Channels to use voice controls.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -111,7 +125,7 @@ module.exports = {
       const name = interaction.options.getString('name').trim();
       if (!name) {
         return interaction.reply({
-          embeds: [errorEmbed('Please provide a voice channel name.')],
+          embeds: [blockedReply('Please provide a voice channel name.')],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -125,11 +139,11 @@ module.exports = {
         db.addVoiceChannel(interaction.guild.id, channel.id);
 
         return interaction.reply({
-          embeds: [successEmbed(`Created voice channel <#${channel.id}>.`)]
+          embeds: [actionReply(`Created voice channel <#${channel.id}>.`)]
         });
       } catch (err) {
         return interaction.reply({
-          embeds: [errorEmbed(`Failed to create voice channel: ${err.message}`)],
+          embeds: [blockedReply(`Failed to create voice channel: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -150,7 +164,7 @@ module.exports = {
   async executePrefix(message, args) {
     if (!canManage({ member: message.member, guild: message.guild })) {
       return message.reply({
-        embeds: [errorEmbed('You need Manage Channels to use voice controls.')]
+        embeds: [blockedReply('You need Manage Channels to use voice controls.')]
       });
     }
 
@@ -160,7 +174,7 @@ module.exports = {
       const name = args.slice(1).join(' ').trim();
       if (!name) {
         return message.reply({
-          embeds: [errorEmbed('Usage: `!voice create <name>`')]
+          embeds: [blockedReply('Usage: `!voice create <name>`')]
         });
       }
 
@@ -172,11 +186,11 @@ module.exports = {
         });
         db.addVoiceChannel(message.guild.id, channel.id);
         return message.reply({
-          embeds: [successEmbed(`Created voice channel <#${channel.id}>.`)]
+          embeds: [actionReply(`Created voice channel <#${channel.id}>.`)]
         });
       } catch (err) {
         return message.reply({
-          embeds: [errorEmbed(`Failed to create voice channel: ${err.message}`)]
+          embeds: [blockedReply(`Failed to create voice channel: ${err.message}`)]
         });
       }
     }
@@ -193,7 +207,7 @@ module.exports = {
   async handleSelect(interaction) {
     if (!canManage(interaction)) {
       return interaction.reply({
-        embeds: [errorEmbed('You need Manage Channels to manage voice channels.')],
+        embeds: [blockedReply('You need Manage Channels to manage voice channels.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -204,7 +218,7 @@ module.exports = {
     const channel = interaction.guild.channels.cache.get(channelId);
     if (!channel) {
       return interaction.reply({
-        embeds: [errorEmbed('That voice channel no longer exists.')],
+        embeds: [blockedReply('That voice channel no longer exists.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -235,7 +249,7 @@ module.exports = {
   async handleButton(interaction) {
     if (!canManage(interaction)) {
       return interaction.reply({
-        embeds: [errorEmbed('You need Manage Channels to manage voice channels.')],
+        embeds: [blockedReply('You need Manage Channels to manage voice channels.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -248,7 +262,7 @@ module.exports = {
     const channel = interaction.guild.channels.cache.get(channelId);
     if (!channel || channel.type !== ChannelType.GuildVoice) {
       return interaction.reply({
-        embeds: [errorEmbed('That voice channel no longer exists.')],
+        embeds: [blockedReply('That voice channel no longer exists.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -261,12 +275,12 @@ module.exports = {
           Connect: null
         });
         return interaction.update({
-          embeds: [successEmbed(`<#${channel.id}> is now **unlocked**.`)],
+          embeds: [actionReply(`<#${channel.id}> is now **unlocked**.`)],
           components: [voiceControlRow(channelId, false, false)]
         });
       } catch (err) {
         return interaction.reply({
-          embeds: [errorEmbed(`Failed to unlock: ${err.message}`)],
+          embeds: [blockedReply(`Failed to unlock: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -281,12 +295,12 @@ module.exports = {
           ViewChannel: currentlyHidden ? null : true
         });
         return interaction.update({
-          embeds: [successEmbed(`<#${channel.id}> is now ${currentlyHidden ? 'unhidden' : 'hidden'}.`)],
+          embeds: [actionReply(`<#${channel.id}> is now ${currentlyHidden ? 'unhidden' : 'hidden'}.`)],
           components: [voiceControlRow(channelId, false, !currentlyHidden)]
         });
       } catch (err) {
         return interaction.reply({
-          embeds: [errorEmbed(`Failed to hide/unhide: ${err.message}`)],
+          embeds: [blockedReply(`Failed to hide/unhide: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }
@@ -297,12 +311,12 @@ module.exports = {
         await channel.delete('[Onyx Voice] Deleted via panel');
         db.removeVoiceChannel(interaction.guild.id, channelId);
         return interaction.update({
-          embeds: [successEmbed(`Voice channel deleted.`)],
+          embeds: [actionReply(`Voice channel deleted.`)],
           components: []
         });
       } catch (err) {
         return interaction.reply({
-          embeds: [errorEmbed(`Failed to delete: ${err.message}`)],
+          embeds: [blockedReply(`Failed to delete: ${err.message}`)],
           flags: MessageFlags.Ephemeral
         });
       }

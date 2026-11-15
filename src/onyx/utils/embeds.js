@@ -43,6 +43,8 @@ const ACTION_VERBS = {
   'Server Dehoisted': 'Dehoisted the server',
   'Nickname Set': 'Set the nickname of',
   'Nickname Cleared': 'Cleared the nickname of',
+  'Role Added': 'Added',
+  'Role Removed': 'Removed',
   'Channel Locked': 'Locked the channel',
   'Channel Unlocked': 'Unlocked the channel',
   'Channel Cleared': 'Cleared the channel',
@@ -366,7 +368,9 @@ function actionEmbed(options = {}) {
 
     return createEmbed({
       description: [sentence, description, ...meta.map(muted)].filter(Boolean).join('\n'),
-      color
+      color,
+      footer: false,
+      timestamp: false
     });
   }
 
@@ -375,7 +379,9 @@ function actionEmbed(options = {}) {
       description: [`${deny()} **${title}**`, description, ...meta.map(muted)]
         .filter(Boolean)
         .join('\n'),
-      color
+      color,
+      footer: false,
+      timestamp: false
     });
   }
 
@@ -395,7 +401,9 @@ function actionEmbed(options = {}) {
     title: title ? withEmoji(icon || '', title) : undefined,
     description,
     fields: embedFields,
-    color
+    color,
+    footer: false,
+    timestamp: false
   });
 }
 

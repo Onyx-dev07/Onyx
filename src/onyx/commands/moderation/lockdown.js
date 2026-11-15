@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { infoEmbed } = require('../../utils/embeds');
 const { actionPayload } = require('../../utils/moderation');
 const { lockServer } = require('../../utils/serverLock');
 
@@ -25,7 +24,11 @@ module.exports = {
   },
 
   async executePrefix(message) {
-    const sent = await message.reply({ embeds: [infoEmbed('Locking down server channels.')] });
+    const sent = await message.reply(actionPayload({
+      title: 'Server lockdown',
+      icon: 'lock',
+      description: 'Locking down server channels.'
+    }));
     const result = await lockServer(message.guild);
     await sent.edit(actionPayload({
       title: 'Server lockdown active',

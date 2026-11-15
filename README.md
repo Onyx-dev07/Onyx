@@ -62,7 +62,7 @@ Data lives in local JSON by default, so the bot runs with no external services. 
 - Mass ban and mass kick
 - User notes and full case history
 - Nuke, softban, hardban, and channel locks
-- Hierarchy-aware action cards on every action
+- One compact, footer-free receipt on every action, with hierarchy checks before the bot touches a member
 
 **Utility &amp; Fun**
 - Anime actions: `slap`, `kiss`, `punch`, `ship`, and more

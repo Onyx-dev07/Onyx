@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const { errorEmbed } = require('../../utils/embeds');
-const { actionPayload } = require('../../utils/moderation');
+const { actionPayload, failurePayload } = require('../../utils/moderation');
 
 module.exports = {
   name: 'nuke',
@@ -17,7 +16,7 @@ module.exports = {
     // Threads have no permission overwrites of their own and cannot be cloned.
     if (channel.isThread?.()) {
       return interaction.reply({
-        embeds: [errorEmbed('Nuke cannot run inside a thread. Use it in the parent channel.')],
+        ...failurePayload('Nuke Blocked', 'Nuke cannot run inside a thread. Use it in the parent channel.'),
         flags: MessageFlags.Ephemeral
       });
     }
@@ -50,9 +49,9 @@ module.exports = {
     } catch (err) {
       // If deletion succeeded this edit fails silently, which is expected —
       // there is no original channel left to report into.
-      await interaction.editReply({
-        embeds: [errorEmbed(`Failed to nuke channel: ${err.message}`)]
-      }).catch(() => {});
+      await interaction.editReply(
+        failurePayload('Nuke Blocked', `Failed to nuke channel: ${err.message}`)
+      ).catch(() => {});
     }
   },
 
@@ -60,7 +59,7 @@ module.exports = {
     const channel = message.channel;
 
     if (channel.isThread?.()) {
-      return message.reply({ embeds: [errorEmbed('Nuke cannot run inside a thread. Use it in the parent channel.')] });
+      return message.reply(failurePayload('Nuke Blocked', 'Nuke cannot run inside a thread. Use it in the parent channel.'));
     }
 
     try {
@@ -85,7 +84,7 @@ module.exports = {
         fields: [{ name: 'New Channel', value: `<#${newChannel.id}>`, inline: true }]
       }));
     } catch (err) {
-      await message.reply({ embeds: [errorEmbed(`Failed to nuke channel: ${err.message}`)] });
+      await message.reply(failurePayload('Nuke Blocked', `Failed to nuke channel: ${err.message}`));
     }
   }
 };

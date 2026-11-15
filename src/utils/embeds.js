@@ -386,38 +386,100 @@ export function compactEmbed(description, color = 'primary') {
   });
 }
 
+// Action titles map to the verb that follows the moderator's mention, so a
+// receipt reads as one sentence instead of a title-and-fields card. This mirrors
+// the CommonJS Onyx ACTION_VERBS map used by !mute, !unmute and friends.
+const MODERATION_VERBS = {
+  'Member Banned': 'Banned',
+  'Member Unbanned': 'Unbanned',
+  'Member Kicked': 'Kicked',
+  'Member Warned': 'Warned',
+  'Member Timed Out': 'Timed out',
+  'Timeout Removed': 'Removed the timeout from',
+  'Member Muted': 'Muted',
+  'Member Unmuted': 'Unmuted',
+  'Messages Purged': 'Purged',
+  'Messages Deleted': 'Deleted messages in',
+  'Message Sent': 'Sent a message in',
+  'Direct Message Sent': 'Directly messaged',
+  'Mass Ban Completed': 'Mass banned',
+  'Mass Kick Completed': 'Mass kicked',
+  'Note Added': 'Added a note for',
+  'Note Removed': 'Removed a note from',
+  'Notes Cleared': 'Cleared the notes of',
+  'Channel Locked': 'Locked',
+  'Channel Unlocked': 'Unlocked',
+  'Channel Cleared': 'Cleared',
+  'Role Added': 'Added',
+  'Role Removed': 'Removed',
+};
+
+const RECEIPT_SEPARATOR = '·';
+
+function receiptMarker(status) {
+  if (status === 'error') return '❌';
+  if (status === 'warning') return '⚠️';
+  return '✅';
+}
+
 /**
- * Build a clean moderation receipt: target, moderator, optional duration and
- * case id, and the reason. Every moderation command uses the same shape.
+ * Build a moderation receipt in the same shape as the Onyx action card:
+ *
+ *   ✅ **@mod**: Banned @user.
+ *   -# Reason · Raiding
+ *   -# Case · #12
+ *
+ * Failures pass `color: 'error'` and a blocked action name, which renders as
+ * `❌ **Ban Blocked**` followed by the explanation. No title, footer, or
+ * timestamp, so Discord draws the same compact box as !lock and !mute.
  */
 export function moderationEmbed({
   action = 'Action Complete',
   target = null,
+  targetKind = 'user',
   moderator = null,
-  reason = 'No reason provided',
+  reason = null,
   duration = null,
   caseId = null,
-  color = 'success',
+  color = 'primary',
   fields = [],
   description = null,
 } = {}) {
-  const status = color === 'warning' ? 'warning' : color === 'error' ? 'error' : 'success';
-  const embedFields = [
-    { name: 'Target', value: mentionOrText(target), inline: true },
-    { name: 'Moderator', value: mentionOrText(moderator), inline: true },
-  ];
+  const status = color === 'error' ? 'error' : color === 'warning' ? 'warning' : 'success';
+  const marker = receiptMarker(status);
+  const verb = MODERATION_VERBS[action];
+  const meta = [];
 
-  if (duration) embedFields.push({ name: 'Duration', value: String(duration), inline: true });
-  if (caseId) embedFields.push({ name: 'Case ID', value: `#${caseId}`, inline: true });
+  if (reason) meta.push(`-# Reason ${RECEIPT_SEPARATOR} ${reason}`);
+  if (caseId) meta.push(`-# Case ${RECEIPT_SEPARATOR} #${caseId}`);
 
-  embedFields.push({ name: 'Reason', value: String(reason || 'No reason provided'), inline: false });
-  embedFields.push(...fields);
+  for (const field of fields) {
+    if (!field || !field.name || field.value === undefined || field.value === null) continue;
+    meta.push(`-# ${field.name} ${RECEIPT_SEPARATOR} ${field.value}`);
+  }
+
+  if (moderator && verb) {
+    const sentence = `${marker} **${mentionOrText(moderator)}**: ${[
+      verb,
+      target !== null && target !== undefined ? mentionOrText(target, targetKind) : null,
+      duration ? `for ${duration}` : null,
+    ].filter(Boolean).join(' ')}.`;
+
+    return createEmbed({
+      description: [sentence, description, ...meta].filter(Boolean).join('\n'),
+      color,
+      footer: false,
+      timestamp: false,
+    });
+  }
+
+  const heading = action ? `${marker} **${action}**` : marker;
 
   return createEmbed({
-    title: statusTitle(status, action),
-    description: description || undefined,
-    fields: embedFields,
+    description: [heading, description, ...meta].filter(Boolean).join('\n'),
     color,
+    footer: false,
+    timestamp: false,
   });
 }
 

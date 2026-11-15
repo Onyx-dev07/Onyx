@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
-import { createEmbed, successEmbed } from '../../utils/embeds.js';
+import { createEmbed } from '../../utils/embeds.js';
 import { getModerationCases } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -76,7 +76,12 @@ export default {
 
                 const embed = createEmbed({
                     title: 'Moderation Cases',
-                    description: `Showing moderation cases for **${interaction.guild.name}**\n\n**Page ${page} of ${totalPages}**`
+                    description: [
+                        `**${interaction.guild.name}**`,
+                        `-# Page ${page} of ${totalPages} · Total ${cases.length} · Filter ${filterType}${targetUser ? ` · ${targetUser.username}` : ''}`
+                    ].join('\n'),
+                    color: 'primary',
+                    timestamp: false,
                 });
 
                 pageCases.forEach(case_ => {
@@ -88,10 +93,6 @@ export default {
                         value: `**Target:** ${case_.target}\n**Moderator:** ${case_.executor}\n**Date:** ${date} at ${time}\n**Reason:** ${case_.reason || 'No reason provided'}`,
                         inline: false
                     });
-                });
-
-                embed.setFooter({
-                    text: `Total cases: ${cases.length} | Filter: ${filterType}${targetUser ? ` | User: ${targetUser.username}` : ''}`
                 });
 
                 return embed;

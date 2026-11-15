@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { compactEmbed, formatDuration } from '../../utils/embeds.js';
+import { formatDuration, moderationEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -54,11 +54,12 @@ function parseDurationInput(value) {
     return durationMs;
 }
 
-function muteText(targetId, durationMs, reason) {
-    const headline = `🔇 <@${targetId}> muted for **${formatDuration(durationMs)}**.`;
-    return reason && reason !== 'No reason provided'
-        ? `${headline}\n-# ${reason}`
-        : headline;
+function timeoutBlocked(error) {
+    return moderationEmbed({
+        action: 'Timeout Blocked',
+        color: 'error',
+        description: errorText(error),
+    });
 }
 
 function errorText(error) {
@@ -154,14 +155,20 @@ export default {
             });
 
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(muteText(targetUser.id, durationMs, reason), 'success')],
+                embeds: [moderationEmbed({
+                    action: 'Member Timed Out',
+                    target: targetUser,
+                    moderator: interaction.user,
+                    duration: formatDuration(durationMs),
+                    reason,
+                })],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
                 logger.error('Timeout command error:', error);
             }
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(errorText(error), 'error')],
+                embeds: [timeoutBlocked(error)],
             });
         }
     },
@@ -172,10 +179,11 @@ export default {
 
         if (!targetId) {
             return interaction.reply({
-                embeds: [compactEmbed(
-                    'Mention a member to mute. Usage: `!mute @user [duration] [reason]` — e.g. `!mute @user 10m spam`.',
-                    'error',
-                )],
+                embeds: [moderationEmbed({
+                    action: 'Timeout Blocked',
+                    color: 'error',
+                    description: 'Mention a member to mute. Usage: `!mute @user [duration] [reason]` — e.g. `!mute @user 10m spam`.',
+                })],
             });
         }
 
@@ -218,14 +226,20 @@ export default {
             });
 
             return interaction.reply({
-                embeds: [compactEmbed(muteText(targetId, durationMs, reason), 'success')],
+                embeds: [moderationEmbed({
+                    action: 'Member Timed Out',
+                    target: { id: targetId },
+                    moderator: interaction.user,
+                    duration: formatDuration(durationMs),
+                    reason,
+                })],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
                 logger.error('Prefix mute command error:', error);
             }
             return interaction.reply({
-                embeds: [compactEmbed(errorText(error), 'error')],
+                embeds: [timeoutBlocked(error)],
             });
         }
     },

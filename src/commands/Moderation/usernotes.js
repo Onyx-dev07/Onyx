@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
-import { createEmbed, successEmbed, infoEmbed, warningEmbed } from '../../utils/embeds.js';
+import { compactEmbed, createEmbed, moderationEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { getFromDb, setInDb, deleteFromDb, getUserNotesKey, getUserNotesListKey } from '../../utils/database.js';
 import { sanitizeInput } from '../../utils/validation.js';
@@ -146,17 +146,18 @@ async function handleAddNote(interaction, targetUser, notes, guildId) {
     const notesKey = getUserNotesKey(guildId, targetUser.id);
     await setInDb(notesKey, notes);
 
-    const typeInfo = getNoteTypeInfo(type);
-
     return InteractionHelper.safeReply(interaction, {
         embeds: [
-            successEmbed(
-                `${typeInfo.emoji} Note Added`,
-                `Added a **${type}** note for <@${targetUser.id}>:\n\n` +
-                `> ${note}\n\n` +
-                `**Moderator:** <@${interaction.user.id}>\n` +
-                `**Total Notes:** ${notes.length}`
-            )
+            moderationEmbed({
+                action: 'Note Added',
+                target: targetUser,
+                moderator: interaction.user,
+                fields: [
+                    { name: 'Type', value: type },
+                    { name: 'Note', value: `> ${note}` },
+                    { name: 'Total Notes', value: `${notes.length}` },
+                ],
+            })
         ]
     });
 }
@@ -165,17 +166,14 @@ async function handleViewNotes(interaction, targetUser, notes) {
     if (notes.length === 0) {
         return InteractionHelper.safeReply(interaction, {
             embeds: [
-                infoEmbed(
-                    "📝 No Notes",
-                    `There are no notes for <@${targetUser.id}>.`
-                ),
+                compactEmbed(`**No notes** — <@${targetUser.id}> has no notes on record.`, 'info'),
             ],
         });
     }
 
     const sortedNotes = [...notes].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    let description = `**Notes for ${targetUser.username}** (<@${targetUser.id}>)\n\n`;
+    let description = '';
     
     sortedNotes.forEach((note, index) => {
         const typeInfo = getNoteTypeInfo(note.type);
@@ -191,10 +189,12 @@ async function handleViewNotes(interaction, targetUser, notes) {
 
     return InteractionHelper.safeReply(interaction, {
         embeds: [
-            infoEmbed(
-                `📝 User Notes (${notes.length})`,
-                description
-            )
+            createEmbed({
+                title: `User Notes · ${notes.length}`,
+                description: `**${targetUser.username}** (<@${targetUser.id}>)\n\n${description.trim()}`,
+                color: 'primary',
+                timestamp: false,
+            })
         ]
     });
 }
@@ -220,12 +220,13 @@ async function handleRemoveNote(interaction, targetUser, notes, guildId) {
 
     return InteractionHelper.safeReply(interaction, {
         embeds: [
-            successEmbed(
-                `${typeInfo.emoji} Note Removed`,
-                `Removed note #${index + 1} from <@${targetUser.id}>:\n\n` +
-                `> ${removedNote.content}\n\n` +
-                `**Remaining Notes:** ${notes.length}`
-            )
+            moderationEmbed({
+                action: 'Note Removed',
+                target: targetUser,
+                moderator: interaction.user,
+                description: `${typeInfo.emoji} > ${removedNote.content}`,
+                fields: [{ name: 'Remaining Notes', value: `${notes.length}` }],
+            })
         ]
     });
 }
@@ -236,10 +237,7 @@ async function handleClearNotes(interaction, targetUser, notes, guildId) {
     if (noteCount === 0) {
         return InteractionHelper.safeReply(interaction, {
             embeds: [
-                infoEmbed(
-                    "No Notes to Clear",
-                    `There are no notes for <@${targetUser.id}> to clear.`
-                ),
+                compactEmbed(`**No notes to clear** — <@${targetUser.id}> has no notes on record.`, 'info'),
             ],
         });
     }
@@ -251,10 +249,12 @@ async function handleClearNotes(interaction, targetUser, notes, guildId) {
 
     return InteractionHelper.safeReply(interaction, {
         embeds: [
-            successEmbed(
-                "🗑️ Notes Cleared",
-                `Cleared **${noteCount}** notes from <@${targetUser.id}>.`
-            )
+            moderationEmbed({
+                action: 'Notes Cleared',
+                target: targetUser,
+                moderator: interaction.user,
+                fields: [{ name: 'Removed', value: `${noteCount}` }],
+            })
         ]
     });
 }

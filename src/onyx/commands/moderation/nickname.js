@@ -1,8 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const config = require('../../../config.json');
-const { approve, createEmbed, deny } = require('../../utils/embeds');
 const {
-  actionButtons,
+  actionPayload,
+  failurePayload,
   moderationBlock,
   moderationFailure
 } = require('../../utils/moderation');
@@ -12,51 +11,32 @@ const ACTION = 'change the nickname of';
 // One action sentence, matching the mute receipt: no title, no metadata block.
 function nicknamePayload({ member, moderator, nickname }) {
   if (!nickname) {
-    return {
-      embeds: [createEmbed({
-        description: `${approve()} **<@${moderator.id}>**: Cleared the nickname of <@${member.id}>.`,
-        footer: false,
-        timestamp: false
-      })],
-      components: [actionButtons()]
-    };
+    return actionPayload({
+      title: 'Nickname Cleared',
+      icon: 'check',
+      target: `<@${member.id}>`,
+      moderator: `<@${moderator.id}>`
+    });
   }
 
   const safeNickname = String(nickname).replace(/`/g, "'");
 
-  return {
-    embeds: [createEmbed({
-      description: `${approve()} **<@${moderator.id}>**: Set the nickname of <@${member.id}> to \`${safeNickname}\`.`,
-      footer: false,
-      timestamp: false
-    })],
-    components: [actionButtons()]
-  };
+  return actionPayload({
+    title: 'Nickname Set',
+    icon: 'check',
+    target: `<@${member.id}>`,
+    moderator: `<@${moderator.id}>`,
+    fields: [{ name: 'Nickname', value: `\`${safeNickname}\`` }]
+  });
 }
 
 // Failures stay on the same quiet card: no footer, no timestamp.
 function nicknameFailure(description) {
-  return {
-    embeds: [createEmbed({
-      description: `${deny()} **Nickname Blocked**\n${description}`,
-      color: config.colors.error,
-      footer: false,
-      timestamp: false
-    })],
-    components: [actionButtons()]
-  };
+  return failurePayload('Nickname Blocked', description);
 }
 
 function nicknameError(description) {
-  return {
-    embeds: [createEmbed({
-      title: '❌ Error',
-      description,
-      color: config.colors.error,
-      footer: false,
-      timestamp: false
-    })]
-  };
+  return failurePayload('Nickname Blocked', description);
 }
 
 module.exports = {

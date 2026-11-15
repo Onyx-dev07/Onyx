@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags } from 'discord.js';
-import { createEmbed, successEmbed, moderationEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { getColor } from '../../config/bot.js';
@@ -66,6 +66,7 @@ export default {
           moderationEmbed({
             action: 'Messages Purged',
             target: channel,
+            targetKind: 'channel',
             moderator: interaction.user,
             reason: `Deleted **${deletedCount}** messages`,
           }),

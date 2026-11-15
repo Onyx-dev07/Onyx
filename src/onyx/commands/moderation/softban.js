@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { errorEmbed } = require('../../utils/embeds');
 const { sendModerationDM } = require('../../utils/notify');
 const {
   actionPayload,
@@ -77,7 +76,7 @@ module.exports = {
   async executePrefix(message, args) {
     const user = message.mentions.users.first() || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
     if (!user) {
-      return message.reply({ embeds: [errorEmbed('Please specify a member to softban. Usage: `!softban @user [reason]`')] });
+      return message.reply({ ...failurePayload('Softban Blocked', 'Please specify a member to softban. Usage: `!softban @user [reason]`') });
     }
 
     const member = await message.guild.members.fetch(user.id).catch(() => null);

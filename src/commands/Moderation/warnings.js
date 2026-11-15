@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { compactEmbed, createEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { WarningService } from '../../services/moderation/warningService.js';
@@ -38,22 +38,17 @@ export default {
         if (totalWarns === 0) {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
-                    createEmbed({
-                        title: '✅ No Warnings',
-                        description: `<@${target.id}> has no recorded warnings.`,
-                        color: 'success',
-                        thumbnail: target.displayAvatarURL({ size: 256 }),
-                    }),
+                    compactEmbed(`✅ **No warnings** — <@${target.id}> has a clean record.`, 'success'),
                 ],
             });
             return;
         }
 
         const embed = createEmbed({
-            title: `Warnings: ${target.username}`,
-            description: `<@${target.id}> has **${totalWarns}** warning${totalWarns === 1 ? '' : 's'} on record.`,
+            title: `Warnings · ${target.username}`,
+            description: `-# ${totalWarns} warning${totalWarns === 1 ? '' : 's'} on record for <@${target.id}>`,
             color: 'warning',
-            thumbnail: target.displayAvatarURL({ size: 256 }),
+            timestamp: false,
         });
 
         const warningFields = validWarnings

@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { errorEmbed } = require('../../utils/embeds');
-const { actionPayload } = require('../../utils/moderation');
+const { actionPayload, failurePayload } = require('../../utils/moderation');
 
 const hoistRegex = /^[^a-zA-Z0-9]/;
 
@@ -21,7 +20,7 @@ module.exports = {
 
     if (target) {
       const member = await interaction.guild.members.fetch(target.id).catch(() => null);
-      if (!member) return interaction.editReply({ embeds: [errorEmbed('Member not found.')] });
+      if (!member) return interaction.editReply(failurePayload('Dehoist Blocked', 'Member not found.'));
 
       const name = member.nickname || member.user.username;
       if (hoistRegex.test(name)) {
@@ -35,7 +34,7 @@ module.exports = {
           fields: [{ name: 'Previous nickname', value: name, inline: true }]
         }));
       }
-      return interaction.editReply({ embeds: [errorEmbed('This user is not hoisting.')] });
+      return interaction.editReply(failurePayload('Dehoist Blocked', 'This user is not hoisting.'));
     }
 
     const result = await dehoistGuild(interaction.guild);
@@ -52,7 +51,7 @@ module.exports = {
     const target = message.mentions.users.first();
     if (target) {
       const member = await message.guild.members.fetch(target.id).catch(() => null);
-      if (!member) return message.reply({ embeds: [errorEmbed('Member not found.')] });
+      if (!member) return message.reply(failurePayload('Dehoist Blocked', 'Member not found.'));
 
       const name = member.nickname || member.user.username;
       if (hoistRegex.test(name)) {
@@ -66,7 +65,7 @@ module.exports = {
           fields: [{ name: 'Previous nickname', value: name, inline: true }]
         }));
       }
-      return message.reply({ embeds: [errorEmbed('This user is not hoisting.')] });
+      return message.reply(failurePayload('Dehoist Blocked', 'This user is not hoisting.'));
     }
 
     const sent = await message.reply(actionPayload({

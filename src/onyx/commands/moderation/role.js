@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const db = require('../../database');
 const config = require('../../../config.json');
-const { createEmbed, errorEmbed, UI, cardAuthor, quote, muted } = require('../../utils/embeds');
+const { createEmbed, UI } = require('../../utils/embeds');
+const { actionButtons, actionPayload, failurePayload } = require('../../utils/moderation');
 
 const ACTION_WORDS = {
   add: 'add',
@@ -34,21 +35,21 @@ function findRole(guild, mentioned, query) {
 }
 
 function hierarchyError(guild, member, role, moderator) {
-  if (role.id === guild.id) return errorEmbed('The **@everyone** role cannot be assigned.');
-  if (role.managed) return errorEmbed(`${role} is managed by an integration and cannot be assigned manually.`);
-  if (member.id === guild.ownerId) return errorEmbed('You cannot change the roles of the server owner.');
+  if (role.id === guild.id) return 'The **@everyone** role cannot be assigned.';
+  if (role.managed) return `${role} is managed by an integration and cannot be assigned manually.`;
+  if (member.id === guild.ownerId) return 'You cannot change the roles of the server owner.';
   if (role.position >= guild.members.me.roles.highest.position) {
-    return errorEmbed(`${role} sits above my highest role, so I cannot manage it.`);
+    return `${role} sits above my highest role, so I cannot manage it.`;
   }
   if (moderator && moderator.id !== guild.ownerId && member.roles.highest.position >= moderator.roles.highest.position) {
-    return errorEmbed(`${member.user.username} has a role equal to or above yours.`);
+    return `${member.user.username} has a role equal to or above yours.`;
   }
   return null;
 }
 
 async function changeRole({ guild, member, role, action, moderator, client }) {
   const problem = hierarchyError(guild, member, role, moderator);
-  if (problem) return { embed: problem };
+  if (problem) return { payload: failurePayload('Role Blocked', problem) };
 
   const hasRole = member.roles.cache.has(role.id);
   const shouldAdd = action === 'toggle' ? !hasRole : action === 'add';
@@ -56,38 +57,45 @@ async function changeRole({ guild, member, role, action, moderator, client }) {
 
   if (action !== 'toggle' && hasRole === shouldAdd) {
     return {
-      embed: createEmbed({
-        author: cardAuthor('Role', client.user.displayAvatarURL({ size: 128 })),
-        description: quote(`**${member.user.username}** ${shouldAdd ? 'already has' : 'does not have'} ${role}`),
-        color: config.colors.warning
-      })
+      payload: {
+        embeds: [createEmbed({
+          description: [
+            `⚠️ **Role Unchanged**`,
+            `**${member.user.username}** ${shouldAdd ? 'already has' : 'does not have'} ${role}.`
+          ].join('\n'),
+          color: config.colors.warning,
+          footer: false,
+          timestamp: false
+        })],
+        components: [actionButtons()]
+      }
     };
   }
 
   try {
     await member.roles[shouldAdd ? 'add' : 'remove'](role, `[Onyx] ${label} by ${moderator.tag}`);
   } catch (err) {
-    return { embed: errorEmbed(`Could not update the role ${UI.separator} ${err.message}`) };
+    return { payload: failurePayload('Role Blocked', `Could not update ${role} ${UI.separator} ${err.message}`) };
   }
 
   const roleCount = member.roles.cache.filter(entry => entry.id !== guild.id).size;
 
   return {
-    embed: createEmbed({
-      author: cardAuthor('Role', client.user.displayAvatarURL({ size: 128 })),
-      title: shouldAdd ? 'Role added' : 'Role removed',
-      description: [
-        quote(`${shouldAdd ? UI.active : UI.inactive} **${label}** ${role} ${shouldAdd ? 'to' : 'from'} **${member.user.username}**`),
-        muted(`Member now holds ${roleCount} ${roleCount === 1 ? 'role' : 'roles'}`)
-      ].join('\n'),
-      color: config.colors.success
+    payload: actionPayload({
+      title: shouldAdd ? 'Role Added' : 'Role Removed',
+      icon: 'check',
+      target: `<@${member.id}>`,
+      moderator: `<@${moderator.id}>`,
+      fields: [
+        { name: 'Role', value: `${role}` },
+        { name: 'Roles', value: `${roleCount}` }
+      ]
     })
   };
 }
 
 function usageEmbed(prefix) {
   return createEmbed({
-    author: cardAuthor('Role'),
     title: 'Usage',
     description: [
       'Add, remove, or toggle a role. The role can be mentioned or written by name.',
@@ -95,7 +103,9 @@ function usageEmbed(prefix) {
       `\`${prefix}role @member @Role\``,
       `\`${prefix}role add @member RoleName\``,
       `\`${prefix}role remove @member @Role\``
-    ].join('\n')
+    ].join('\n'),
+    footer: false,
+    timestamp: false
   });
 }
 
@@ -134,10 +144,10 @@ module.exports = {
     const role = interaction.guild.roles.cache.get(selected?.id);
     const action = interaction.options.getString('action') || 'toggle';
 
-    if (!role) return interaction.reply({ embeds: [errorEmbed('That role could not be found.')], flags: MessageFlags.Ephemeral });
+    if (!role) return interaction.reply({ ...failurePayload('Role Blocked', 'That role could not be found.'), flags: MessageFlags.Ephemeral });
 
     const member = await interaction.guild.members.fetch(user.id).catch(() => null);
-    if (!member) return interaction.reply({ embeds: [errorEmbed('That member is not in this server.')], flags: MessageFlags.Ephemeral });
+    if (!member) return interaction.reply({ ...failurePayload('Role Blocked', 'That member is not in this server.'), flags: MessageFlags.Ephemeral });
 
     const result = await changeRole({
       guild: interaction.guild,
@@ -148,7 +158,7 @@ module.exports = {
       client: interaction.client
     });
 
-    await interaction.reply({ embeds: [result.embed] });
+    await interaction.reply(result.payload);
   },
 
   async executePrefix(message, args) {
@@ -179,6 +189,6 @@ module.exports = {
       client: message.client
     });
 
-    await message.reply({ embeds: [result.embed] });
+    await message.reply(result.payload);
   }
 };
