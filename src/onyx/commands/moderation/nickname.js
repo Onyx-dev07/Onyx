@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { createEmbed } = require('../../utils/embeds');
 const {
-  actionPayload,
   failurePayload,
   moderationBlock,
   moderationFailure
@@ -8,26 +8,28 @@ const {
 
 const ACTION = 'change the nickname of';
 
-// One action sentence, matching the mute receipt: no title, no metadata block.
-function nicknamePayload({ member, moderator, nickname }) {
+// Plain one-line confirmation, matching !role: no emoji, moderator prefix, or
+// metadata block.
+function nicknamePayload({ member, nickname }) {
   if (!nickname) {
-    return actionPayload({
-      title: 'Nickname Cleared',
-      icon: 'check',
-      target: `<@${member.id}>`,
-      moderator: `<@${moderator.id}>`
-    });
+    return {
+      embeds: [createEmbed({
+        description: `Nickname of <@${member.id}> cleared.`,
+        footer: false,
+        timestamp: false
+      })]
+    };
   }
 
   const safeNickname = String(nickname).replace(/`/g, "'");
 
-  return actionPayload({
-    title: 'Nickname Set',
-    icon: 'check',
-    target: `<@${member.id}>`,
-    moderator: `<@${moderator.id}>`,
-    fields: [{ name: 'Nickname', value: `\`${safeNickname}\`` }]
-  });
+  return {
+    embeds: [createEmbed({
+      description: `Nickname of <@${member.id}> set to \`${safeNickname}\`.`,
+      footer: false,
+      timestamp: false
+    })]
+  };
 }
 
 // Failures stay on the same quiet card: no footer, no timestamp.
