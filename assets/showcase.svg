@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="300" viewBox="0 0 1280 300" role="img" aria-label="Featured Onyx commands: slap, punch, ship, and boobs with compact one-line replies" font-family="'JetBrains Mono','Fira Code','SFMono-Regular',Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07080b"/>
+      <stop offset="0.55" stop-color="#0b0c10"/>
+      <stop offset="1" stop-color="#07080b"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#11131a"/>
+      <stop offset="1" stop-color="#0a0b0f"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f7a8c4"/>
+      <stop offset="1" stop-color="#ff8fb1"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f7a8c4" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#f7a8c4" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.022" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="300" fill="url(#bg)"/>
+  <rect width="1280" height="300" fill="url(#grid)"/>
+  <ellipse cx="1080" cy="120" rx="320" ry="180" fill="url(#glow)"/>
+
+  <text x="48" y="44" fill="#ff8fb1" font-size="11.5" letter-spacing="3.4" opacity="0.9">// FEATURED COMMANDS</text>
+  <text x="48" y="80" fill="#eceef2" font-size="27" font-weight="700">Small commands. Instant replies.</text>
+  <text x="48" y="104" fill="#8f95a1" font-size="13">One-line embeds, no footer noise, and a random-target fallback on every action.</text>
+
+  <g>
+    <rect x="48" y="128" width="278" height="118" rx="14" fill="url(#card)" stroke="#262833" stroke-width="1.2"/>
+    <text x="68" y="158" fill="#f7a8c4" font-size="15.5" font-weight="700">!slap</text>
+    <text x="130" y="158" fill="#eceef2" font-size="15.5">@member</text>
+    <text x="308" y="154" fill="#6ee7a8" font-size="10" text-anchor="end" letter-spacing="1.4">SFW</text>
+    <text x="68" y="186" fill="#5f6470" font-size="14">&#8627;</text>
+    <text x="88" y="186" fill="#8f95a1" font-size="12.5">anime GIF &#183; random target</text>
+    <text x="68" y="218" fill="#454a54" font-size="11">pre-warmed GIF pool</text>
+  </g>
+
+  <g>
+    <rect x="350" y="128" width="278" height="118" rx="14" fill="url(#card)" stroke="#262833" stroke-width="1.2"/>
+    <text x="370" y="158" fill="#f7a8c4" font-size="15.5" font-weight="700">!punch</text>
+    <text x="446" y="158" fill="#eceef2" font-size="15.5">@member</text>
+    <text x="610" y="154" fill="#6ee7a8" font-size="10" text-anchor="end" letter-spacing="1.4">SFW</text>
+    <text x="370" y="186" fill="#5f6470" font-size="14">&#8627;</text>
+    <text x="390" y="186" fill="#8f95a1" font-size="12.5">anime GIF &#183; random target</text>
+    <text x="370" y="218" fill="#454a54" font-size="11">same theme as slap / kiss</text>
+  </g>
+
+  <g>
+    <rect x="652" y="128" width="278" height="118" rx="14" fill="url(#card)" stroke="#262833" stroke-width="1.2"/>
+    <text x="672" y="158" fill="#f7a8c4" font-size="15.5" font-weight="700">!ship</text>
+    <text x="732" y="158" fill="#eceef2" font-size="15.5">@you @them</text>
+    <text x="912" y="154" fill="#6ee7a8" font-size="10" text-anchor="end" letter-spacing="1.4">SFW</text>
+    <text x="672" y="186" fill="#5f6470" font-size="14">&#8627;</text>
+    <text x="692" y="186" fill="#8f95a1" font-size="12.5">compatibility card &#183; stable score</text>
+    <text x="672" y="218" fill="#454a54" font-size="11">no footer &#183; no timestamp</text>
+  </g>
+
+  <g>
+    <rect x="954" y="128" width="278" height="118" rx="14" fill="url(#card)" stroke="#262833" stroke-width="1.2"/>
+    <text x="974" y="158" fill="#f7a8c4" font-size="15.5" font-weight="700">!boobs</text>
+    <text x="1052" y="158" fill="#eceef2" font-size="15.5">@member</text>
+    <text x="1214" y="154" fill="#6ee7a8" font-size="10" text-anchor="end" letter-spacing="1.4">FUN</text>
+    <text x="974" y="186" fill="#5f6470" font-size="14">&#8627;</text>
+    <text x="994" y="186" fill="#8f95a1" font-size="12.5">random size &#183; 26AA to 56N</text>
+    <text x="974" y="218" fill="#454a54" font-size="11">compact meter reply</text>
+  </g>
+
+  <text x="640" y="280" fill="#5f6470" font-size="11.5" text-anchor="middle" letter-spacing="1.2">NSFW anime actions are available in age-restricted channels only.</text>
+</svg>

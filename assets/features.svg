@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="520" viewBox="0 0 1280 520" role="img" aria-label="Onyx feature matrix: security suite, moderation, community core, utility and fun commands" font-family="'JetBrains Mono','Fira Code','SFMono-Regular',Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07080b"/>
+      <stop offset="0.55" stop-color="#0b0c10"/>
+      <stop offset="1" stop-color="#07080b"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#11131a"/>
+      <stop offset="1" stop-color="#090a0e"/>
+    </linearGradient>
+    <linearGradient id="pink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f7a8c4"/>
+      <stop offset="1" stop-color="#ff8fb1"/>
+    </linearGradient>
+    <radialGradient id="glowPink" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#f7a8c4" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#f7a8c4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowMint" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#6ee7a8" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#6ee7a8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.022" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="520" fill="url(#bg)"/>
+  <rect width="1280" height="520" fill="url(#grid)"/>
+  <ellipse cx="1080" cy="120" rx="330" ry="200" fill="url(#glowPink)"/>
+  <ellipse cx="160" cy="470" rx="300" ry="170" fill="url(#glowMint)"/>
+
+  <text x="48" y="44" fill="#ff8fb1" font-size="11.5" letter-spacing="3.4" opacity="0.9">// FEATURE MATRIX</text>
+  <text x="48" y="82" fill="#eceef2" font-size="30" font-weight="700">Everything in one quiet console.</text>
+  <text x="48" y="108" fill="#8f95a1" font-size="13">Security, moderation, community, and utility systems share one theme and one config.</text>
+
+  <!-- security card -->
+  <rect x="48" y="132" width="580" height="342" rx="16" fill="url(#card)" stroke="#262833" stroke-width="1.2"/>
+  <rect x="48" y="132" width="580" height="4" rx="2" fill="url(#pink)"/>
+  <g transform="translate(76 168)">
+    <path d="M10 0L20 4V11C20 16 16 20 10 22C4 20 0 16 0 11V4Z" fill="none" stroke="#f7a8c4" stroke-width="1.6"/>
+    <path d="M6.4 10.4L9 13L13.8 8" fill="none" stroke="#f7a8c4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="110" y="182" fill="#eceef2" font-size="20" font-weight="700">Security Suite</text>
+  <text x="110" y="203" fill="#6f747f" font-size="12">Hardened defaults, zero noise.</text>
+
+  <g font-size="13.5">
+    <circle cx="80" cy="236" r="3" fill="#f7a8c4"/>
+    <text x="96" y="240" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Antinuke</tspan> &#8212; stop destructive admin actions</text>
+    <circle cx="80" cy="262" r="3" fill="#f7a8c4"/>
+    <text x="96" y="266" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Antiraid</tspan> &#8212; automatic raid response and lockdown</text>
+    <circle cx="80" cy="288" r="3" fill="#f7a8c4"/>
+    <text x="96" y="292" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Antibetray</tspan> &#8212; catch compromised staff accounts</text>
+    <circle cx="80" cy="314" r="3" fill="#f7a8c4"/>
+    <text x="96" y="318" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Automod</tspan> &#8212; spam, invite, link, and content filters</text>
+    <circle cx="80" cy="340" r="3" fill="#f7a8c4"/>
+    <text x="96" y="344" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Whitelist</tspan> &#8212; trusted-user bypass system</text>
+    <circle cx="80" cy="366" r="3" fill="#f7a8c4"/>
+    <text x="96" y="370" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Extra Owner</tspan> &#8212; delegate owner-level protection</text>
+    <circle cx="80" cy="392" r="3" fill="#f7a8c4"/>
+    <text x="96" y="396" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Fortress</tspan> &#8212; freeze dangerous permissions instantly</text>
+    <circle cx="80" cy="418" r="3" fill="#f7a8c4"/>
+    <text x="96" y="422" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Jail / Unjail</tspan> &#8212; isolate and restore members</text>
+    <circle cx="80" cy="444" r="3" fill="#f7a8c4"/>
+    <text x="96" y="448" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Limits</tspan> &#8212; per-action thresholds for staff actions</text>
+  </g>
+
+  <!-- community card -->
+  <rect x="652" y="132" width="580" height="342" rx="16" fill="url(#card)" stroke="#262833" stroke-width="1.2"/>
+  <rect x="652" y="132" width="580" height="4" rx="2" fill="#6ee7a8" opacity="0.85"/>
+  <g transform="translate(680 166)">
+    <circle cx="8" cy="7" r="4.2" fill="none" stroke="#6ee7a8" stroke-width="1.6"/>
+    <circle cx="19" cy="7" r="4.2" fill="none" stroke="#6ee7a8" stroke-width="1.6"/>
+    <path d="M0.8 21C1.4 16.6 4.8 14 8 14C11.2 14 14.6 16.6 15.2 21" fill="none" stroke="#6ee7a8" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M15.4 15C18.2 15 21 17.2 21.4 21" fill="none" stroke="#6ee7a8" stroke-width="1.6" stroke-linecap="round"/>
+  </g>
+  <text x="712" y="182" fill="#eceef2" font-size="20" font-weight="700">Community Core</text>
+  <text x="712" y="203" fill="#6f747f" font-size="12">Economy, levels, tickets, and more.</text>
+
+  <g font-size="13.5">
+    <circle cx="684" cy="236" r="3" fill="#6ee7a8"/>
+    <text x="700" y="240" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Economy</tspan> &#8212; shop, inventory, and gambling</text>
+    <circle cx="684" cy="262" r="3" fill="#6ee7a8"/>
+    <text x="700" y="266" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Leveling</tspan> &#8212; message XP, ranks, and level roles</text>
+    <circle cx="684" cy="288" r="3" fill="#6ee7a8"/>
+    <text x="700" y="292" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Giveaways</tspan> &#8212; multi-winner draws and rerolls</text>
+    <circle cx="684" cy="314" r="3" fill="#6ee7a8"/>
+    <text x="700" y="318" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Tickets</tspan> &#8212; claiming, priorities, and transcripts</text>
+    <circle cx="684" cy="340" r="3" fill="#6ee7a8"/>
+    <text x="700" y="344" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Birthdays</tspan> &#8212; tracking and announcements</text>
+    <circle cx="684" cy="366" r="3" fill="#6ee7a8"/>
+    <text x="700" y="370" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Reaction roles</tspan> &#8212; welcome and autoroles</text>
+    <circle cx="684" cy="392" r="3" fill="#6ee7a8"/>
+    <text x="700" y="396" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Server stats</tspan> &#8212; live member and channel counters</text>
+    <circle cx="684" cy="418" r="3" fill="#6ee7a8"/>
+    <text x="700" y="422" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Verification</tspan> &#8212; button panels and auto-verify</text>
+    <circle cx="684" cy="444" r="3" fill="#6ee7a8"/>
+    <text x="700" y="448" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Anime actions</tspan> &#8212; slap, kiss, punch, ship, and more</text>
+  </g>
+
+  <text x="640" y="504" fill="#5f6470" font-size="11.5" text-anchor="middle" letter-spacing="1.2">137 COMMANDS &#183; 28 SECURITY MODULES &#183; JSON OR POSTGRESQL</text>
+</svg>

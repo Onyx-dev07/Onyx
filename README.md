@@ -25,7 +25,7 @@
   </p>
 </div>
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 ```console
 onyx@discord:~$ onyx start --secure
@@ -50,10 +50,15 @@ Data lives in local JSON by default, so the bot runs with no external services. 
 - **Per-guild security suite.** The Onyx category registers per guild, keeping the bot inside Discord's command budget.
 - **One visual language.** Near-black surfaces, a single soft-pink accent, compact embeds, and no noise.
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 <a name="featured-commands"></a>
 ## Featured Commands
+
+<img src="./assets/showcase.svg" alt="Featured Onyx commands: slap, punch, ship, and boobs with compact one-line replies" width="100%" />
+
+<details>
+<summary><b>Text list</b></summary>
 
 | Command | What it does |
 | --- | --- |
@@ -62,61 +67,37 @@ Data lives in local JSON by default, so the bot runs with no external services. 
 | `!ship @you @them` | Renders a shareable compatibility card with a stable score for each pair. |
 | `!count setup` | Sets up the counting game with streaks and a leaderboard. |
 
+</details>
+
 > [!TIP]
 > `!slap` and `!kiss` are also available as `/slap` and `/kiss`. GIFs come from a pre-warmed pool, so the reply is instant after the first fetch.
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 ## Highlights
 
-<table>
-<tr>
-<td width="50%" valign="top">
+<img src="./assets/features.svg" alt="Onyx feature matrix: security suite, moderation, community core, utility and fun commands" width="100%" />
 
-### 🛡️ Security Suite
-- **Antinuke** — stop destructive admin actions
-- **Antiraid** — automatic raid response and lockdown
-- **Antibetray** — catch compromised staff accounts
-- **Automod** — spam, invite, link, and content filters
-- **Whitelist** — trusted-user bypass system
-- **Extra Owner** — delegate owner-level protection
-- **Fortress** — freeze dangerous permissions instantly
-- **Jail / Unjail** — isolate disruptive members
-- **Limits** — per-action thresholds for staff actions
-- **Security audit** — posture score and hardening tips
+<details>
+<summary><b>Moderation &amp; utility details</b></summary>
 
-### Moderation
+**Moderation**
 - Mass ban and mass kick
 - User notes and full case history
 - Nuke, softban, hardban, and channel locks
 - Hierarchy-aware action cards on every action
 
-</td>
-<td width="50%" valign="top">
-
-### Community Core
-- Economy with shop, inventory, and gambling
-- Message XP, ranks, and automatic level roles
-- Multi-winner giveaways with rerolls
-- Ticket claiming, priorities, and transcripts
-- Birthday tracking and announcements
-- Reaction roles, welcome, and autoroles
-- Live server stat counters
-- Button-panel verification and auto-verify
-
-### Utility & Fun
-- Anime actions: `slap`, `kiss`, `ship`
+**Utility &amp; Fun**
+- Anime actions: `slap`, `kiss`, `punch`, `ship`, and more
 - Counting game with streak leaderboard
 - Polls, reminders, snipes, AFK, autoresponders
 - Search, calculators, weather, and time tools
 - Todo lists, reports, and prefix control
 - Embed builder with live preview
 
-</td>
-</tr>
-</table>
+</details>
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 <a name="quick-setup"></a>
 ## Quick Setup
@@ -161,7 +142,7 @@ Onyx creates `data/database.json` automatically. The security suite keeps its ow
 
 Community slash commands register globally on startup. The Onyx security commands register per guild so the bot stays within Discord's 100-command global budget; both sets appear in every server, and new guilds receive the security commands when the bot joins.
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 <a name="command-reference"></a>
 ## Command Reference
@@ -462,7 +443,7 @@ Community slash commands register globally on startup. The Onyx security command
 
 </details>
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 <a name="configuration"></a>
 ## Configuration
@@ -493,7 +474,7 @@ The Onyx security suite reads identity, colors, emoji slots, and security defaul
 | `PORT` / `WEB_HOST` | Health server bind settings |
 | `TMDB_API_KEY` | Optional key for media lookups |
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 ## Design Language
 
@@ -505,7 +486,7 @@ Onyx uses one dark, minimal language across every module: near-black surfaces, c
 - **One embed builder.** Every response is built through [`src/utils/embeds.js`](src/utils/embeds.js), which centralizes colors, footers, timestamps, truncation, and the shared moderation receipt.
 - **Mentions over raw IDs.** User, role, and channel references render as Discord mentions.
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 <a name="docker-deployment"></a>
 ## Docker Deployment
@@ -529,7 +510,7 @@ The included compose file runs the bot with JSON storage and mounts `./data`, so
 
 If PostgreSQL is unavailable, Onyx falls back to JSON storage automatically.
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 ## Project Structure
 
@@ -549,12 +530,16 @@ Onyx/
 ├── data/
 │   ├── database.json         # Native community database (created automatically)
 │   └── guilds.json           # Onyx security database
-├── assets/banner.svg         # Terminal-style README banner
+├── assets/
+│   ├── banner.svg            # Terminal-style README banner
+│   ├── showcase.svg          # Featured commands graphic
+│   ├── features.svg          # Feature matrix graphic
+│   └── divider.svg           # Section divider rule
 ├── legacy/                   # Original Onyx source, preserved for reference
 └── scripts/                  # Optional PostgreSQL migration and backup tools
 ```
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 ## Scripts
 
@@ -569,7 +554,7 @@ Onyx/
 | `npm run restore:db` | Restore from a backup |
 | `npm run backup:drill` | Run a restore drill |
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 ## Required Bot Intents
 
@@ -598,7 +583,7 @@ Enable these in the Discord Developer Portal:
 - Moderate Members
 - Connect
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 <a name="contributing"></a>
 ## Contributing
@@ -611,13 +596,13 @@ Enable these in the Discord Developer Portal:
 
 Please keep changes consistent with the existing architecture and visual language. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) for details.
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 ## License
 
 Onyx is released under the MIT License. See [LICENSE](LICENSE) for details.
 
----
+<img src="./assets/divider.svg" alt="" width="100%" />
 
 <div align="center">
 
