@@ -96,7 +96,7 @@
     <circle cx="684" cy="418" r="3" fill="#6ee7a8"/>
     <text x="700" y="422" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Verification</tspan> &#8212; button panels and auto-verify</text>
     <circle cx="684" cy="444" r="3" fill="#6ee7a8"/>
-    <text x="700" y="448" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Anime actions</tspan> &#8212; slap, kiss, punch, ship, and more</text>
+    <text x="700" y="448" fill="#c8ccd4"><tspan fill="#eceef2" font-weight="700">Polls</tspan> &#8212; quick community votes and tallies</text>
   </g>
 
   <text x="640" y="504" fill="#5f6470" font-size="11.5" text-anchor="middle" letter-spacing="1.2">137 COMMANDS &#183; 28 SECURITY MODULES &#183; JSON OR POSTGRESQL</text>

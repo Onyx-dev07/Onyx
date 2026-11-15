@@ -18,7 +18,7 @@
 
   <p>
     <a href="#quick-setup">Quick setup</a> &middot;
-    <a href="#featured-commands">Commands</a> &middot;
+    <a href="#security-at-a-glance">Security</a> &middot;
     <a href="#command-reference">Full reference</a> &middot;
     <a href="#configuration">Configuration</a> &middot;
     <a href="#docker-deployment">Docker</a>
@@ -36,8 +36,8 @@ onyx@discord:~$ onyx start --secure
   [ok] 137 commands · 28 security modules
   [ok] json storage ready · zero external services
 
-onyx@discord:~$ !slap @member
-  ↳ anime GIF · random target
+onyx@discord:~$ !antinuke enable
+  ↳ role matrix · destructive action limits
 
 onyx@discord:~$ _
 ```
@@ -52,25 +52,25 @@ Data lives in local JSON by default, so the bot runs with no external services. 
 
 <img src="./assets/divider.svg" alt="" width="100%" />
 
-<a name="featured-commands"></a>
-## Featured Commands
+<a name="security-at-a-glance"></a>
+## Security at a glance
 
-<img src="./assets/showcase.svg" alt="Featured Onyx commands: slap, punch, ship, and boobs with compact one-line replies" width="100%" />
+<img src="./assets/showcase.svg" alt="Onyx security modules: antinuke, automod, antiraid and whitelist with hardened defaults" width="100%" />
 
 <details>
 <summary><b>Text list</b></summary>
 
 | Command | What it does |
 | --- | --- |
-| `!slap @user` | Replies with a random anime slap GIF. Omit the mention and Onyx targets a random member. |
-| `!kiss @user` | Replies with a random anime kiss GIF, with the same random-target fallback. |
-| `!ship @you @them` | Renders a shareable compatibility card with a stable score for each pair. |
-| `!count setup` | Sets up the counting game with streaks and a leaderboard. |
+| `!antinuke enable` | Arms Anti-Nuke, creates its security roles, and enforces action limits. |
+| `!automod enable` | Turns on spam, invite, link, and content filters per channel. |
+| `!antiraid enable` | Gates new accounts and locks the server down automatically during a raid. |
+| `!whitelist add @user` | Keeps trusted staff and bots exempt from the Anti-Nuke modules. |
 
 </details>
 
 > [!TIP]
-> `!slap` and `!kiss` are also available as `/slap` and `/kiss`. GIFs come from a pre-warmed pool, so the reply is instant after the first fetch.
+> Every module ships disabled by default. Run `!setup` once, then tune thresholds with `!limits` and review posture with `!security`.
 
 <img src="./assets/divider.svg" alt="" width="100%" />
 
@@ -532,7 +532,7 @@ Onyx/
 │   └── guilds.json           # Onyx security database
 ├── assets/
 │   ├── banner.svg            # Terminal-style README banner
-│   ├── showcase.svg          # Featured commands graphic
+│   ├── showcase.svg          # Security modules graphic
 │   ├── features.svg          # Feature matrix graphic
 │   └── divider.svg           # Section divider rule
 ├── legacy/                   # Original Onyx source, preserved for reference
