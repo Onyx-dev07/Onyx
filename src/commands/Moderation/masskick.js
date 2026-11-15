@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
-import { moderationEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { logModerationAction } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
@@ -137,34 +137,13 @@ export default {
                 }
             }
 
-            const sections = [];
-
-            if (results.successful.length > 0) {
-                sections.push(`**Kicked**\n${results.successful.map(result => `• <@${result.userId}>`).join('\n')}`);
-            }
-
-            if (results.skipped.length > 0) {
-                sections.push(`**Skipped**\n${results.skipped.map(result => `• <@${result.userId}> — ${result.reason}`).join('\n')}`);
-            }
-
-            if (results.failed.length > 0) {
-                sections.push(`**Failed**\n${results.failed.map(result => `• <@${result.userId}> — ${result.reason}`).join('\n')}`);
-            }
+            const kicked = results.successful.length;
+            const summary = [`👢 Kicked **${kicked}** ${kicked === 1 ? 'member' : 'members'}.`];
+            if (results.skipped.length > 0) summary.push(`**${results.skipped.length}** skipped.`);
+            if (results.failed.length > 0) summary.push(`**${results.failed.length}** failed.`);
 
             return await InteractionHelper.safeEditReply(interaction, {
-                embeds: [moderationEmbed({
-                    action: 'Mass Kick Completed',
-                    target: `${results.successful.length} member${results.successful.length === 1 ? '' : 's'}`,
-                    moderator: interaction.user,
-                    reason,
-                    description: sections.join('\n\n'),
-                    color: results.successful.length > 0 ? 'primary' : 'warning',
-                    fields: [
-                        { name: 'Kicked', value: `${results.successful.length}` },
-                        { name: 'Skipped', value: `${results.skipped.length}` },
-                        { name: 'Failed', value: `${results.failed.length}` },
-                    ],
-                })],
+                embeds: [compactEmbed(summary.join(' '), kicked > 0 ? 'success' : 'warning')],
             });
 
         } catch (error) {

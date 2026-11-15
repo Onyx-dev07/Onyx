@@ -62,7 +62,7 @@ Data lives in local JSON by default, so the bot runs with no external services. 
 - Mass ban and mass kick
 - User notes and full case history
 - Nuke, softban, hardban, and channel locks
-- One compact, footer-free receipt on every action, with hierarchy checks before the bot touches a member
+- One-line, footer-free confirmation on every action, with hierarchy checks before the bot touches a member
 
 **Utility &amp; Fun**
 - Anime actions: `slap`, `kiss`, `punch`, `ship`, and more
@@ -461,7 +461,7 @@ Onyx uses one dark, minimal language across every module: near-black surfaces, c
 - **Pink accent.** `primary` `#f7a8c4` and `accent` `#ff8fb1` drive titles, highlights, progress bars, and important values.
 - **Near-black surfaces.** `dark` `#0b0b10`, `surface` `#17171f`, and `border` `#2a2a36` keep cards compact and quiet.
 - **Status colors.** `success` `#6ee7a8`, `warning` `#ffc66d`, `error` `#ff6b81`, and `info` `#a8c7ff`.
-- **One embed builder.** Every response is built through [`src/utils/embeds.js`](src/utils/embeds.js), which centralizes colors, footers, timestamps, truncation, and the shared moderation receipt.
+- **One embed builder.** Every response is built through [`src/utils/embeds.js`](src/utils/embeds.js), which centralizes colors, footers, timestamps, truncation, and the shared one-line action confirmation.
 - **Mentions over raw IDs.** User, role, and channel references render as Discord mentions.
 
 <img src="./assets/divider.svg" alt="" width="100%" />

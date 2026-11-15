@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const { actionPayload, failurePayload, moderationFailure } = require('../../utils/moderation');
+const { createEmbed } = require('../../utils/embeds');
+const { failurePayload, moderationFailure } = require('../../utils/moderation');
 
 const ACTION = 'remove the timeout from';
 
@@ -27,13 +28,13 @@ module.exports = {
 
     try {
       await member.timeout(null, '[Onyx Mod] Timeout removed');
-      return interaction.reply(actionPayload({
-        title: 'Member Unmuted',
-        icon: 'check',
-        target: `<@${user.id}>`,
-        moderator: `<@${interaction.user.id}>`,
-        reason: 'Timeout removed'
-      }));
+      return interaction.reply({
+        embeds: [createEmbed({
+          description: `🔊 <@${user.id}> unmuted.`,
+          footer: false,
+          timestamp: false
+        })]
+      });
     } catch (err) {
       return interaction.reply({
         ...failurePayload('Unmute Blocked', moderationFailure(ACTION, err)),
@@ -55,13 +56,13 @@ module.exports = {
 
     try {
       await member.timeout(null, '[Onyx Mod] Timeout removed');
-      return message.reply(actionPayload({
-        title: 'Member Unmuted',
-        icon: 'check',
-        target: `<@${user.id}>`,
-        moderator: `<@${message.author.id}>`,
-        reason: 'Timeout removed'
-      }));
+      return message.reply({
+        embeds: [createEmbed({
+          description: `🔊 <@${user.id}> unmuted.`,
+          footer: false,
+          timestamp: false
+        })]
+      });
     } catch (err) {
       return message.reply(failurePayload('Unmute Blocked', moderationFailure(ACTION, err)));
     }

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { moderationEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -48,7 +48,7 @@ export default {
             );
         }
 
-        const result = await ModerationService.banUser({
+        await ModerationService.banUser({
             guild: interaction.guild,
             user,
             moderator: interaction.member,
@@ -56,15 +56,7 @@ export default {
         });
 
         await InteractionHelper.universalReply(interaction, {
-            embeds: [
-                moderationEmbed({
-                    action: 'Member Banned',
-                    target: user,
-                    moderator: interaction.user,
-                    reason,
-                    caseId: result.caseId,
-                }),
-            ],
+            embeds: [compactEmbed(`🔨 <@${user.id}> banned.`, 'success')],
         });
     },
 };

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags } from 'discord.js';
-import { moderationEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { getColor } from '../../config/bot.js';
@@ -63,13 +63,7 @@ export default {
 
       await InteractionHelper.safeEditReply(interaction, {
         embeds: [
-          moderationEmbed({
-            action: 'Messages Purged',
-            target: channel,
-            targetKind: 'channel',
-            moderator: interaction.user,
-            reason: `Deleted **${deletedCount}** messages`,
-          }),
+          compactEmbed(`🧹 Deleted **${deletedCount}** messages in <#${channel.id}>.`, 'success'),
         ],
         flags: MessageFlags.Ephemeral,
       });

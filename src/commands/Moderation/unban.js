@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { moderationEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { replyUserError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -54,7 +54,7 @@ export default {
 
         const reason = interaction.options.getString("reason") || "No reason provided";
 
-        const result = await ModerationService.unbanUser({
+        await ModerationService.unbanUser({
             guild: interaction.guild,
             user: targetUser,
             moderator: interaction.member,
@@ -62,15 +62,7 @@ export default {
         });
 
         await InteractionHelper.safeEditReply(interaction, {
-            embeds: [
-                moderationEmbed({
-                    action: 'Member Unbanned',
-                    target: targetUser,
-                    moderator: interaction.user,
-                    reason,
-                    caseId: result.caseId,
-                }),
-            ],
+            embeds: [compactEmbed(`🔓 <@${targetUser.id}> unbanned.`, 'success')],
         });
     },
 };

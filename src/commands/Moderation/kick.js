@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { moderationEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -59,7 +59,7 @@ export default {
             );
         }
 
-        const result = await ModerationService.kickUser({
+        await ModerationService.kickUser({
             guild: interaction.guild,
             member,
             moderator: interaction.member,
@@ -67,15 +67,7 @@ export default {
         });
 
         await InteractionHelper.universalReply(interaction, {
-            embeds: [
-                moderationEmbed({
-                    action: 'Member Kicked',
-                    target: targetUser,
-                    moderator: interaction.user,
-                    reason,
-                    caseId: result.caseId,
-                }),
-            ],
+            embeds: [compactEmbed(`👢 <@${targetUser.id}> kicked.`, 'success')],
         });
     },
 };

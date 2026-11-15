@@ -358,20 +358,6 @@ const USER_ERROR_COLORS = {
   rate_limit: 'warning',
 };
 
-function mentionOrText(value, kind = 'user') {
-  if (value === null || value === undefined || value === '') return '—';
-  if (typeof value === 'string') {
-    if (/^\d{17,20}$/.test(value)) {
-      return kind === 'channel' ? `<#${value}>` : kind === 'role' ? `<@&${value}>` : `<@${value}>`;
-    }
-    return value;
-  }
-  if (value.id) {
-    return kind === 'channel' ? `<#${value.id}>` : kind === 'role' ? `<@&${value.id}>` : `<@${value.id}>`;
-  }
-  return String(value);
-}
-
 /**
  * One-line, chrome-free notice used by commands that only need a quick
  * confirmation (lock/unlock, mute/unmute). No title, fields, footer, or
@@ -380,103 +366,6 @@ function mentionOrText(value, kind = 'user') {
 export function compactEmbed(description, color = 'primary') {
   return createEmbed({
     description,
-    color,
-    footer: false,
-    timestamp: false,
-  });
-}
-
-// Action titles map to the verb that follows the moderator's mention, so a
-// receipt reads as one sentence instead of a title-and-fields card. This mirrors
-// the CommonJS Onyx ACTION_VERBS map used by !mute, !unmute and friends.
-const MODERATION_VERBS = {
-  'Member Banned': 'Banned',
-  'Member Unbanned': 'Unbanned',
-  'Member Kicked': 'Kicked',
-  'Member Warned': 'Warned',
-  'Member Timed Out': 'Timed out',
-  'Timeout Removed': 'Removed the timeout from',
-  'Member Muted': 'Muted',
-  'Member Unmuted': 'Unmuted',
-  'Messages Purged': 'Purged',
-  'Messages Deleted': 'Deleted messages in',
-  'Message Sent': 'Sent a message in',
-  'Direct Message Sent': 'Directly messaged',
-  'Mass Ban Completed': 'Mass banned',
-  'Mass Kick Completed': 'Mass kicked',
-  'Note Added': 'Added a note for',
-  'Note Removed': 'Removed a note from',
-  'Notes Cleared': 'Cleared the notes of',
-  'Channel Locked': 'Locked',
-  'Channel Unlocked': 'Unlocked',
-  'Channel Cleared': 'Cleared',
-  'Role Added': 'Added',
-  'Role Removed': 'Removed',
-};
-
-const RECEIPT_SEPARATOR = '·';
-
-function receiptMarker(status) {
-  if (status === 'error') return '❌';
-  if (status === 'warning') return '⚠️';
-  return '✅';
-}
-
-/**
- * Build a moderation receipt in the same shape as the Onyx action card:
- *
- *   ✅ **@mod**: Banned @user.
- *   -# Reason · Raiding
- *   -# Case · #12
- *
- * Failures pass `color: 'error'` and a blocked action name, which renders as
- * `❌ **Ban Blocked**` followed by the explanation. No title, footer, or
- * timestamp, so Discord draws the same compact box as !lock and !mute.
- */
-export function moderationEmbed({
-  action = 'Action Complete',
-  target = null,
-  targetKind = 'user',
-  moderator = null,
-  reason = null,
-  duration = null,
-  caseId = null,
-  color = 'primary',
-  fields = [],
-  description = null,
-} = {}) {
-  const status = color === 'error' ? 'error' : color === 'warning' ? 'warning' : 'success';
-  const marker = receiptMarker(status);
-  const verb = MODERATION_VERBS[action];
-  const meta = [];
-
-  if (reason) meta.push(`-# Reason ${RECEIPT_SEPARATOR} ${reason}`);
-  if (caseId) meta.push(`-# Case ${RECEIPT_SEPARATOR} #${caseId}`);
-
-  for (const field of fields) {
-    if (!field || !field.name || field.value === undefined || field.value === null) continue;
-    meta.push(`-# ${field.name} ${RECEIPT_SEPARATOR} ${field.value}`);
-  }
-
-  if (moderator && verb) {
-    const sentence = `${marker} **${mentionOrText(moderator)}**: ${[
-      verb,
-      target !== null && target !== undefined ? mentionOrText(target, targetKind) : null,
-      duration ? `for ${duration}` : null,
-    ].filter(Boolean).join(' ')}.`;
-
-    return createEmbed({
-      description: [sentence, description, ...meta].filter(Boolean).join('\n'),
-      color,
-      footer: false,
-      timestamp: false,
-    });
-  }
-
-  const heading = action ? `${marker} **${action}**` : marker;
-
-  return createEmbed({
-    description: [heading, description, ...meta].filter(Boolean).join('\n'),
     color,
     footer: false,
     timestamp: false,

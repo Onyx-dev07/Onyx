@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const ms = require('ms');
+const { createEmbed } = require('../../utils/embeds');
 const {
-  actionPayload,
   failurePayload,
   moderationBlock,
   moderationFailure
@@ -24,18 +24,14 @@ async function resolveUser(client, input) {
   return client.users.fetch(id).catch(() => null);
 }
 
-function mutePayload({ user, durationMs, reason, moderator, isDefault }) {
-  const expiresAt = Math.floor((Date.now() + durationMs) / 1000);
-
-  return actionPayload({
-    title: 'Member Muted',
-    icon: 'lock',
-    target: `<@${user.id}>`,
-    moderator: `<@${moderator.id}>`,
-    duration: `${ms(durationMs, { long: true })}${isDefault ? ' (default)' : ''}`,
-    fields: [{ name: 'Expires', value: `<t:${expiresAt}:R>` }],
-    reason
-  });
+function mutePayload({ user, durationMs, isDefault }) {
+  return {
+    embeds: [createEmbed({
+      description: `🔇 <@${user.id}> muted for **${ms(durationMs, { long: true })}**${isDefault ? ' (default)' : ''}.`,
+      footer: false,
+      timestamp: false
+    })]
+  };
 }
 
 function invalidDuration(input) {
@@ -88,7 +84,7 @@ module.exports = {
 
     try {
       await member.timeout(durationMs, `[Onyx Mod] ${reason}`);
-      return interaction.editReply(mutePayload({ user, durationMs, reason, moderator: interaction.user, isDefault }));
+      return interaction.editReply(mutePayload({ user, durationMs, isDefault }));
     } catch (err) {
       return interaction.editReply(failurePayload('Mute Blocked', moderationFailure(ACTION, err)));
     }
@@ -128,7 +124,7 @@ module.exports = {
 
     try {
       await member.timeout(durationMs, `[Onyx Mod] ${reason}`);
-      return message.reply(mutePayload({ user, durationMs, reason, moderator: message.author, isDefault }));
+      return message.reply(mutePayload({ user, durationMs, isDefault }));
     } catch (err) {
       return message.reply(failurePayload('Mute Blocked', moderationFailure(ACTION, err)));
     }

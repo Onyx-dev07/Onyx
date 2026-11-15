@@ -54,11 +54,8 @@ function parseDurationInput(value) {
     return durationMs;
 }
 
-function muteText(targetId, durationMs, reason) {
-    const headline = `🔇 <@${targetId}> muted for **${formatDuration(durationMs)}**.`;
-    return reason && reason !== 'No reason provided'
-        ? `${headline}\n-# ${reason}`
-        : headline;
+function muteText(targetId, durationMs) {
+    return `🔇 <@${targetId}> muted for **${formatDuration(durationMs)}**.`;
 }
 
 function errorText(error) {
@@ -154,7 +151,7 @@ export default {
             });
 
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(muteText(targetUser.id, durationMs, reason), 'success')],
+                embeds: [compactEmbed(muteText(targetUser.id, durationMs), 'success')],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
@@ -218,7 +215,7 @@ export default {
             });
 
             return interaction.reply({
-                embeds: [compactEmbed(muteText(targetId, durationMs, reason), 'success')],
+                embeds: [compactEmbed(muteText(targetId, durationMs), 'success')],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {

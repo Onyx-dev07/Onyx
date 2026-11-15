@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
-import { compactEmbed, createEmbed, moderationEmbed } from '../../utils/embeds.js';
+import { compactEmbed, createEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { getFromDb, setInDb, deleteFromDb, getUserNotesKey, getUserNotesListKey } from '../../utils/database.js';
 import { sanitizeInput } from '../../utils/validation.js';
@@ -147,18 +147,7 @@ async function handleAddNote(interaction, targetUser, notes, guildId) {
     await setInDb(notesKey, notes);
 
     return InteractionHelper.safeReply(interaction, {
-        embeds: [
-            moderationEmbed({
-                action: 'Note Added',
-                target: targetUser,
-                moderator: interaction.user,
-                fields: [
-                    { name: 'Type', value: type },
-                    { name: 'Note', value: `> ${note}` },
-                    { name: 'Total Notes', value: `${notes.length}` },
-                ],
-            })
-        ]
+        embeds: [compactEmbed(`📝 Note added for <@${targetUser.id}>.`, 'success')],
     });
 }
 
@@ -216,18 +205,8 @@ async function handleRemoveNote(interaction, targetUser, notes, guildId) {
     const notesKey = getUserNotesKey(guildId, targetUser.id);
     await setInDb(notesKey, notes);
 
-    const typeInfo = getNoteTypeInfo(removedNote.type);
-
     return InteractionHelper.safeReply(interaction, {
-        embeds: [
-            moderationEmbed({
-                action: 'Note Removed',
-                target: targetUser,
-                moderator: interaction.user,
-                description: `${typeInfo.emoji} > ${removedNote.content}`,
-                fields: [{ name: 'Remaining Notes', value: `${notes.length}` }],
-            })
-        ]
+        embeds: [compactEmbed(`🗑️ Note removed from <@${targetUser.id}>.`, 'success')],
     });
 }
 
@@ -248,14 +227,7 @@ async function handleClearNotes(interaction, targetUser, notes, guildId) {
     await setInDb(notesKey, notes);
 
     return InteractionHelper.safeReply(interaction, {
-        embeds: [
-            moderationEmbed({
-                action: 'Notes Cleared',
-                target: targetUser,
-                moderator: interaction.user,
-                fields: [{ name: 'Removed', value: `${noteCount}` }],
-            })
-        ]
+        embeds: [compactEmbed(`🧹 Cleared **${noteCount}** ${noteCount === 1 ? 'note' : 'notes'} for <@${targetUser.id}>.`, 'success')],
     });
 }
 
