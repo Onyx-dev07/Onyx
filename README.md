@@ -18,7 +18,6 @@
 
   <p>
     <a href="#quick-setup">Quick setup</a> &middot;
-    <a href="#security-at-a-glance">Security</a> &middot;
     <a href="#command-reference">Full reference</a> &middot;
     <a href="#configuration">Configuration</a> &middot;
     <a href="#docker-deployment">Docker</a>
@@ -49,28 +48,6 @@ Data lives in local JSON by default, so the bot runs with no external services. 
 - **Prefix and slash.** Community commands answer to `!command`; slash versions are published within Discord's 100-command global limit, and anything over the cap stays available as a prefix command.
 - **Per-guild security suite.** The Onyx category registers per guild, keeping the bot inside Discord's command budget.
 - **One visual language.** Near-black surfaces, a single soft-pink accent, compact embeds, and no noise.
-
-<img src="./assets/divider.svg" alt="" width="100%" />
-
-<a name="security-at-a-glance"></a>
-## Security at a glance
-
-<img src="./assets/security-modules.svg" alt="Onyx security modules: antinuke, automod, antiraid and whitelist with hardened defaults" width="100%" />
-
-<details>
-<summary><b>Text list</b></summary>
-
-| Command | What it does |
-| --- | --- |
-| `!antinuke enable` | Arms Anti-Nuke, creates its security roles, and enforces action limits. |
-| `!automod enable` | Turns on spam, invite, link, and content filters per channel. |
-| `!antiraid enable` | Gates new accounts and locks the server down automatically during a raid. |
-| `!whitelist add @user` | Keeps trusted staff and bots exempt from the Anti-Nuke modules. |
-
-</details>
-
-> [!TIP]
-> Every module ships disabled by default. Run `!setup` once, then tune thresholds with `!limits` and review posture with `!security`.
 
 <img src="./assets/divider.svg" alt="" width="100%" />
 
@@ -532,7 +509,6 @@ Onyx/
 │   └── guilds.json           # Onyx security database
 ├── assets/
 │   ├── banner.svg           # Terminal-style README banner
-│   ├── security-modules.svg # Security modules graphic
 │   ├── feature-matrix.svg   # Feature matrix graphic
 │   └── divider.svg          # Section divider rule
 ├── legacy/                   # Original Onyx source, preserved for reference
