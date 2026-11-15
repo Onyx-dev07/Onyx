@@ -82,6 +82,16 @@ export function createMockInteraction(message, commandData, args) {
         const mentionMatch = userId.match(/<@!?(\d+)>/);
         const id = mentionMatch ? mentionMatch[1] : userId;
 
+        const mentioned = message.mentions?.users?.get(id);
+        if (mentioned) {
+          return mentioned;
+        }
+
+        const cachedUser = message.client?.users?.cache?.get(id);
+        if (cachedUser) {
+          return cachedUser;
+        }
+
         const cachedMember = message.guild.members.cache.get(id);
         if (cachedMember) {
           return cachedMember.user;

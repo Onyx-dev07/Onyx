@@ -7,7 +7,7 @@
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20.10%2B-3c873a?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 20.10+" /></a>
   <a href="https://discord.js.org/"><img src="https://img.shields.io/badge/discord.js-v14-5865f2?style=for-the-badge&logo=discord&logoColor=white" alt="discord.js v14" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-b4545b?style=for-the-badge" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/Commands-137-f7a8c4?style=for-the-badge" alt="137 commands" />
+  <img src="https://img.shields.io/badge/Commands-138-f7a8c4?style=for-the-badge" alt="138 commands" />
   <img src="https://img.shields.io/badge/Storage-JSON%20%2F%20PostgreSQL-2b2d31?style=for-the-badge" alt="JSON storage with optional PostgreSQL" />
   <a href="#contributing"><img src="https://img.shields.io/badge/PRs-Welcome-2b2d31?style=for-the-badge" alt="PRs welcome" /></a>
 
@@ -32,7 +32,7 @@ onyx@discord:~$ onyx start --secure
   [ok] anti-nuke armed · anti-raid gated
   [ok] automod filters online · moderation cards ready
   [ok] community core · economy, leveling, tickets, giveaways
-  [ok] 137 commands · 28 security modules
+  [ok] 138 commands · 28 security modules
   [ok] json storage ready · zero external services
 
 onyx@discord:~$ !antinuke enable
@@ -124,7 +124,7 @@ Community slash commands register globally on startup. The Onyx security command
 <a name="command-reference"></a>
 ## Command Reference
 
-**137 commands** ship in this build: **109 community commands** plus **28 Onyx security modules**.
+**138 commands** ship in this build: **110 community commands** plus **28 Onyx security modules**.
 
 - Community commands accept a prefix (`!help`) and are published as slash commands (`/help`), within Discord's 100-command global limit. The default prefix is `!`; change it per server with `!setprefix <prefix>` (for example `!setprefix &`) and every prefix command updates immediately.
 - Onyx security commands are published per guild and appear under the **Onyx** category.
@@ -405,11 +405,12 @@ Community slash commands register globally on startup. The Onyx security command
 </details>
 
 <details>
-<summary><b>🔧 Utility</b> · 8 commands</summary>
+<summary><b>🔧 Utility</b> · 9 commands</summary>
 
 | Command | Description | Subcommands |
 | --- | --- | --- |
-| `avatar` | Display a member's avatar | — |
+| `avatar` | Display a member's avatar (`av`, `pfp`) | — |
+| `banner` | Display a member's profile banner | — |
 | `firstmsg` | Link to the first message in a channel | — |
 | `report` | Report a member, or configure report delivery | `file`, `setchannel` |
 | `serverinfo` | Detailed server information | — |

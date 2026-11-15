@@ -51,8 +51,12 @@ export const commandAliases = {
 
     'user': 'userinfo',
     'avatar': 'avatar',
+    'av': 'avatar',
+    'ava': 'avatar',
     'pfp': 'avatar',
     'icon': 'avatar',
+    'banner': 'banner',
+    'bn': 'banner',
 
     'bd': 'birthday',
     'bday': 'birthday',
@@ -101,7 +105,7 @@ export const commandAliases = {
 
     'ver': 'verify',
     'vadmin': 'verification',
-    'av': 'autoverify',
+    'autov': 'autoverify',
 
     'welcome': 'welcome',
     'greet': 'greet',
