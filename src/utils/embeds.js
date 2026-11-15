@@ -222,10 +222,10 @@ export function createEmbed({
   color = 'primary',
   fields = [],
   author = null,
-  footer = null,
+  footer = false,
   thumbnail = null,
   image = null,
-  timestamp = true,
+  timestamp = false,
   url = null
 } = {}) {
   const embed = new EmbedBuilder();

@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { getGuildConfig, updateGuildConfig } from '../../services/config/guildConfig.js';
 import { getCommandPrefix } from '../../config/bot.js';
 import { logger } from '../../utils/logger.js';
@@ -43,15 +43,11 @@ export default {
     if (!rawPrefix) {
       return interaction.reply({
         embeds: [
-          createEmbed({
-            title: 'Prefix',
-            description: [
-              `Current prefix: \`${currentPrefix}\``,
-              '',
-              `Change it with \`${currentPrefix}setprefix <prefix>\` or \`/setprefix newprefix:<prefix>\`.`,
-            ].join('\n'),
-            color: 'secondary',
-          }),
+          compactEmbed([
+            `Current prefix: \`${currentPrefix}\``,
+            '',
+            `Change it with \`${currentPrefix}setprefix <prefix>\` or \`/setprefix newprefix:<prefix>\`.`,
+          ].join('\n')),
         ],
       });
     }
@@ -61,7 +57,7 @@ export default {
 
     if (validationError) {
       return interaction.reply({
-        embeds: [createEmbed({ title: 'Invalid Prefix', description: validationError, color: 'error' })],
+        embeds: [compactEmbed(validationError, 'error')],
       });
     }
 
@@ -77,15 +73,11 @@ export default {
 
     return interaction.reply({
       embeds: [
-        createEmbed({
-          title: 'Prefix Changed',
-          description: [
-            `New prefix: \`${newPrefix}\``,
-            '',
-            `Try \`${newPrefix}help\` to see every command.`,
-          ].join('\n'),
-          color: 'success',
-        }),
+        compactEmbed([
+          `New prefix: \`${newPrefix}\``,
+          '',
+          `Try \`${newPrefix}help\` to see every command.`,
+        ].join('\n'), 'success'),
       ],
     });
   },

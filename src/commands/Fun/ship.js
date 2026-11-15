@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
-import { createEmbed } from '../../utils/embeds.js';
+import { createEmbed, compactEmbed } from '../../utils/embeds.js';
 import { progressLabel, userMention } from '../../utils/theme.js';
 import { logger } from '../../utils/logger.js';
 
@@ -80,17 +80,16 @@ function pickRandom(guild, excludeId) {
 function shipEmbed(first, second, stats) {
   const color = stats.percent >= 70 ? 'accent' : 'primary';
 
-  return createEmbed({
-    title: '🩷 Ship Meter',
-    description: [
-      `${userMention(first)} + ${userMention(second)}`,
+  return compactEmbed(
+    [
+      `🩷 ${userMention(first)} + ${userMention(second)}`,
       progressLabel(stats.percent),
       '',
       stats.verdict,
+      `**Ship name:** ${stats.name}`,
     ].join('\n'),
-    fields: [{ name: 'Ship name', value: `**${stats.name}**`, inline: true }],
     color,
-  });
+  );
 }
 
 async function shipPayload(first, second) {
@@ -111,6 +110,8 @@ async function shipPayload(first, second) {
         createEmbed({
           image: 'attachment://onyx-ship.png',
           color,
+          footer: false,
+          timestamp: false,
         }),
       ],
     };

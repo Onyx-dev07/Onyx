@@ -7,7 +7,7 @@
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20.10%2B-3c873a?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js 20.10+" /></a>
   <a href="https://discord.js.org/"><img src="https://img.shields.io/badge/discord.js-v14-5865f2?style=for-the-badge&logo=discord&logoColor=white" alt="discord.js v14" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-b4545b?style=for-the-badge" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/Commands-129-f7a8c4?style=for-the-badge" alt="129 commands" />
+  <img src="https://img.shields.io/badge/Commands-137-f7a8c4?style=for-the-badge" alt="137 commands" />
   <img src="https://img.shields.io/badge/Storage-JSON%20%2F%20PostgreSQL-2b2d31?style=for-the-badge" alt="JSON storage with optional PostgreSQL" />
   <a href="#contributing"><img src="https://img.shields.io/badge/PRs-Welcome-2b2d31?style=for-the-badge" alt="PRs welcome" /></a>
 
@@ -33,7 +33,7 @@ onyx@discord:~$ onyx start --secure
   [ok] anti-nuke armed · anti-raid gated
   [ok] automod filters online · moderation cards ready
   [ok] community core · economy, leveling, tickets, giveaways
-  [ok] 129 commands · 28 security modules
+  [ok] 137 commands · 28 security modules
   [ok] json storage ready · zero external services
 
 onyx@discord:~$ !slap @member
@@ -166,9 +166,9 @@ Community slash commands register globally on startup. The Onyx security command
 <a name="command-reference"></a>
 ## Command Reference
 
-**129 commands** ship in this build: **101 community commands** plus **28 Onyx security modules**.
+**137 commands** ship in this build: **109 community commands** plus **28 Onyx security modules**.
 
-- Community commands accept a prefix (`!help`) and are published as slash commands (`/help`), within Discord's 100-command global limit.
+- Community commands accept a prefix (`!help`) and are published as slash commands (`/help`), within Discord's 100-command global limit. The default prefix is `!`; change it per server with `!setprefix <prefix>` (for example `!setprefix &`) and every prefix command updates immediately.
 - Onyx security commands are published per guild and appear under the **Onyx** category.
 - Dashboard and setup flows are slash-only; a few other subcommands (music, birthday channel, report channel) are also slash-only for safety.
 - Use `/help` to browse categories in Discord, or `!help` for the prefix menu.
@@ -182,7 +182,7 @@ Community slash commands register globally on startup. The Onyx security command
 | `configwizard` | Open the server configuration dashboard and setup wizard | — |
 | `help` | Browse every available command | — |
 | `ping` | Check gateway latency and API speed | — |
-| `setprefix` | Change this server's command prefix | — |
+| `setprefix` | Change this server's command prefix (e.g. `!setprefix &`) | — |
 | `stats` | View bot statistics and uptime | — |
 | `support` | Get the support server invite | — |
 | `uptime` | Check how long Onyx has been online | — |
@@ -301,20 +301,28 @@ Community slash commands register globally on startup. The Onyx security command
 </details>
 
 <details>
-<summary><b>🎮 Fun</b> · 10 commands</summary>
+<summary><b>🎮 Fun</b> · 18 commands</summary>
 
 | Command | Description | Subcommands |
 | --- | --- | --- |
+| `boobs` | Roll a random boob size for a member | — |
 | `count` | Counting game with streaks and a leaderboard | `setup`, `disable`, `status`, `reset`, `leaderboard` |
+| `cum` | Random NSFW anime GIF (age-restricted channels only) | — |
 | `dih` | Roll a random dih size for a member | — |
 | `fight` | Start a simulated 1v1 text battle | — |
 | `flip` | Flip a coin | — |
+| `fuck` | Random NSFW anime GIF (age-restricted channels only) | — |
+| `gay` | Roll a random gay percentage | — |
 | `kiss` | Random anime kiss GIF | — |
 | `lesbian` | Roll a random lesbian percentage | — |
+| `lick` | Random NSFW anime GIF (age-restricted channels only) | — |
 | `puh` | Roll a random puh color | — |
+| `punch` | Random anime punch GIF | — |
 | `roll` | Roll dice with standard notation (`2d20`, `1d6 + 5`) | — |
 | `ship` | Compatibility card for two members | — |
 | `slap` | Random anime slap GIF | — |
+| `squeeze` | Random NSFW anime GIF (age-restricted channels only) | — |
+| `suck` | Random NSFW anime GIF (age-restricted channels only) | — |
 
 </details>
 

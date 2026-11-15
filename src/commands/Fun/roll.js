@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { successEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
 
@@ -70,9 +70,11 @@ export default {
       numDice > 1 ? `**Rolls:** ${rolls.join(" + ")}\n` : "";
     const modifierText = modifier !== 0 ? `+ (${modifier})` : "";
 
-    const embed = successEmbed(
-      `🎲 Rolling ${numDice}d${numSides}${modifier !== 0 ? match[3] : ""}`,
-      `${resultsDetail}**Total Roll:** ${totalRoll}${modifierText} = **${finalTotal}**`,
+    const embed = compactEmbed(
+      [
+        `🎲 **Rolling ${numDice}d${numSides}${modifier !== 0 ? match[3] : ""}**`,
+        `${resultsDetail}**Total Roll:** ${totalRoll}${modifierText} = **${finalTotal}**`,
+      ].join('\n'),
     );
 
     await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });

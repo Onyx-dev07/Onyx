@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { successEmbed, warningEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -25,17 +25,17 @@ export default {
     const opponent = interaction.options.getUser("opponent");
 
     if (challenger.id === opponent.id) {
-      const embed = warningEmbed(
-        "⚔️ Invalid Challenge",
-        `**${challenger.username}**, you can't fight yourself! That's a draw before it even starts.`
+      const embed = compactEmbed(
+        `⚔️ **${challenger.username}**, you can't fight yourself! That's a draw before it even starts.`,
+        'warning',
       );
       return await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     }
 
     if (opponent.bot) {
-      const embed = warningEmbed(
-        "⚔️ Invalid Opponent",
-        "You can't fight bots! Challenge a real person instead."
+      const embed = compactEmbed(
+        "⚔️ You can't fight bots! Challenge a real person instead.",
+        'warning',
       );
       return await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     }
@@ -72,10 +72,7 @@ export default {
       ? fullDescription
       : `${fullDescription.slice(0, EMBED_DESCRIPTION_LIMIT - 15)}\n\n...`;
 
-    const embed = successEmbed(
-      "🏆 Duel Complete!",
-      description
-    );
+    const embed = compactEmbed(description);
 
     await InteractionHelper.safeEditReply(interaction, { embeds: [embed] });
     logger.debug(`Fight command executed between ${challenger.id} and ${opponent.id} in guild ${interaction.guildId}`);
