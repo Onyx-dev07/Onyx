@@ -56,7 +56,7 @@ export default {
         });
 
         await InteractionHelper.universalReply(interaction, {
-            embeds: [compactEmbed(`🔨 <@${user.id}> banned.`, 'success')],
+            embeds: [compactEmbed(`<@${user.id}> banned.`, 'success')],
         });
     },
 };

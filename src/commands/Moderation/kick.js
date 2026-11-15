@@ -67,7 +67,7 @@ export default {
         });
 
         await InteractionHelper.universalReply(interaction, {
-            embeds: [compactEmbed(`👢 <@${targetUser.id}> kicked.`, 'success')],
+            embeds: [compactEmbed(`<@${targetUser.id}> kicked.`, 'success')],
         });
     },
 };
