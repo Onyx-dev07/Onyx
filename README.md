@@ -55,7 +55,7 @@ Data lives in local JSON by default, so the bot runs with no external services. 
 <a name="security-at-a-glance"></a>
 ## Security at a glance
 
-<img src="./assets/showcase.svg" alt="Onyx security modules: antinuke, automod, antiraid and whitelist with hardened defaults" width="100%" />
+<img src="./assets/security-modules.svg" alt="Onyx security modules: antinuke, automod, antiraid and whitelist with hardened defaults" width="100%" />
 
 <details>
 <summary><b>Text list</b></summary>
@@ -76,7 +76,7 @@ Data lives in local JSON by default, so the bot runs with no external services. 
 
 ## Highlights
 
-<img src="./assets/features.svg" alt="Onyx feature matrix: security suite, moderation, community core, utility and fun commands" width="100%" />
+<img src="./assets/feature-matrix.svg" alt="Onyx feature matrix: security suite, moderation, community core, utility and fun commands" width="100%" />
 
 <details>
 <summary><b>Moderation &amp; utility details</b></summary>
@@ -531,10 +531,10 @@ Onyx/
 │   ├── database.json         # Native community database (created automatically)
 │   └── guilds.json           # Onyx security database
 ├── assets/
-│   ├── banner.svg            # Terminal-style README banner
-│   ├── showcase.svg          # Security modules graphic
-│   ├── features.svg          # Feature matrix graphic
-│   └── divider.svg           # Section divider rule
+│   ├── banner.svg           # Terminal-style README banner
+│   ├── security-modules.svg # Security modules graphic
+│   ├── feature-matrix.svg   # Feature matrix graphic
+│   └── divider.svg          # Section divider rule
 ├── legacy/                   # Original Onyx source, preserved for reference
 └── scripts/                  # Optional PostgreSQL migration and backup tools
 ```
