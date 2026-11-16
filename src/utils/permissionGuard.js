@@ -21,6 +21,23 @@ export function getCommandDefaultPermissions(commandData) {
   return BigInt(value);
 }
 
+// Slash commands declare permissions in data; Onyx commands declare them as a
+// `userPermissions` array on the command object. Prefix execution must honour
+// both, otherwise `!role` and friends skip the permission gate entirely.
+function resolveRequiredPermissions(command) {
+  const declared = getCommandDefaultPermissions(command?.data) ?? command?.userPermissions;
+
+  if (declared == null) {
+    return null;
+  }
+
+  const mask = Array.isArray(declared)
+    ? declared.reduce((combined, permission) => combined | permission, 0n)
+    : BigInt(declared);
+
+  return mask === 0n ? null : mask;
+}
+
 // Permission names read as "manage roles" instead of "ManageRoles" so they
 // can sit in a sentence and inside inline code.
 export function permissionCodes(permissions) {
@@ -181,7 +198,7 @@ export async function enforceDefaultCommandPermissions(interaction, command, con
     return true;
   }
 
-  const requiredPermissions = getCommandDefaultPermissions(command?.data);
+  const requiredPermissions = resolveRequiredPermissions(command);
   if (requiredPermissions == null) {
     return true;
   }

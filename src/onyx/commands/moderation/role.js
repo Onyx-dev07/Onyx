@@ -89,10 +89,11 @@ function rolePayload(member, results) {
   const changed = results.filter((result) => result.ok);
   const failed = results.filter((result) => !result.ok);
   const blocked = failed.some((result) => !result.warning);
+  const problems = [...new Set(failed.map((result) => result.problem))];
 
   if (changed.length === 0) {
     return plainPayload(
-      failed.map((result) => result.problem).join('\n'),
+      problems.join('\n'),
       blocked ? config.colors.error : config.colors.warning
     );
   }
@@ -103,7 +104,7 @@ function rolePayload(member, results) {
 
   if (added.length) lines.push(`${added.join(', ')} added to <@${member.id}>.`);
   if (removed.length) lines.push(`${removed.join(', ')} removed from <@${member.id}>.`);
-  for (const result of failed) lines.push(result.problem);
+  for (const problem of problems) lines.push(problem);
 
   return plainPayload(
     lines.join('\n'),

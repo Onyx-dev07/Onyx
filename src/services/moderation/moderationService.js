@@ -3,6 +3,7 @@
 import { PermissionFlagsBits } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
+import { buildMissingPermissionMessage } from '../../utils/permissionGuard.js';
 import { logModerationAction } from '../../utils/moderation.js';
 
 function getTargetLabel(target) {
@@ -14,6 +15,28 @@ function getHighestRole(member) {
 }
 
 export class ModerationService {
+
+  // Permission that authorises each hierarchy-checked action. A member without
+  // it should be told what is missing, not that the target outranks them.
+  static requiredPermission(action) {
+    const normalized = String(action || '').toLowerCase();
+
+    if (normalized === 'ban') return PermissionFlagsBits.BanMembers;
+    if (normalized === 'kick') return PermissionFlagsBits.KickMembers;
+    if (normalized === 'warn' || normalized.includes('timeout')) {
+      return PermissionFlagsBits.ModerateMembers;
+    }
+
+    return null;
+  }
+
+  static missingPermissionError(moderator, action) {
+    const permission = this.requiredPermission(action);
+    if (!permission) return null;
+    if (moderator?.permissions?.has(permission)) return null;
+
+    return buildMissingPermissionMessage(moderator?.id, permission);
+  }
 
   static buildHierarchyMessage({ actor, actorId, targetId, actorRole, targetRole, targetLabel, action }) {
     if (actor === 'moderator') {
@@ -55,6 +78,11 @@ export class ModerationService {
 
     if (moderator.guild?.ownerId === moderator.id) {
       return { valid: true };
+    }
+
+    const missingPermission = this.missingPermissionError(moderator, action);
+    if (missingPermission) {
+      return { valid: false, error: missingPermission };
     }
 
     const modRole = getHighestRole(moderator);
@@ -122,6 +150,11 @@ export class ModerationService {
   }
 
   static assertModerationHierarchy(moderator, target, action) {
+    const missingPermission = this.missingPermissionError(moderator, action);
+    if (missingPermission) {
+      throw new OnyxError(missingPermission, ErrorTypes.PERMISSION, missingPermission);
+    }
+
     const botCheck = this.validateBotHierarchy(target, action);
     if (!botCheck.valid) {
       throw new OnyxError(botCheck.error, ErrorTypes.PERMISSION, botCheck.error);
