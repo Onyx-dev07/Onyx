@@ -1,6 +1,19 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const db = require('../../database');
-const { actionPayload, failurePayload } = require('../../utils/moderation');
+const { createEmbed } = require('../../utils/embeds');
+const config = require('../../../config.json');
+
+// One-line, footer-free confirmation that matches !lock and !unlock.
+function plain(description, color = config.colors.success) {
+  return {
+    embeds: [createEmbed({
+      description,
+      color,
+      footer: false,
+      timestamp: false
+    })]
+  };
+}
 
 module.exports = {
   name: 'unjail',
@@ -22,7 +35,7 @@ module.exports = {
 
     if (!member) {
       return interaction.reply({
-        ...failurePayload('Unjail Blocked', 'That member is not in this server.'),
+        ...plain('That member is not in this server.', config.colors.error),
         flags: MessageFlags.Ephemeral
       });
     }
@@ -30,62 +43,51 @@ module.exports = {
     const result = await unjailMember(interaction.guild, member, interaction.user);
     if (result.error) {
       return interaction.reply({
-        ...failurePayload('Unjail Blocked', result.error),
+        ...plain(result.error, config.colors.error),
         flags: MessageFlags.Ephemeral
       });
     }
 
-    await interaction.reply(result.payload);
+    await interaction.reply(plain(`🔓 <@${member.id}> released.`));
   },
 
   async executePrefix(message, args) {
     const user = message.mentions.users.first() || (args[0] ? await message.client.users.fetch(args[0]).catch(() => null) : null);
     if (!user) {
-      return message.reply(failurePayload('Unjail Blocked', 'Please specify a member to unjail. Usage: `!unjail @user`'));
+      return message.reply(plain('Usage: `!unjail @user`.', config.colors.warning));
     }
 
     const member = await message.guild.members.fetch(user.id).catch(() => null);
     if (!member) {
-      return message.reply(failurePayload('Unjail Blocked', 'That member is not in this server.'));
+      return message.reply(plain('That member is not in this server.', config.colors.error));
     }
 
     const result = await unjailMember(message.guild, member, message.author);
     if (result.error) {
-      return message.reply(failurePayload('Unjail Blocked', result.error));
+      return message.reply(plain(result.error, config.colors.error));
     }
 
-    await message.reply(result.payload);
+    await message.reply(plain(`🔓 <@${member.id}> released.`));
   }
 };
 
 async function unjailMember(guild, member, moderator) {
-  const jailConfig = db.getJail(guild.id);
   const jailedData = db.getJailedMember(guild.id, member.id);
 
   if (!jailedData) {
-    return { error: `<@${member.id}> is not recorded as jailed in the Onyx database.` };
+    return { error: `<@${member.id}> is not recorded as jailed.` };
   }
 
   try {
-    // Restore roles that the bot is capable of assigning
     const validRolesToRestore = (jailedData.roles || []).filter(roleId => {
-      const r = guild.roles.cache.get(roleId);
-      return r && !r.managed && r.position < guild.members.me.roles.highest.position;
+      const role = guild.roles.cache.get(roleId);
+      return role && !role.managed && role.position < guild.members.me.roles.highest.position;
     });
 
     await member.roles.set(validRolesToRestore, `[Onyx Unjail] Released by ${moderator.tag}`);
     db.removeJailedMember(guild.id, member.id);
 
-    return {
-      payload: actionPayload({
-        title: 'Member Released from Jail',
-        icon: 'check',
-        target: `<@${member.id}>`,
-        moderator: `<@${moderator.id}>`,
-        reason: 'Released from jail',
-        fields: [{ name: 'Roles Restored', value: `${validRolesToRestore.length}`, inline: true }]
-      })
-    };
+    return { restored: validRolesToRestore.length };
   } catch (err) {
     return { error: `Failed to unjail member: ${err.message}` };
   }

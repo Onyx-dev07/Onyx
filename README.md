@@ -161,7 +161,7 @@ Community slash commands register globally on startup. The Onyx security command
 | `extraowner` | Manage extra trusted owners for AntiNuke | `add`, `remove`, `list` |
 | `fortress` | Freeze dangerous role permissions during a raid | `enable`, `disable`, `status` |
 | `hardban` | Hardban a user and re-ban them if unbanned | — |
-| `jail` | Isolate a member into the jail channel | — |
+| `jail` | Isolate a member into the jail channel and manage jail setup | `setup`, `reset` (prefix) |
 | `limits` | Configure limit thresholds for staff actions | `status`, `enable`, `disable`, `set`, `window`, `reset` |
 | `lockdown` | Lock all public text channels for `@everyone` | — |
 | `media` | Keep media channels free of text-only messages | `add`, `remove`, `list` |
