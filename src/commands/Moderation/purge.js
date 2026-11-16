@@ -6,6 +6,10 @@ import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 
 const DEFAULT_PURGE_AMOUNT = 20;
+const MAX_PURGE_AMOUNT = 500;
+// Discord caps each bulkDelete call at 100 messages, so larger purges run in
+// batches.
+const BULK_DELETE_BATCH_SIZE = 100;
 
 export default {
     data: new SlashCommandBuilder()
@@ -14,9 +18,9 @@ export default {
     .addIntegerOption((option) =>
       option
         .setName("amount")
-        .setDescription("Number of messages (1-100, defaults to 20)")
+        .setDescription("Number of messages (1-500, defaults to 20)")
         .setMinValue(1)
-        .setMaxValue(100)
+        .setMaxValue(MAX_PURGE_AMOUNT)
         .setRequired(false),
     )
 .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
@@ -27,9 +31,9 @@ export default {
     const amount = interaction.options.getInteger("amount") ?? DEFAULT_PURGE_AMOUNT;
     const channel = interaction.channel;
 
-    if (amount < 1 || amount > 100) {
+    if (amount < 1 || amount > MAX_PURGE_AMOUNT) {
       const response = {
-        embeds: [compactEmbed('Specify a number between 1 and 100.', 'error')],
+        embeds: [compactEmbed(`Specify a number between 1 and ${MAX_PURGE_AMOUNT}.`, 'error')],
       };
       if (!interaction._isPrefixCommand) {
         response.flags = MessageFlags.Ephemeral;
@@ -50,9 +54,18 @@ export default {
     }
 
     try {
-      const fetched = await channel.messages.fetch({ limit: amount });
-      const deleted = await channel.bulkDelete(fetched, true);
-      const deletedCount = deleted.size;
+      let deletedCount = 0;
+
+      while (deletedCount < amount) {
+        const batchSize = Math.min(BULK_DELETE_BATCH_SIZE, amount - deletedCount);
+        const fetched = await channel.messages.fetch({ limit: batchSize });
+        if (fetched.size === 0) break;
+
+        const deleted = await channel.bulkDelete(fetched, true);
+        if (deleted.size === 0) break;
+
+        deletedCount += deleted.size;
+      }
 
       await logEvent({
         client,

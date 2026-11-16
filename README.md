@@ -292,7 +292,7 @@ A channel-scoped counting game with streak tracking, reset controls, and a leade
 | `lock` | Lock the current channel for `@everyone` | — |
 | `massban` | Ban multiple users at once | — |
 | `masskick` | Kick multiple users at once | — |
-| `purge` | Delete a specific number of messages (defaults to 20) | — |
+| `purge` | Delete up to 500 messages (defaults to 20) | — |
 | `say` | Send a plain message as the bot | — |
 | `snipe` | Show the most recently deleted message in this channel | — |
 | `timeout` | Time out a user for a duration | — |
