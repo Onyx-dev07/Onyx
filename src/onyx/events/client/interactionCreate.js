@@ -10,6 +10,7 @@ const PANEL_COMMANDS = [
   'automod',
   'antinuke',
   'antiraid',
+  'setup',
   'logs',
   'welcome',
   'autorole',

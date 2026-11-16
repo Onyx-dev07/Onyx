@@ -4,15 +4,14 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  StringSelectMenuBuilder,
   MessageFlags,
   ChannelType
 } = require('discord.js');
 const db = require('../../database');
 const {
   securityEmbed,
-  errorEmbed,
   receiptEmbed,
-  infoEmbed,
   bullets,
   muted,
   section,
@@ -56,52 +55,137 @@ function firewallText(anti) {
 
 /* ── Payloads ───────────────────────────────────────────────────────────── */
 
-function panelEmbed(guild) {
+// Drop-down sections. The panel keeps a single select menu so the surface
+// stays quiet no matter how much detail a section carries.
+const VIEWS = {
+  overview: {
+    label: 'Overview',
+    description: 'Protection state and coverage'
+  },
+  punishment: {
+    label: 'Punishment',
+    description: 'What happens when a module fires'
+  },
+  roles: {
+    label: 'Security roles',
+    description: 'Role matrix and hierarchy'
+  },
+  modules: {
+    label: 'Modules',
+    description: 'Every watched action'
+  }
+};
+
+const PUNISHMENT_TRIGGERS = [
+  'Ban or kick members',
+  'Create, delete, or modify channels',
+  'Create, delete, or grant administrative roles',
+  'Add unauthorized bots',
+  'Create or abuse webhooks'
+];
+
+const PUNISHMENT_RESPONSE = [
+  'Offender is banned immediately',
+  'Every action is reversed',
+  'Alert is posted to the log channel'
+];
+
+function panelEmbed(guild, view = 'overview') {
   const anti = db.getAntiNuke(guild.id);
   const armed = Boolean(anti.enabled);
+  const footer = { text: `AntiNuke ${UI.separator} ${VIEWS[view]?.label || 'Overview'}` };
+
+  if (view === 'punishment') {
+    return securityEmbed({
+      title: 'AntiNuke · Punishment',
+      description: [
+        section('Enforcement', `Punishment **BAN** ${UI.separator} every malicious action is reverted`),
+        '',
+        section('Triggers', bullets(PUNISHMENT_TRIGGERS)),
+        '',
+        section('Response', bullets(PUNISHMENT_RESPONSE)),
+        '',
+        muted('Applies to administrators and any member without a whitelist entry.')
+      ].join('\n'),
+      footer
+    });
+  }
+
+  if (view === 'roles') {
+    return securityEmbed({
+      title: 'AntiNuke · Security roles',
+      description: [
+        firewallText(anti),
+        '',
+        muted('Place the Onyx Unstoppable Power™ role above every other role. Without that position Onyx cannot contain a rogue administrator.')
+      ].join('\n'),
+      footer
+    });
+  }
+
+  if (view === 'modules') {
+    return securityEmbed({
+      title: 'AntiNuke · Modules',
+      description: bullets(MODULES),
+      footer
+    });
+  }
 
   return securityEmbed({
     title: 'AntiNuke',
     description: [
-      `${armed ? UI.active : UI.inactive} **Protection** ${UI.separator} ${armed ? 'Armed' : 'Standby'}`,
-      `${anti.roles?.firewall ? UI.active : UI.inactive} **Firewall** ${UI.separator} ${anti.roles?.firewall ? 'Configured' : 'Not configured'}`,
-      `${anti.logChannelId ? UI.active : UI.inactive} **Anti-nuke logs** ${UI.separator} ${anti.logChannelId ? `<#${anti.logChannelId}>` : 'Not configured'}`,
+      section('Protection', armed ? 'Armed' : 'Standby'),
+      '',
+      section('Firewall', anti.roles?.firewall ? `<@&${anti.roles.firewall}>` : 'Not configured'),
+      '',
+      section('Anti-nuke logs', anti.logChannelId ? `<#${anti.logChannelId}>` : 'Not configured'),
       '',
       muted('Place the Onyx Unstoppable Power™ role above every other role. Without that position Onyx cannot contain a rogue administrator.')
     ].join('\n'),
     fields: [
-      { name: 'Enforcement', value: 'Punishment **BAN** · every malicious action is reverted', inline: false },
-      { name: 'Security roles', value: firewallText(anti), inline: false },
-      { name: 'Modules', value: bullets(MODULES), inline: false }
+      { name: 'Coverage', value: `${MODULES.length} modules ${UI.separator} punishment **BAN**`, inline: false },
+      { name: 'Security roles', value: firewallText(anti), inline: false }
     ],
     footer: { text: `AntiNuke ${UI.separator} ${armed ? 'Armed' : 'Standby'}` }
   });
 }
 
-function panelPayload(guild) {
+function panelPayload(guild, view = 'overview') {
   const anti = db.getAntiNuke(guild.id);
+  const current = VIEWS[view] ? view : 'overview';
+
+  const sectionSelect = new StringSelectMenuBuilder()
+    .setCustomId('antinuke_view')
+    .setPlaceholder('Choose a section')
+    .addOptions(Object.entries(VIEWS).map(([value, entry]) => ({
+      label: entry.label,
+      description: entry.description,
+      value,
+      default: value === current
+    })));
+
+  const actionButton = anti.enabled
+    ? new ButtonBuilder()
+      .setCustomId('antinuke_disable_request')
+      .setLabel('Disable protection')
+      .setStyle(ButtonStyle.Danger)
+    : new ButtonBuilder()
+      .setCustomId('antinuke_enable')
+      .setLabel('Enable protection')
+      .setStyle(ButtonStyle.Success);
 
   return {
-    embeds: [panelEmbed(guild)],
-    components: [new ActionRowBuilder().addComponents(
-      anti.enabled
-        ? new ButtonBuilder()
-          .setCustomId('antinuke_disable_request')
-          .setLabel('Disable protection')
-          .setStyle(ButtonStyle.Danger)
-        : new ButtonBuilder()
-          .setCustomId('antinuke_enable')
-          .setLabel('Enable protection')
-          .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setCustomId('show_punishment')
-        .setLabel('Punishment')
-        .setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder()
-        .setCustomId('antinuke_refresh')
-        .setLabel('Refresh')
-        .setStyle(ButtonStyle.Secondary)
-    )]
+    embeds: [panelEmbed(guild, current)],
+    components: [
+      new ActionRowBuilder().addComponents(sectionSelect),
+      new ActionRowBuilder().addComponents(
+        actionButton,
+        new ButtonBuilder()
+          .setCustomId('antinuke_refresh')
+          .setLabel('Refresh')
+          .setStyle(ButtonStyle.Secondary)
+      )
+    ]
   };
 }
 
@@ -146,11 +230,38 @@ function disableConfirmPayload() {
 }
 
 function disabledEmbed(guild) {
-  return infoEmbed([
-    `AntiNuke is **disabled** for **${guild.name}**.`,
-    '',
-    muted('Re-arm protection with either button below or `/antinuke enable`.')
-  ].join('\n'));
+  return securityEmbed({
+    title: 'AntiNuke disabled',
+    description: [
+      `AntiNuke is **disabled** for **${guild.name}**.`,
+      '',
+      muted('Re-arm protection with either button below or `/antinuke enable`.')
+    ].join('\n')
+  });
+}
+
+// Panels in this command carry no emoji: a title and a sentence are enough.
+function deniedEmbed(message) {
+  return securityEmbed({
+    title: 'Not permitted',
+    description: message,
+    color: config.colors.error
+  });
+}
+
+function failedEmbed(message) {
+  return securityEmbed({
+    title: 'AntiNuke setup failed',
+    description: message,
+    color: config.colors.error
+  });
+}
+
+function noticeEmbed(message) {
+  return securityEmbed({
+    title: 'AntiNuke',
+    description: message
+  });
 }
 
 // True when the firewall outranks every role the bot does not own.
@@ -179,6 +290,7 @@ function enabledReceipt(guild) {
   const ranked = Boolean(roles.firewall && firewallRanked(guild, roles.firewall));
 
   return receiptEmbed({
+    marker: false,
     headline: 'Onyx Anti-Nuke™ successfully enabled',
     lines: [
       `Protection roles deployed ${UI.separator} ${deployed.join(' ')}`,
@@ -200,6 +312,7 @@ function enabledReceipt(guild) {
 
 function disabledReceipt() {
   return receiptEmbed({
+    marker: false,
     active: false,
     headline: 'Onyx Anti-Nuke™ disabled',
     lines: [
@@ -432,7 +545,7 @@ module.exports = {
   async executeSlash(interaction) {
     if (!isAuthorized(interaction.guild, interaction.user.id)) {
       return interaction.reply({
-        embeds: [errorEmbed('Only the **Server Owner** or an **Extra Owner** can run this command.')],
+        embeds: [deniedEmbed('Only the **Server Owner** or an **Extra Owner** can run this command.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -455,7 +568,7 @@ module.exports = {
 
     if (anti.enabled) {
       return interaction.reply({
-        embeds: [infoEmbed('AntiNuke is already enabled. Use `/antinuke status` to review coverage.')],
+        embeds: [noticeEmbed('AntiNuke is already enabled. Use `/antinuke status` to review coverage.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -469,7 +582,7 @@ module.exports = {
 
     const result = await runSetup(interaction.guild);
     if (result.error) {
-      return interaction.editReply({ embeds: [errorEmbed(result.error)] });
+      return interaction.editReply({ embeds: [failedEmbed(result.error)] });
     }
 
     await sleep(500);
@@ -480,7 +593,7 @@ module.exports = {
   async executePrefix(message, args) {
     if (!isAuthorized(message.guild, message.author.id)) {
       return message.reply({
-        embeds: [errorEmbed('Only the **Server Owner** or an **Extra Owner** can run this command.')]
+        embeds: [deniedEmbed('Only the **Server Owner** or an **Extra Owner** can run this command.')]
       });
     }
 
@@ -501,12 +614,12 @@ module.exports = {
     }
 
     if (option !== 'enable' && option !== 'on') {
-      return message.reply({ embeds: [infoEmbed('Usage: `!antinuke enable`, `!antinuke disable`, or `!antinuke status`.')] });
+      return message.reply({ embeds: [noticeEmbed('Usage: `!antinuke enable`, `!antinuke disable`, or `!antinuke status`.')] });
     }
 
     if (anti.enabled) {
       return message.reply({
-        embeds: [infoEmbed('AntiNuke is already enabled. Use `!antinuke status` to review coverage.')]
+        embeds: [noticeEmbed('AntiNuke is already enabled. Use `!antinuke status` to review coverage.')]
       });
     }
 
@@ -518,7 +631,7 @@ module.exports = {
 
     const result = await runSetup(message.guild);
     if (result.error) {
-      return sent.edit({ embeds: [errorEmbed(result.error)] });
+      return sent.edit({ embeds: [failedEmbed(result.error)] });
     }
 
     await sleep(500);
@@ -526,10 +639,24 @@ module.exports = {
     return message.channel.send(panelPayload(message.guild));
   },
 
+  async handleSelect(interaction) {
+    if (!isAuthorized(interaction.guild, interaction.user.id)) {
+      return interaction.reply({
+        embeds: [deniedEmbed('Only the **Server Owner** or an **Extra Owner** can change AntiNuke.')],
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    if (interaction.customId !== 'antinuke_view') return false;
+
+    const view = VIEWS[interaction.values[0]] ? interaction.values[0] : 'overview';
+    return interaction.update(panelPayload(interaction.guild, view));
+  },
+
   async handleButton(interaction) {
     if (!isAuthorized(interaction.guild, interaction.user.id)) {
       return interaction.reply({
-        embeds: [errorEmbed('Only the **Server Owner** or an **Extra Owner** can change AntiNuke.')],
+        embeds: [deniedEmbed('Only the **Server Owner** or an **Extra Owner** can change AntiNuke.')],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -567,7 +694,7 @@ module.exports = {
 
       const result = await runSetup(interaction.guild);
       if (result.error) {
-        return interaction.editReply({ embeds: [errorEmbed(result.error)] });
+        return interaction.editReply({ embeds: [failedEmbed(result.error)] });
       }
 
       await sleep(500);

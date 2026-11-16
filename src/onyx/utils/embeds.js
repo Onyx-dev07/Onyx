@@ -120,12 +120,14 @@ function deny() {
 /**
  * Receipt text: a marker-led headline, marker-led detail lines, then muted
  * hints in the "- Run ... / - Onyx Security · Module" shape.
+ *
+ * Pass `marker: false` for panels that must stay free of status emoji.
  */
-function receiptText({ active = true, headline, lines = [], hint, source }) {
-  const marker = mark(active);
+function receiptText({ active = true, headline, lines = [], hint, source, marker: showMarker = true }) {
+  const marker = showMarker ? `${mark(active)} ` : '';
   const output = [
-    `${marker} **${headline}**`,
-    ...lines.filter(Boolean).map(line => `${marker} ${line}`)
+    `${marker}**${headline}**`,
+    ...lines.filter(Boolean).map(line => `${marker}${line}`)
   ];
 
   if (hint) output.push(muted(hint));

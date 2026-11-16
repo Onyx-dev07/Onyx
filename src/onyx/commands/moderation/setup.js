@@ -5,50 +5,35 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  StringSelectMenuBuilder,
   MessageFlags
 } = require('discord.js');
 const db = require('../../database');
-const { securityEmbed, errorEmbed, bullets, code, UI, muted } = require('../../utils/embeds');
+const { securityEmbed, bullets, code, UI, muted } = require('../../utils/embeds');
 const config = require('../../../config.json');
 
 const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-function introPayload(initiatorId) {
-  return {
-    embeds: [securityEmbed({
-      title: 'Security acceptance',
-      description: [
-        '**Onyx does not rely on blind trust.**',
-        'Traditional anti-nuke bots stop checking users the moment they are whitelisted. Onyx keeps watching.',
-        '',
-        '**What changes with Onyx**',
-        bullets([
-          '**Limit System** — trusted staff may perform only a limited number of sensitive actions inside a time window.',
-          '**Anti-Betray** — exceeding a limit overrides the whitelist, strips dangerous roles, quarantines the offender, and can lock down the server.',
-          '**Precision moderation** — every action is logged with target, moderator, reason, duration, and DM status.'
-        ])
-      ].join('\n'),
-      fields: [
-        { name: 'Proceed', value: 'Review the security disclaimer and accept the Terms of Service.', inline: false },
-        { name: 'Firewall requirement', value: 'Place the **Onyx Unstoppable Power™** role above all other roles to prevent unauthorized actions.', inline: false }
-      ]
-    })],
-    components: [new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(`setup_proceed:${initiatorId}`)
-        .setLabel('Proceed')
-        .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setCustomId(`setup_stop:${initiatorId}`)
-        .setLabel('Stop')
-        .setStyle(ButtonStyle.Danger)
-    )]
-  };
-}
+// The setup panel is drop-down driven: members read the model, terms, and
+// requirements without the card growing, then act with plain buttons.
+const SETUP_VIEWS = {
+  model: {
+    label: 'Security model',
+    description: 'How Onyx keeps watching after whitelist'
+  },
+  terms: {
+    label: 'Terms and disclaimer',
+    description: 'Read before activating'
+  },
+  requirements: {
+    label: 'Permissions and firewall',
+    description: 'What Onyx needs to contain threats'
+  }
+};
 
-function tosPayload(initiatorId) {
-  return {
-    embeds: [securityEmbed({
+function setupEmbed(view) {
+  if (view === 'terms') {
+    return securityEmbed({
       title: 'Security disclaimer and terms',
       description: [
         '**Read before activating Onyx.**',
@@ -57,28 +42,130 @@ function tosPayload(initiatorId) {
           'Blindly whitelisting a compromised account weakens protection. Anti-Betray helps, but correct role hierarchy is mandatory.',
           'Onyx needs **Administrator**, **Manage Channels**, and **Manage Roles** to contain threats and restore damage.',
           'Server owners are responsible for reviewing whitelist entries and keeping the Onyx role above all others.',
-          'By clicking **Agree to TOS** you accept these conditions and authorize Onyx to act during a security incident.'
+          'By choosing **Agree and activate** you accept these conditions and authorize Onyx to act during a security incident.'
         ])
       ].join('\n')
-    })],
-    components: [new ActionRowBuilder().addComponents(
+    });
+  }
+
+  if (view === 'requirements') {
+    return securityEmbed({
+      title: 'Permissions and firewall',
+      description: [
+        '**What Onyx needs to contain an incident**',
+        bullets([
+          `**Administrator** ${UI.separator} revert destructive actions and contain a rogue administrator`,
+          `**Manage Channels** ${UI.separator} recreate deleted channels and apply jail overwrites`,
+          `**Manage Roles** ${UI.separator} strip dangerous roles and restore the offender's previous roles`,
+          `**Ban Members** ${UI.separator} remove an offender before they can act again`
+        ]),
+        '',
+        '**Firewall position**',
+        'Place the **Onyx Unstoppable Power™** role above every other role. A role above Onyx cannot be contained.'
+      ].join('\n')
+    });
+  }
+
+  return securityEmbed({
+    title: 'Security acceptance',
+    description: [
+      '**Onyx does not rely on blind trust.**',
+      'Traditional anti-nuke bots stop checking users the moment they are whitelisted. Onyx keeps watching.',
+      '',
+      '**What changes with Onyx**',
+      bullets([
+        '**Limit System** — trusted staff may perform only a limited number of sensitive actions inside a time window.',
+        '**Anti-Betray** — exceeding a limit overrides the whitelist, strips dangerous roles, quarantines the offender, and can lock down the server.',
+        '**Precision moderation** — every action is logged with target, moderator, reason, duration, and DM status.'
+      ])
+    ].join('\n')
+  });
+}
+
+function setupComponents(initiatorId, view = 'model') {
+  const select = new StringSelectMenuBuilder()
+    .setCustomId(`setup_view:${initiatorId}`)
+    .setPlaceholder('Choose a section')
+    .addOptions(Object.entries(SETUP_VIEWS).map(([value, entry]) => ({
+      label: entry.label,
+      description: entry.description,
+      value,
+      default: value === view
+    })));
+
+  const actions = view === 'terms'
+    ? [
       new ButtonBuilder()
         .setCustomId(`setup_agree:${initiatorId}`)
-        .setLabel('Agree to TOS')
+        .setLabel('Agree and activate')
         .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
+        .setCustomId(`setup_back:${initiatorId}`)
+        .setLabel('Back')
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
         .setCustomId(`setup_stop:${initiatorId}`)
-        .setLabel('Stop')
+        .setLabel('Cancel')
         .setStyle(ButtonStyle.Danger)
-    )]
+    ]
+    : [
+      new ButtonBuilder()
+        .setCustomId(`setup_proceed:${initiatorId}`)
+        .setLabel('Review terms')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId(`setup_stop:${initiatorId}`)
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Danger)
+    ];
+
+  return [
+    new ActionRowBuilder().addComponents(select),
+    new ActionRowBuilder().addComponents(...actions)
+  ];
+}
+
+function landingPayload(initiatorId, view = 'model') {
+  const current = SETUP_VIEWS[view] ? view : 'model';
+  return {
+    embeds: [setupEmbed(current)],
+    components: setupComponents(initiatorId, current)
   };
+}
+
+function introPayload(initiatorId) {
+  return landingPayload(initiatorId, 'model');
+}
+
+function tosPayload(initiatorId) {
+  return landingPayload(initiatorId, 'terms');
 }
 
 function cancelPayload() {
   return {
-    embeds: [errorEmbed('Security acceptance was cancelled. Onyx will remain in a limited state until `/setup` is completed.')],
+    embeds: [securityEmbed({
+      title: 'Security setup cancelled',
+      description: 'Onyx will remain in a limited state until `/setup` is completed.',
+      color: config.colors.muted
+    })],
     components: []
   };
+}
+
+function deniedPayload(message) {
+  return securityEmbed({
+    title: 'Not permitted',
+    description: message,
+    color: config.colors.error
+  });
+}
+
+function failedPayload(message) {
+  return securityEmbed({
+    title: 'Setup failed',
+    description: message,
+    color: config.colors.error
+  });
 }
 
 function setupPayload(step) {
@@ -179,19 +266,39 @@ module.exports = {
     return message.reply(introPayload(message.author.id));
   },
 
+  async handleSelect(interaction) {
+    const [action, initiatorId] = interaction.customId.split(':');
+    if (action !== 'setup_view') return false;
+
+    const isAdministrator = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
+    if (interaction.user.id !== initiatorId && !isAdministrator) {
+      return interaction.reply({
+        embeds: [deniedPayload('Only the setup initiator or an **Administrator** can control this flow.')],
+        flags: MessageFlags.Ephemeral
+      });
+    }
+
+    const view = SETUP_VIEWS[interaction.values[0]] ? interaction.values[0] : 'model';
+    return interaction.update(landingPayload(initiatorId, view));
+  },
+
   async handleButton(interaction) {
     const [action, initiatorId] = interaction.customId.split(':');
     const isAdministrator = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator);
 
     if (interaction.user.id !== initiatorId && !isAdministrator) {
       return interaction.reply({
-        embeds: [errorEmbed('Only the setup initiator or an **Administrator** can control this flow.')],
+        embeds: [deniedPayload('Only the setup initiator or an **Administrator** can control this flow.')],
         flags: MessageFlags.Ephemeral
       });
     }
 
     if (action === 'setup_proceed') {
       return interaction.update(tosPayload(initiatorId));
+    }
+
+    if (action === 'setup_back') {
+      return interaction.update(introPayload(initiatorId));
     }
 
     if (action === 'setup_stop') {
@@ -204,7 +311,10 @@ module.exports = {
 
       const me = interaction.guild.members.me;
       if (!me?.permissions.has([PermissionFlagsBits.ManageRoles, PermissionFlagsBits.ManageChannels])) {
-        return interaction.editReply({ embeds: [errorEmbed('I need **Manage Roles** and **Manage Channels** permissions to complete setup.')], components: [] });
+        return interaction.editReply({
+          embeds: [deniedPayload('I need **Manage Roles** and **Manage Channels** permissions to complete setup.')],
+          components: []
+        });
       }
 
       try {
@@ -285,14 +395,14 @@ module.exports = {
         return interaction.editReply({ embeds: [checklistEmbed(interaction.guild)], components: [] });
       } catch (err) {
         return interaction.editReply({
-          embeds: [errorEmbed(`Setup failed: ${err.message}`)],
+          embeds: [failedPayload(`Setup failed: ${err.message}`)],
           components: []
         });
       }
     }
 
     return interaction.reply({
-      embeds: [errorEmbed('This setup control is no longer available.')],
+      embeds: [deniedPayload('This setup control is no longer available.')],
       flags: MessageFlags.Ephemeral
     });
   }

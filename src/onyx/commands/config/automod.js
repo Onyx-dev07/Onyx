@@ -10,7 +10,7 @@ const {
 } = require('discord.js');
 const db = require('../../database');
 const config = require('../../../config.json');
-const { securityEmbed, errorEmbed, mark, receiptText, muted, code, UI } = require('../../utils/embeds');
+const { securityEmbed, receiptText, muted, code, UI } = require('../../utils/embeds');
 
 const FILTERS = [
   { key: 'antiSpam', slug: 'antispam', name: 'Anti-Spam', aliases: ['spam'] },
@@ -117,6 +117,29 @@ function activeCount(current) {
   return FILTERS.filter(filter => current[filter.key]).length;
 }
 
+// Grouped so the panel reads as three short columns instead of nine loose
+// fields. No emoji: state is written out.
+const FILTER_GROUPS = [
+  {
+    name: 'Content',
+    keys: ['antiSpam', 'antiCaps', 'antiEmojiSpam']
+  },
+  {
+    name: 'Links',
+    keys: ['antiLink', 'antiInvite', 'antiNsfwLink']
+  },
+  {
+    name: 'Abuse',
+    keys: ['antiMassMention', 'antiExternalApps', 'antiTokenSpam']
+  }
+];
+
+function filterLine(current, key) {
+  const filter = FILTERS.find(entry => entry.key === key);
+  if (!filter) return null;
+  return `${filter.name} ${UI.separator} ${current[key] ? 'Active' : 'Off'}`;
+}
+
 // Receipt block naming the modules a change touched.
 function changeText(entries) {
   const on = entries.filter(entry => entry.enabled).map(entry => entry.filter.name);
@@ -125,9 +148,9 @@ function changeText(entries) {
 
   if (on.length && off.length) {
     return [
-      `${mark(true)} **AutoMod modules updated**`,
-      `${mark(true)} Enabled ${UI.separator} ${on.join(', ')}`,
-      `${mark(false)} Disabled ${UI.separator} ${off.join(', ')}`,
+      '**AutoMod modules updated**',
+      `Enabled ${UI.separator} ${on.join(', ')}`,
+      `Disabled ${UI.separator} ${off.join(', ')}`,
       muted(hint),
       `-# Onyx Security ${UI.separator} AutoMod`
     ].join('\n');
@@ -137,6 +160,7 @@ function changeText(entries) {
   const names = enabled ? on : off;
 
   return receiptText({
+    marker: false,
     active: enabled,
     headline: names.length === 1
       ? `${names[0]} has been ${enabled ? 'enabled' : 'disabled'}`
@@ -156,20 +180,20 @@ function statusEmbed(current, notice) {
       ? config.colors.info
       : config.colors.warning;
 
-  const fields = FILTERS.map(filter => ({
-    name: `${mark(Boolean(current[filter.key]))} ${filter.name}`,
-    value: muted(current[filter.key] ? 'Active · select to disable' : 'Inactive · select to enable'),
+  const fields = FILTER_GROUPS.map(group => ({
+    name: group.name,
+    value: group.keys.map(key => filterLine(current, key)).filter(Boolean).join('\n'),
     inline: true
   }));
 
-  fields.push({ name: 'Blacklisted words', value: formatBlacklist(blacklist) });
+  fields.push({ name: 'Blacklisted words', value: formatBlacklist(blacklist), inline: false });
 
   return securityEmbed({
     title: 'AutoMod',
     description: [
       ...(notice ? [notice, ''] : []),
       `**${active} of ${FILTERS.length}** filters active`,
-      muted('Select filters below to toggle them, or use the bulk controls.')
+      muted('Choose filters from the drop-down to toggle them, or use the actions below.')
     ].join('\n'),
     color,
     fields,
@@ -186,13 +210,13 @@ function filterSelectRow(current) {
       .setMaxValues(FILTERS.length)
       .addOptions(FILTERS.map(filter => ({
         label: filter.name,
-        description: current[filter.key] ? 'Active · select to disable' : 'Inactive · select to enable',
+        description: current[filter.key] ? 'Active · choose to disable' : 'Off · choose to enable',
         value: filter.slug
       })))
   );
 }
 
-function controlRow() {
+function actionRow() {
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('automod_enable')
@@ -201,7 +225,11 @@ function controlRow() {
     new ButtonBuilder()
       .setCustomId('automod_disable')
       .setLabel('Disable all')
-      .setStyle(ButtonStyle.Danger)
+      .setStyle(ButtonStyle.Danger),
+    new ButtonBuilder()
+      .setCustomId('automod_refresh')
+      .setLabel('Refresh')
+      .setStyle(ButtonStyle.Secondary)
   );
 }
 
@@ -209,7 +237,7 @@ function panelPayload(guild, notice) {
   const current = db.getAutoMod(guild.id);
   return {
     embeds: [statusEmbed(current, notice)],
-    components: [filterSelectRow(current), controlRow()]
+    components: [filterSelectRow(current), actionRow()]
   };
 }
 
@@ -274,15 +302,19 @@ const builder = new SlashCommandBuilder()
 
 function setBlacklist(guildId, action, word) {
   const list = db.getAutoMod(guildId).blacklist || [];
+  const added = action === 'add';
 
-  if (action === 'add') {
+  if (added) {
     const updated = list.includes(word) ? list : [...list, word];
     db.setAutoMod(guildId, { blacklist: updated });
-    return successEmbed(`Added ${code(word)} to the blacklist.`);
+  } else {
+    db.setAutoMod(guildId, { blacklist: list.filter(entry => entry !== word) });
   }
 
-  db.setAutoMod(guildId, { blacklist: list.filter(entry => entry !== word) });
-  return successEmbed(`Removed ${code(word)} from the blacklist.`);
+  return securityEmbed({
+    title: 'Blacklist updated',
+    description: `${added ? 'Added' : 'Removed'} ${code(word)} ${added ? 'to' : 'from'} the blacklist.`
+  });
 }
 
 async function applyFilters(guild, enabled, targets) {
@@ -328,7 +360,7 @@ module.exports = {
     }
 
     const enabled = sub === 'enable';
-    applyFilters(interaction.guild, enabled, targets);
+    await applyFilters(interaction.guild, enabled, targets);
     return interaction.reply({
       ...panelPayload(interaction.guild, changeText(targets.map(filter => ({ filter, enabled })))),
       flags: MessageFlags.Ephemeral
@@ -364,15 +396,16 @@ module.exports = {
     const { targets, invalid } = parseFilters(args.slice(1).join(' '));
     if (invalid.length) {
       return message.reply({
-        embeds: [createEmbed({
+        embeds: [securityEmbed({
           title: 'Unknown filter',
-          description: `Unknown filter ${UI.separator} ${invalid.map(token => code(token)).join(', ')}\n\n${usageText(prefix)}`
+          description: `Unknown filter ${UI.separator} ${invalid.map(token => code(token)).join(', ')}\n\n${usageText(prefix)}`,
+          color: config.colors.error
         })]
       });
     }
 
     const enabled = sub === 'enable';
-    applyFilters(message.guild, enabled, targets);
+    await applyFilters(message.guild, enabled, targets);
     return message.reply(panelPayload(
       message.guild,
       changeText(targets.map(filter => ({ filter, enabled })))
@@ -382,7 +415,11 @@ module.exports = {
   async handleSelect(interaction) {
     if (!canManage(interaction)) {
       return interaction.reply({
-        embeds: [errorEmbed('You need Manage Server to change AutoMod.')],
+        embeds: [securityEmbed({
+          title: 'Not permitted',
+          description: 'You need Manage Server to change AutoMod.',
+          color: config.colors.error
+        })],
         flags: MessageFlags.Ephemeral
       });
     }
@@ -418,17 +455,27 @@ module.exports = {
   async handleButton(interaction) {
     if (!canManage(interaction)) {
       return interaction.reply({
-        embeds: [errorEmbed('You need Manage Server to change AutoMod.')],
+        embeds: [securityEmbed({
+          title: 'Not permitted',
+          description: 'You need Manage Server to change AutoMod.',
+          color: config.colors.error
+        })],
         flags: MessageFlags.Ephemeral
       });
     }
 
-    if (interaction.customId !== 'automod_enable' && interaction.customId !== 'automod_disable') {
+    const { customId } = interaction;
+
+    if (customId === 'automod_refresh') {
+      return interaction.update(panelPayload(interaction.guild));
+    }
+
+    if (customId !== 'automod_enable' && customId !== 'automod_disable') {
       return false;
     }
 
-    const enabled = interaction.customId === 'automod_enable';
-    applyFilters(interaction.guild, enabled, FILTERS);
+    const enabled = customId === 'automod_enable';
+    await applyFilters(interaction.guild, enabled, FILTERS);
     return interaction.update(panelPayload(
       interaction.guild,
       changeText(FILTERS.map(filter => ({ filter, enabled })))
