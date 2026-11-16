@@ -41,7 +41,7 @@ function hierarchyError(guild, member, role, moderator) {
     return `${role} sits above my highest role, so I cannot manage it.`;
   }
   if (moderator && moderator.id !== guild.ownerId && member.roles.highest.position >= moderator.roles.highest.position) {
-    return `${member.user.username} has a role equal to or above yours.`;
+    return `⚠️ <@${moderator.id}>: You can't moderate <@${member.id}> — their highest role is above or equal to yours.`;
   }
   return null;
 }

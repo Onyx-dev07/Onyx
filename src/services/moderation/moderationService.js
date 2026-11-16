@@ -15,12 +15,11 @@ function getHighestRole(member) {
 
 export class ModerationService {
 
-  static buildHierarchyMessage({ actor, actorRole, targetRole, targetLabel, action }) {
+  static buildHierarchyMessage({ actor, actorId, targetId, actorRole, targetRole, targetLabel, action }) {
     if (actor === 'moderator') {
-      return (
-        `You cannot ${action} **${targetLabel}** — their role **${targetRole.name}** is equal to or above yours (**${actorRole.name}**). ` +
-        `In **Server Settings → Roles**, drag your moderator role above **${targetRole.name}**.`
-      );
+      const actorMention = actorId ? `<@${actorId}>: ` : '';
+      const targetMention = targetId ? `<@${targetId}>` : `**${targetLabel}**`;
+      return `⚠️ ${actorMention}You can't moderate ${targetMention} — their highest role is above or equal to yours.`;
     }
 
     return (
@@ -73,6 +72,8 @@ export class ModerationService {
         valid: false,
         error: this.buildHierarchyMessage({
           actor: 'moderator',
+          actorId: moderator.id,
+          targetId: target.id,
           actorRole: modRole,
           targetRole,
           targetLabel: getTargetLabel(target),

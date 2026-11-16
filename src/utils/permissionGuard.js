@@ -1,9 +1,9 @@
 // permissionGuard.js
 
-import { PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits, PermissionsBitField } from 'discord.js';
 import { logger } from './logger.js';
 import { replyUserError, ErrorTypes } from './errorHandler.js';
-import { isBotOwner, getBotMessage } from '../config/bot.js';
+import { isBotOwner } from '../config/bot.js';
 
 /**
  * Read default_member_permissions from a SlashCommandBuilder (or its JSON).
@@ -19,6 +19,34 @@ export function getCommandDefaultPermissions(commandData) {
   }
 
   return BigInt(value);
+}
+
+// Permission names read as "manage roles" instead of "ManageRoles" so they
+// can sit in a sentence and inside inline code.
+export function permissionCodes(permissions) {
+  try {
+    return new PermissionsBitField(permissions)
+      .toArray()
+      .map(name => name.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase());
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Standard "You're missing permission" line used by permission denials.
+ * @param {string} [userId]
+ * @param {bigint | bigint[] | string | null} [permissions]
+ * @returns {string}
+ */
+export function buildMissingPermissionMessage(userId, permissions) {
+  const names = permissionCodes(permissions);
+  const list = names.length
+    ? names.map(name => `\`${name}\``).join(', ')
+    : '`the required permission`';
+  const actor = userId ? `<@${userId}>: ` : '';
+
+  return `⚠️ ${actor}You're **missing** permission: ${list}`;
 }
 
 function normalizeRoleId(role) {
@@ -122,7 +150,7 @@ export async function checkModerationPermissions(
   interaction,
   guildConfig,
   requiredPermissions,
-  errorMessage = 'You do not have permission to use this command.'
+  errorMessage = null
 ) {
   if (memberHasModerationCommandAccess(interaction.member, guildConfig, requiredPermissions)) {
     return true;
@@ -130,7 +158,7 @@ export async function checkModerationPermissions(
 
   await replyUserError(interaction, {
     type: ErrorTypes.PERMISSION,
-    message: errorMessage,
+    message: errorMessage || buildMissingPermissionMessage(interaction.user?.id, requiredPermissions),
     context: { source: 'permissionGuard.checkModerationPermissions' },
   });
 
@@ -169,7 +197,7 @@ export async function enforceDefaultCommandPermissions(interaction, command, con
   const commandName = command?.data?.name ?? interaction.commandName ?? 'command';
   await replyUserError(interaction, {
     type: ErrorTypes.PERMISSION,
-    message: getBotMessage('noPermission'),
+    message: buildMissingPermissionMessage(interaction.user?.id, requiredPermissions),
     context: {
       source: context.source ?? 'permissionGuard.enforceDefaultCommandPermissions',
       commandName,
@@ -218,14 +246,14 @@ export function botHasPermission(channel, permissions) {
 export async function checkUserPermissions(
   interaction,
   requiredPermissions,
-  errorMessage = 'You do not have permission to use this command.'
+  errorMessage = null
 ) {
   const member = interaction.member;
 
   if (!member.permissions.has(requiredPermissions)) {
     await replyUserError(interaction, {
       type: ErrorTypes.PERMISSION,
-      message: errorMessage,
+      message: errorMessage || buildMissingPermissionMessage(interaction.user?.id, requiredPermissions),
       context: { source: 'permissionGuard.checkUserPermissions' }
     });
 
@@ -326,5 +354,7 @@ export default {
   enforceDefaultCommandPermissions,
   checkUserPermissions,
   checkBotPermissions,
-  auditPermissionCheck
+  auditPermissionCheck,
+  permissionCodes,
+  buildMissingPermissionMessage
 };

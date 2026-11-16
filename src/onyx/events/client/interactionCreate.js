@@ -32,6 +32,17 @@ function formatPermissions(permissions) {
   }
 }
 
+// Lowercase, space-separated names for the "missing permission" line.
+function permissionCodes(permissions) {
+  try {
+    return new PermissionsBitField(permissions)
+      .toArray()
+      .map(name => name.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase());
+  } catch {
+    return [];
+  }
+}
+
 async function reject(interaction, message) {
   const payload = {
     embeds: [errorEmbed(message)],
@@ -91,9 +102,14 @@ module.exports = {
 
       if (command.userPermissions && interaction.guild) {
         if (!interaction.member.permissions.has(command.userPermissions)) {
+          const missing = permissionCodes(command.userPermissions);
+          const list = missing.length
+            ? missing.map(name => `\`${name}\``).join(', ')
+            : '`the required permission`';
+
           return reject(
             interaction,
-            `You need ${formatPermissions(command.userPermissions)} permission to run this command.`
+            `⚠️ <@${interaction.user.id}>: You're **missing** permission: ${list}`
           );
         }
       }
