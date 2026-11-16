@@ -71,12 +71,12 @@ function sanitizeUsername(value) {
 }
 
 function buildContent(original, phrase) {
-  const suffix = `\n-# ${phrase}`;
+  const suffix = ` ${phrase}`;
   const text = String(original ?? '').trim();
   const room = MAX_CONTENT_LENGTH - suffix.length;
 
   if (!text) {
-    return `-# ${phrase}`;
+    return phrase;
   }
 
   const clipped = text.length > room

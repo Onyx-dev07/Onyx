@@ -223,7 +223,7 @@ async function handleBrainrotLock(message, client, prefix) {
       : '';
 
     await message.reply({
-      content: quote ? `${quote}\n-# ${phrase}` : `-# ${phrase}`,
+      content: quote ? `${quote} ${phrase}` : phrase,
       allowedMentions: { parse: [], repliedUser: false },
     }).catch(error => {
       logger.debug('Failed to send brainrot reply:', error.message);

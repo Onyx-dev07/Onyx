@@ -288,7 +288,7 @@ A channel-scoped counting game with streak tracking, reset controls, and a leade
 | Command | Description | Subcommands |
 | --- | --- | --- |
 | `ban` | Ban a user from the server | — |
-| `brainrotlock` | Repost a user's messages as them with a random brainrot line | `add`, `remove` |
+| `brainrotlock` | Repost a user's messages as them with a random brainrot phrase | `add`, `remove` |
 | `cases` | View moderation cases and filter the audit trail | — |
 | `dm` | Send a direct message to a user as staff | — |
 | `kick` | Kick a user from the server | — |
@@ -306,7 +306,7 @@ A channel-scoped counting game with streak tracking, reset controls, and a leade
 | `warn` | Warn a user and record it | — |
 | `warnings` | View all warnings for a user | — |
 
-`brainrotlock` reposts the user's messages through a channel webhook using their display name and avatar, appends a random brainrot line, and removes the original. If the bot is missing Manage Webhooks or Manage Messages, it falls back to a quoted reply. Use `/brainrotlock add user:@user` or `!brainrot add @user`; remove it the same way with `/brainrotlock remove user:@user` or `!brainrot remove @user`.
+`brainrotlock` reposts the user's messages through a channel webhook using their display name and avatar, appends a random brainrot phrase inline, and removes the original. If the bot is missing Manage Webhooks or Manage Messages, it falls back to a quoted reply. Use `/brainrotlock add user:@user` or `!brainrot add @user`; remove it the same way with `/brainrotlock remove user:@user` or `!brainrot remove @user`.
 
 </details>
 

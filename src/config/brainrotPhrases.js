@@ -1,4 +1,4 @@
-// Lines appended to a brainrot-locked member's messages.
+// Phrases appended to a brainrot-locked member's messages.
 export const BRAINROT_PHRASES = [
   'bro is cooked',
   'what the sigma',
