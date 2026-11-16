@@ -1,11 +1,12 @@
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags } from 'discord.js';
+import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
 import { compactEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
-import { getColor } from '../../config/bot.js';
 
 import { InteractionHelper } from '../../utils/interactionHelper.js';
-import { replyUserError, ErrorTypes } from '../../utils/errorHandler.js';
+
+const DEFAULT_PURGE_AMOUNT = 20;
+
 export default {
     data: new SlashCommandBuilder()
     .setName("purge")
@@ -13,14 +14,29 @@ export default {
     .addIntegerOption((option) =>
       option
         .setName("amount")
-        .setDescription("Number of messages (1-100)")
-        .setRequired(true),
+        .setDescription("Number of messages (1-100, defaults to 20)")
+        .setMinValue(1)
+        .setMaxValue(100)
+        .setRequired(false),
     )
 .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
   category: "moderation",
   abuseProtection: { maxAttempts: 5, windowMs: 60_000 },
 
   async execute(interaction, config, client) {
+    const amount = interaction.options.getInteger("amount") ?? DEFAULT_PURGE_AMOUNT;
+    const channel = interaction.channel;
+
+    if (amount < 1 || amount > 100) {
+      const response = {
+        embeds: [compactEmbed('Specify a number between 1 and 100.', 'error')],
+      };
+      if (!interaction._isPrefixCommand) {
+        response.flags = MessageFlags.Ephemeral;
+      }
+      return interaction.reply(response);
+    }
+
     const deferSuccess = await InteractionHelper.safeDefer(interaction, {
       flags: MessageFlags.Ephemeral,
     });
@@ -32,12 +48,6 @@ export default {
       });
       return;
     }
-
-    const amount = interaction.options.getInteger("amount");
-    const channel = interaction.channel;
-
-    if (amount < 1 || amount > 100)
-      return await replyUserError(interaction, { type: ErrorTypes.VALIDATION, message: 'Please specify a number between 1 and 100.' });
 
     try {
       const fetched = await channel.messages.fetch({ limit: amount });
@@ -61,12 +71,14 @@ export default {
         }
       });
 
-      await InteractionHelper.safeEditReply(interaction, {
-        embeds: [
-          compactEmbed(`🧹 Deleted **${deletedCount}** messages in <#${channel.id}>.`, 'success'),
-        ],
-        flags: MessageFlags.Ephemeral,
-      });
+      const response = {
+        embeds: [compactEmbed(`Deleted **${deletedCount}** messages in <#${channel.id}>.`, 'success')],
+      };
+      if (!interaction._isPrefixCommand) {
+        response.flags = MessageFlags.Ephemeral;
+      }
+
+      await InteractionHelper.safeEditReply(interaction, response);
 
       setTimeout(() => {
         interaction.deleteReply().catch(err => 
@@ -75,7 +87,9 @@ export default {
       }, 3000);
     } catch (error) {
       logger.error('Purge command error:', error);
-      await replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: 'An unexpected error occurred during message deletion. Note: Messages older than 14 days cannot be bulk deleted.' });
+      await InteractionHelper.safeEditReply(interaction, {
+        embeds: [compactEmbed('Could not delete those messages. Messages older than 14 days cannot be bulk deleted.', 'error')],
+      });
     }
   }
 };

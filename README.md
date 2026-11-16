@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/hero.svg" alt="Onyx — security that never blinks. 138 commands, 28 security modules, 19 categories." width="100%" />
+  <img src="./assets/hero.svg" alt="Onyx — security that never blinks. 139 commands, 28 security modules, 19 categories." width="100%" />
 
   <br />
   <br />
@@ -7,7 +7,7 @@
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/node-20.10%2B-3c873a?style=flat-square&labelColor=0b0b10" alt="Node.js 20.10+" /></a>
   <a href="https://discord.js.org/"><img src="https://img.shields.io/badge/discord.js-v14-5865f2?style=flat-square&labelColor=0b0b10" alt="discord.js v14" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-f7a8c4?style=flat-square&labelColor=0b0b10" alt="MIT License" /></a>
-  <img src="https://img.shields.io/badge/commands-138-f7a8c4?style=flat-square&labelColor=0b0b10" alt="138 commands" />
+  <img src="https://img.shields.io/badge/commands-139-f7a8c4?style=flat-square&labelColor=0b0b10" alt="139 commands" />
   <img src="https://img.shields.io/badge/security_modules-28-ff8fb1?style=flat-square&labelColor=0b0b10" alt="28 security modules" />
   <img src="https://img.shields.io/badge/storage-JSON_%2F_PostgreSQL-6ee7a8?style=flat-square&labelColor=0b0b10" alt="JSON or PostgreSQL storage" />
 
@@ -39,7 +39,7 @@ Data lives in local JSON by default, so the bot runs with **no external services
 
 <table align="center">
 <tr>
-<td align="center" width="25%"><h3>138</h3><sub>commands</sub></td>
+<td align="center" width="25%"><h3>139</h3><sub>commands</sub></td>
 <td align="center" width="25%"><h3>28</h3><sub>security modules</sub></td>
 <td align="center" width="25%"><h3>19</h3><sub>categories</sub></td>
 <td align="center" width="25%"><h3>0</h3><sub>required external services</sub></td>
@@ -66,6 +66,9 @@ Every action returns a compact confirmation. No walls of fields, no decorative f
 !kick      @user kicked.
 !jail      🔒 @user jailed.
 !unjail    🔓 @user released.
+!purge     Deleted 42 messages in #general.
+!snipe     @user · 12s ago
+           the deleted message
 ```
 
 Role and nickname changes follow the same grammar, including grouped multi-role updates:
@@ -92,8 +95,8 @@ Tickets, giveaways, applications, birthdays, welcome flows, reaction roles, veri
 </td>
 <td width="33%" valign="top">
 <h3>🧹 Moderation</h3>
-<p>Ban, kick, softban, hardban, mass ban, mass kick, timeout, purge, warnings, cases, user notes, channel lock, jail, nickname, role, DM, and channel nuke.</p>
-<p><sub>16 commands · hierarchy checks before every action</sub></p>
+<p>Ban, kick, softban, hardban, mass ban, mass kick, timeout, purge, warnings, cases, user notes, channel lock, snipe, jail, nickname, role, DM, and channel nuke.</p>
+<p><sub>17 commands · hierarchy checks before every action</sub></p>
 </td>
 <td width="33%" valign="top">
 <h3>🎟️ Community</h3>
@@ -204,7 +207,7 @@ A channel-scoped counting game with streak tracking, reset controls, and a leade
 <a name="command-reference"></a>
 ## Command reference
 
-**138 commands** ship in this build: **110 community commands** plus **28 Onyx security modules**, across **19 categories**.
+**139 commands** ship in this build: **111 community commands** plus **28 Onyx security modules**, across **19 categories**.
 
 | Surface | Behavior |
 | --- | --- |
@@ -276,7 +279,7 @@ A channel-scoped counting game with streak tracking, reset controls, and a leade
 
 <a name="moderation"></a>
 <details>
-<summary><b>🧹 Moderation</b> · 16 commands</summary>
+<summary><b>🧹 Moderation</b> · 17 commands</summary>
 
 *Receipts, not essays.*
 
@@ -289,8 +292,9 @@ A channel-scoped counting game with streak tracking, reset controls, and a leade
 | `lock` | Lock the current channel for `@everyone` | — |
 | `massban` | Ban multiple users at once | — |
 | `masskick` | Kick multiple users at once | — |
-| `purge` | Delete a specific number of messages | — |
+| `purge` | Delete a specific number of messages (defaults to 20) | — |
 | `say` | Send a plain message as the bot | — |
+| `snipe` | Show the most recently deleted message in this channel | — |
 | `timeout` | Time out a user for a duration | — |
 | `unban` | Unban a user | — |
 | `unlock` | Unlock the current channel | — |
@@ -796,7 +800,7 @@ Onyx/
 │   ├── app.js                # Client bootstrap, web server, health endpoints
 │   ├── config.json           # Onyx identity, colors, emoji slots, security defaults
 │   ├── config/bot.js         # Community defaults and feature toggles
-│   ├── commands/             # 110 community commands by category
+│   ├── commands/             # 111 community commands by category
 │   ├── events/               # Client, guild, message, and interaction listeners
 │   ├── handlers/             # Command loaders, help menus, buttons, selects, modals
 │   ├── interactions/         # Interaction routing helpers

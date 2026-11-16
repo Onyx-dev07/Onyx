@@ -5,6 +5,35 @@ import { getReactionRoleMessage, deleteReactionRoleMessage } from '../services/r
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
 
 const MAX_LOGGED_MESSAGE_CONTENT_LENGTH = 1024;
+const MAX_SNIPE_CONTENT_LENGTH = 1800;
+const MAX_SNIPE_CHANNELS = 500;
+
+// Keep the most recent human message per channel so !snipe can show it without
+// a database round-trip. Bots are skipped, matching the logging behavior.
+function rememberSnipe(message) {
+  if (!message.channel?.id) return;
+
+  const client = message.client;
+  if (!client.snipes) client.snipes = new Map();
+
+  const attachments = [...(message.attachments?.values?.() ?? [])]
+    .map(attachment => attachment.url)
+    .slice(0, 4);
+
+  client.snipes.set(message.channel.id, {
+    content: String(message.content || '').slice(0, MAX_SNIPE_CONTENT_LENGTH),
+    authorId: message.author?.id ?? null,
+    authorTag: message.author?.tag ?? 'Unknown user',
+    createdAt: message.createdTimestamp ?? Date.now(),
+    deletedAt: Date.now(),
+    attachments,
+  });
+
+  if (client.snipes.size > MAX_SNIPE_CHANNELS) {
+    const oldestChannel = client.snipes.keys().next().value;
+    if (oldestChannel) client.snipes.delete(oldestChannel);
+  }
+}
 
 export default {
   name: Events.MessageDelete,
@@ -44,6 +73,8 @@ export default {
       }
 
       if (message.author?.bot) return;
+
+      rememberSnipe(message);
 
       const metaLines = [
         formatLogLine('Channel', message.channel ? `${message.channel.name} ${message.channel.toString()}` : 'Unknown'),

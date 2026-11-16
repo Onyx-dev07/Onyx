@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="Onyx terminal console - antinuke, automod, antiraid and whitelist modules across 138 commands and 28 security modules" font-family="'JetBrains Mono','Fira Code','SFMono-Regular',Menlo,Consolas,monospace">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="Onyx terminal console - antinuke, automod, antiraid and whitelist modules across 139 commands and 28 security modules" font-family="'JetBrains Mono','Fira Code','SFMono-Regular',Menlo,Consolas,monospace">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#07080b"/>
@@ -101,7 +101,7 @@
     <text x="134" y="320" fill="#8f95a1">trusted bypass &#183; staff stay unblocked</text>
 
     <text x="88" y="356" fill="#6ee7a8">[ok]</text>
-    <text x="130" y="356" fill="#a9aeb8">138 commands &#183; 28 security modules</text>
+    <text x="130" y="356" fill="#a9aeb8">139 commands &#183; 28 security modules</text>
   </g>
 
   <!-- divider -->
