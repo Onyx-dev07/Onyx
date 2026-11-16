@@ -1,7 +1,6 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const config = require('../../config.json');
 const { actionEmbed } = require('./embeds');
-const { actionButtons } = require('./moderation');
 
 function controlRow(state, channelId) {
   if (state === 'locked') {
@@ -40,7 +39,7 @@ function channelStatePayload({ channel, moderator, state, reason = 'No reason pr
       fields: [{ name: 'Channel', value: `<#${channel.id}>`, inline: true }],
       color: locked ? config.colors.error : config.colors.success
     })],
-    components: [controlRow(state, channel.id), actionButtons()]
+    components: [controlRow(state, channel.id)]
   };
 }
 

@@ -2,7 +2,6 @@ const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('disc
 const db = require('../../database');
 const config = require('../../../config.json');
 const { createEmbed, UI } = require('../../utils/embeds');
-const { failurePayload } = require('../../utils/moderation');
 
 const ACTION_WORDS = {
   add: 'add',
@@ -47,52 +46,79 @@ function hierarchyError(guild, member, role, moderator) {
   return null;
 }
 
-async function changeRole({ guild, member, role, action, moderator, client }) {
+function plainPayload(description, color = config.colors.success) {
+  return {
+    embeds: [createEmbed({
+      description,
+      color,
+      footer: false,
+      timestamp: false
+    })]
+  };
+}
+
+async function changeRole({ guild, member, role, action, moderator }) {
   const problem = hierarchyError(guild, member, role, moderator);
-  if (problem) return { payload: failurePayload('Role Blocked', problem) };
+  if (problem) return { ok: false, problem };
 
   const hasRole = member.roles.cache.has(role.id);
   const shouldAdd = action === 'toggle' ? !hasRole : action === 'add';
-  const label = shouldAdd ? 'Added' : 'Removed';
 
   if (action !== 'toggle' && hasRole === shouldAdd) {
     return {
-      payload: {
-        embeds: [createEmbed({
-          description: `<@${member.id}> ${shouldAdd ? 'already has' : 'does not have'} ${role}.`,
-          color: config.colors.warning,
-          footer: false,
-          timestamp: false
-        })]
-      }
+      ok: false,
+      warning: true,
+      problem: `<@${member.id}> ${shouldAdd ? 'already has' : 'does not have'} ${role}.`
     };
   }
+
+  const label = shouldAdd ? 'Added' : 'Removed';
 
   try {
     await member.roles[shouldAdd ? 'add' : 'remove'](role, `[Onyx] ${label} by ${moderator.tag}`);
   } catch (err) {
-    return { payload: failurePayload('Role Blocked', `Could not update ${role} ${UI.separator} ${err.message}`) };
+    return { ok: false, problem: `Could not update ${role} ${UI.separator} ${err.message}` };
   }
 
-  return {
-    payload: {
-      embeds: [createEmbed({
-        description: `${role} ${shouldAdd ? 'added to' : 'removed from'} <@${member.id}>.`,
-        color: config.colors.success,
-        footer: false,
-        timestamp: false
-      })]
-    }
-  };
+  return { ok: true, role, added: shouldAdd };
+}
+
+// One plain sentence per outcome, matching !nick. Multiple mentioned roles are
+// grouped so a bulk change still reads as a single compact reply.
+function rolePayload(member, results) {
+  const changed = results.filter((result) => result.ok);
+  const failed = results.filter((result) => !result.ok);
+  const blocked = failed.some((result) => !result.warning);
+
+  if (changed.length === 0) {
+    return plainPayload(
+      failed.map((result) => result.problem).join('\n'),
+      blocked ? config.colors.error : config.colors.warning
+    );
+  }
+
+  const added = changed.filter((result) => result.added).map((result) => `${result.role}`);
+  const removed = changed.filter((result) => !result.added).map((result) => `${result.role}`);
+  const lines = [];
+
+  if (added.length) lines.push(`${added.join(', ')} added to <@${member.id}>.`);
+  if (removed.length) lines.push(`${removed.join(', ')} removed from <@${member.id}>.`);
+  for (const result of failed) lines.push(result.problem);
+
+  return plainPayload(
+    lines.join('\n'),
+    blocked ? config.colors.error : failed.length ? config.colors.warning : config.colors.success
+  );
 }
 
 function usageEmbed(prefix) {
   return createEmbed({
     title: 'Usage',
     description: [
-      'Add, remove, or toggle a role. The role can be mentioned or written by name.',
+      'Add, remove, or toggle a role. Mention one or more roles, or write a role name.',
       UI.divider,
       `\`${prefix}role @member @Role\``,
+      `\`${prefix}role @member @Role1 @Role2\``,
       `\`${prefix}role add @member RoleName\``,
       `\`${prefix}role remove @member @Role\``
     ].join('\n'),
@@ -136,21 +162,20 @@ module.exports = {
     const role = interaction.guild.roles.cache.get(selected?.id);
     const action = interaction.options.getString('action') || 'toggle';
 
-    if (!role) return interaction.reply({ ...failurePayload('Role Blocked', 'That role could not be found.'), flags: MessageFlags.Ephemeral });
+    if (!role) return interaction.reply({ ...plainPayload('That role could not be found.', config.colors.error), flags: MessageFlags.Ephemeral });
 
     const member = await interaction.guild.members.fetch(user.id).catch(() => null);
-    if (!member) return interaction.reply({ ...failurePayload('Role Blocked', 'That member is not in this server.'), flags: MessageFlags.Ephemeral });
+    if (!member) return interaction.reply({ ...plainPayload('That member is not in this server.', config.colors.error), flags: MessageFlags.Ephemeral });
 
     const result = await changeRole({
       guild: interaction.guild,
       member,
       role,
       action,
-      moderator: interaction.member,
-      client: interaction.client
+      moderator: interaction.member
     });
 
-    await interaction.reply(result.payload);
+    await interaction.reply(rolePayload(member, [result]));
   },
 
   async executePrefix(message, args) {
@@ -164,23 +189,30 @@ module.exports = {
     const member = message.mentions.members.first() || await fetchMember(message.guild, words[0]);
     if (!member) return message.reply({ embeds: [usageEmbed(prefix)] });
 
-    const query = words
-      .filter(token => !/^<@!?\d+>$/.test(token) && token !== member.id)
-      .join(' ')
-      .trim();
+    let roles = [...message.mentions.roles.values()];
 
-    const role = findRole(message.guild, message.mentions.roles.first(), query);
-    if (!role) return message.reply({ embeds: [usageEmbed(prefix)] });
+    if (!roles.length) {
+      const query = words
+        .filter(token => !/^<@!?\d+>$/.test(token) && token !== member.id)
+        .join(' ')
+        .trim();
 
-    const result = await changeRole({
-      guild: message.guild,
-      member,
-      role,
-      action,
-      moderator: message.member,
-      client: message.client
-    });
+      const role = findRole(message.guild, null, query);
+      if (!role) return message.reply({ embeds: [usageEmbed(prefix)] });
+      roles = [role];
+    }
 
-    await message.reply(result.payload);
+    const results = [];
+    for (const role of roles) {
+      results.push(await changeRole({
+        guild: message.guild,
+        member,
+        role,
+        action,
+        moderator: message.member
+      }));
+    }
+
+    await message.reply(rolePayload(member, results));
   }
 };

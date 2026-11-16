@@ -1,33 +1,11 @@
-const {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  PermissionFlagsBits
-} = require('discord.js');
+const { PermissionFlagsBits } = require('discord.js');
 const config = require('../../config.json');
 const { actionEmbed } = require('./embeds');
-
-// Every moderation card carries the same two controls. Text labels keep the
-// row compact and on-brand; emoji-only buttons render oversized in Discord.
-// Acknowledge clears the controls, Dismiss deletes the card.
-function actionButtons() {
-  return new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('mod_ack')
-      .setLabel('Acknowledge')
-      .setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder()
-      .setCustomId('mod_dismiss')
-      .setLabel('Dismiss')
-      .setStyle(ButtonStyle.Secondary)
-  );
-}
 
 // Successful moderation action rendered as an actionEmbed card.
 function actionPayload(options) {
   return {
-    embeds: [actionEmbed(options)],
-    components: [actionButtons()]
+    embeds: [actionEmbed(options)]
   };
 }
 
@@ -39,8 +17,7 @@ function failurePayload(title, description) {
       icon: 'cross',
       description,
       color: config.colors.error
-    })],
-    components: [actionButtons()]
+    })]
   };
 }
 
@@ -85,7 +62,6 @@ function moderationFailure(action, err) {
 }
 
 module.exports = {
-  actionButtons,
   actionPayload,
   failurePayload,
   moderationBlock,

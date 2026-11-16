@@ -2,8 +2,6 @@
 // one CommonJS module lets the ESM core skip interactions that Onyx handles.
 const ONYX_COMPONENT_PREFIXES = [
   'onyx_page:',
-  'mod_ack',
-  'mod_dismiss',
   'mod_delete_log',
   'show_punishment',
   'lock_channel:',
