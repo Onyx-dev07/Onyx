@@ -19,6 +19,7 @@ import {
   recordCorrectCount,
 } from '../services/countingGameService.js';
 import { isBrainrotLocked, pickBrainrotPhrase } from '../services/brainrotLockService.js';
+import { impersonateBrainrotMessage } from '../services/brainrotWebhookService.js';
 
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
 const MESSAGE_XP_RATE_LIMIT_WINDOW_MS = 10000;
@@ -208,6 +209,14 @@ async function handleBrainrotLock(message, client, prefix) {
     }
 
     const phrase = pickBrainrotPhrase();
+
+    // Repost the message as the member through a channel webhook. If the bot
+    // is missing Manage Webhooks or Manage Messages, fall back to a quoted
+    // reply so the joke still lands.
+    if (await impersonateBrainrotMessage(message, phrase)) {
+      return;
+    }
+
     const text = message.content?.trim()?.slice(0, BRAINROT_QUOTE_LIMIT);
     const quote = text
       ? text.split('\n').map(line => `> ${line}`).join('\n')

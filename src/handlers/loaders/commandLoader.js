@@ -120,6 +120,25 @@ export async function loadCommands(client) {
     return client.commands;
 }
 
+// Commands marked `guildCommand` skip global registration and are published
+// per guild instead. That sidesteps global propagation delays and keeps new
+// commands visible the moment the bot restarts.
+function isGuildScopedCommand(command) {
+    return Boolean(command.onyxNative || command.guildCommand);
+}
+
+function collectGuildRegistrationPayloads(client) {
+    const guildScoped = collectCommandPayloads(client, isGuildScopedCommand).commands;
+    const globalPool = collectCommandPayloads(client, (command) => !isGuildScopedCommand(command)).commands;
+    const overflow = globalPool.slice(MAX_COMMANDS);
+
+    if (overflow.length > 0) {
+        logger.info(`Publishing ${overflow.length} command(s) beyond the global limit per guild`);
+    }
+
+    return [...guildScoped, ...overflow];
+}
+
 function collectCommandPayloads(client, predicate = () => true) {
     const commands = [];
     let totalSubcommands = 0;
@@ -227,14 +246,14 @@ function validateCommands(commands) {
 
 function prepareCommandsForRegistration(commands) {
     if (commands.length >= COMMAND_COUNT_WARN_THRESHOLD) {
-        logger.warn(`Command count (${commands.length}) is near Discord's ${MAX_COMMANDS} global command limit`);
+        logger.warn(`Command count (${commands.length}) is near Discord's ${MAX_COMMANDS} command limit`);
     }
 
     if (commands.length <= MAX_COMMANDS) {
         return commands;
     }
 
-    logger.warn(`Command count (${commands.length}) exceeds Discord limit (${MAX_COMMANDS}), truncating...`);
+    logger.warn(`Command count (${commands.length}) exceeds Discord's ${MAX_COMMANDS} command limit, truncating...`);
     const truncated = commands.slice(0, MAX_COMMANDS);
     logger.info(`Truncated to ${truncated.length} commands for registration`);
     return truncated;
@@ -267,7 +286,7 @@ async function registerGlobalCommands(client, clientId, commands, totalSubcomman
     logger.info('Global commands may take up to an hour to appear in all servers on first deploy');
 }
 
-async function registerOnyxGuildCommands(client, clientId, guild, commands) {
+async function registerGuildCommands(client, clientId, guild, commands) {
     if (commands.length === 0) {
         return;
     }
@@ -279,32 +298,32 @@ async function registerOnyxGuildCommands(client, clientId, guild, commands) {
         body: commandsToRegister,
     });
 
-    logger.info(`Registered ${commandsToRegister.length} Onyx commands in guild ${guild.id} (${guild.name})`);
+    logger.info(`Registered ${commandsToRegister.length} guild commands in guild ${guild.id} (${guild.name})`);
 }
 
-export async function registerOnyxCommandsForGuild(client, guild, options = {}) {
+export async function registerGuildCommandsForGuild(client, guild, options = {}) {
     const clientId = options.clientId || client.config?.bot?.clientId || process.env.CLIENT_ID;
 
     if (!clientId) {
-        logger.warn('CLIENT_ID is required to register Onyx guild commands.');
+        logger.warn('CLIENT_ID is required to register guild commands.');
         return;
     }
 
     if (!client.rest) {
-        logger.warn('Discord REST client is not available for Onyx guild command registration.');
+        logger.warn('Discord REST client is not available for guild command registration.');
         return;
     }
 
-    const { commands } = collectCommandPayloads(client, (command) => command.onyxNative);
+    const commands = collectGuildRegistrationPayloads(client);
 
     if (commands.length === 0) {
         return;
     }
 
     try {
-        await registerOnyxGuildCommands(client, clientId, guild, commands);
+        await registerGuildCommands(client, clientId, guild, commands);
     } catch (error) {
-        logger.error(`Failed to register Onyx commands in guild ${guild?.id}:`, error);
+        logger.error(`Failed to register guild commands in guild ${guild?.id}:`, error);
     }
 }
 
@@ -312,29 +331,36 @@ export async function registerCommands(client, options = {}) {
     const { clientId = null } = options;
 
     try {
-        // Discord caps global commands at 100. Keep the large community command
-        // set global and publish the Onyx security suite per guild, where it has
-        // its own 100-command budget and appears instantly.
-        const nativeCommands = collectCommandPayloads(client, (command) => !command.onyxNative);
-        await registerGlobalCommands(client, clientId, nativeCommands.commands, nativeCommands.totalSubcommands);
+        // Discord caps global commands at 100. Keep the community set global,
+        // publish Onyx security and any `guildCommand` commands per guild, and
+        // move commands beyond the global cap into the per-guild set so nothing
+        // is silently dropped from the picker.
+        const globalPool = collectCommandPayloads(client, (command) => !isGuildScopedCommand(command));
+        const globalCommands = globalPool.commands.slice(0, MAX_COMMANDS);
+        const globalSubcommands = globalCommands.reduce(
+            (total, command) => total + getSubcommandInfo(command).length,
+            0,
+        );
 
-        const onyxCommands = collectCommandPayloads(client, (command) => command.onyxNative);
+        await registerGlobalCommands(client, clientId, globalCommands, globalSubcommands);
 
-        if (onyxCommands.commands.length > 0) {
+        const guildCommands = collectGuildRegistrationPayloads(client);
+
+        if (guildCommands.length > 0) {
             const guilds = client.guilds?.cache;
 
             if (!guilds || guilds.size === 0) {
-                logger.warn('No guilds cached yet; Onyx commands will be registered when the bot joins a guild.');
+                logger.warn('No guilds cached yet; guild commands will be registered when the bot joins a guild.');
             } else {
                 for (const guild of guilds.values()) {
                     try {
-                        await registerOnyxGuildCommands(client, clientId, guild, onyxCommands.commands);
+                        await registerGuildCommands(client, clientId, guild, guildCommands);
                     } catch (error) {
-                        logger.error(`Failed to register Onyx commands in guild ${guild.id}:`, error);
+                        logger.error(`Failed to register guild commands in guild ${guild.id}:`, error);
                     }
                 }
 
-                logger.info(`Registered ${onyxCommands.commands.length} Onyx commands in ${guilds.size} guild(s)`);
+                logger.info(`Registered ${guildCommands.length} guild commands in ${guilds.size} guild(s)`);
             }
         }
 

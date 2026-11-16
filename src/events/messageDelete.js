@@ -3,6 +3,7 @@ import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
 import { logger } from '../utils/logger.js';
 import { getReactionRoleMessage, deleteReactionRoleMessage } from '../services/reactionRoleService.js';
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
+import { consumeBrainrotDeletion } from '../services/brainrotWebhookService.js';
 
 const MAX_LOGGED_MESSAGE_CONTENT_LENGTH = 1024;
 const MAX_SNIPE_CONTENT_LENGTH = 1800;
@@ -42,6 +43,11 @@ export default {
   async execute(message) {
     try {
       if (!message.guild) return;
+
+      // The brainrot hook deletes the original after reposting it as the
+      // member. That cleanup is not a real deletion, so keep it out of the
+      // moderation log and the snipe cache.
+      if (consumeBrainrotDeletion(message.id)) return;
 
       try {
         const reactionRoleData = await getReactionRoleMessage(message.client, message.guild.id, message.id);

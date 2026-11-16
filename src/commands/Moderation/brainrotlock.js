@@ -36,6 +36,9 @@ export default {
             .setDescription('The user to unlock.')
             .setRequired(true))),
   category: 'moderation',
+  // Registered per guild so the command appears immediately instead of waiting
+  // on global propagation.
+  guildCommand: true,
 
   async execute(interaction, config, client) {
     try {
