@@ -18,9 +18,11 @@ import {
   isValidCountingMessage,
   recordCorrectCount,
 } from '../services/countingGameService.js';
+import { isBrainrotLocked, pickBrainrotPhrase } from '../services/brainrotLockService.js';
 
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
 const MESSAGE_XP_RATE_LIMIT_WINDOW_MS = 10000;
+const BRAINROT_QUOTE_LIMIT = 1200;
 
 export default {
   name: Events.MessageCreate,
@@ -35,8 +37,17 @@ export default {
         return;
       }
 
-      await handlePrefixCommand(message, client);
+      let guildConfig = null;
+      try {
+        guildConfig = await getGuildConfig(client, message.guild.id);
+      } catch (error) {
+        logger.warn('Failed to load guild config for message handling:', error);
+      }
 
+      const prefix = guildConfig?.prefix || getCommandPrefix();
+
+      await handlePrefixCommand(message, client, { guildConfig, prefix });
+      await handleBrainrotLock(message, client, prefix);
       await handleLeveling(message, client);
     } catch (error) {
       logger.error('Error in messageCreate event:', error);
@@ -44,10 +55,10 @@ export default {
   }
 };
 
-async function handlePrefixCommand(message, client) {
+async function handlePrefixCommand(message, client, context = {}) {
   try {
-    const guildConfig = await getGuildConfig(client, message.guild.id);
-    const prefix = guildConfig?.prefix || getCommandPrefix();
+    const guildConfig = context.guildConfig ?? await getGuildConfig(client, message.guild.id);
+    const prefix = context.prefix || guildConfig?.prefix || getCommandPrefix();
     const parsed = parsePrefixCommand(message.content, prefix);
     
     if (!parsed) {
@@ -179,6 +190,37 @@ async function handleCountingGame(message, client) {
   } catch (error) {
     logger.error('Error handling counting game:', error);
     return false;
+  }
+}
+
+async function handleBrainrotLock(message, client, prefix) {
+  try {
+    if (!message.content?.trim() && !message.attachments?.size) {
+      return;
+    }
+
+    if (prefix && message.content?.startsWith(prefix)) {
+      return;
+    }
+
+    if (!(await isBrainrotLocked(client, message.guild.id, message.author.id))) {
+      return;
+    }
+
+    const phrase = pickBrainrotPhrase();
+    const text = message.content?.trim()?.slice(0, BRAINROT_QUOTE_LIMIT);
+    const quote = text
+      ? text.split('\n').map(line => `> ${line}`).join('\n')
+      : '';
+
+    await message.reply({
+      content: quote ? `${quote}\n-# ${phrase}` : `-# ${phrase}`,
+      allowedMentions: { parse: [], repliedUser: false },
+    }).catch(error => {
+      logger.debug('Failed to send brainrot reply:', error.message);
+    });
+  } catch (error) {
+    logger.error('Error handling brainrot lock:', error);
   }
 }
 

@@ -1,0 +1,23 @@
+// Lines appended to a brainrot-locked member's messages.
+export const BRAINROT_PHRASES = [
+  'bro is cooked',
+  'what the sigma',
+  'blud is NOT him',
+  'negative aura',
+  'goofy ahh',
+  'bro fell off',
+  "that's crazy",
+  'actual npc behavior',
+  'certified yapper',
+  'caught in 4k',
+  'absolutely diabolical',
+  'skill issue',
+  'bro is tweaking',
+  "it's giving delulu",
+  'no thoughts just vibes',
+  "bro thinks he's him",
+  'aura in debt',
+  'touch some grass',
+  'respectfully, what?',
+  'never beating the allegations',
+];

@@ -33,6 +33,7 @@ export const commandAliases = {
     'setnick': 'nickname',
     'clear': 'purge',
     'purge': 'purge',
+    'brainrot': 'brainrotlock',
     'untimeout': 'untimeout',
     'unmute': 'untimeout',
 
