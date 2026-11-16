@@ -376,16 +376,17 @@ export function compactEmbed(description, color = 'primary') {
  * Build a consistent user-facing error embed.
  * @param {string} errorType - Error category key (e.g. validation, permission)
  * @param {string} [description] - Specific, actionable message for the user
- * @param {{ titleOverride?: string }} [options]
+ * @param {{ titleOverride?: string, showTitle?: boolean }} [options]
  */
 export function buildUserErrorEmbed(errorType, description = '', options = {}) {
   const type = errorType || 'unknown';
+  const showTitle = options.showTitle !== false;
   const title = options.titleOverride || USER_ERROR_TITLES[type] || USER_ERROR_TITLES.unknown;
   const color = USER_ERROR_COLORS[type] || 'error';
   const body = description ? String(description).trim() : undefined;
 
   return createEmbed({
-    title: statusTitle(color === 'warning' ? 'warning' : 'error', title),
+    title: showTitle ? statusTitle(color === 'warning' ? 'warning' : 'error', title) : undefined,
     description: body,
     color,
   });

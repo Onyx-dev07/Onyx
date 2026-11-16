@@ -1,5 +1,5 @@
 const logger = require('../../utils/logger');
-const { errorEmbed } = require('../../utils/embeds');
+const { compactEmbed, errorEmbed } = require('../../utils/embeds');
 const { channelStatePayload } = require('../../utils/channelActions');
 const { handlePagination } = require('../../utils/pagination');
 const { isOnyxComponent } = require('../../utils/componentIds');
@@ -45,12 +45,12 @@ function permissionCodes(permissions) {
 
 async function reject(interaction, message) {
   const payload = {
-    embeds: [errorEmbed(message)],
+    embeds: [compactEmbed(message, 'error')],
     flags: MessageFlags.Ephemeral
   };
 
   if (interaction.deferred && !interaction.replied) {
-    return interaction.editReply({ embeds: [errorEmbed(message)] }).catch(() => {});
+    return interaction.editReply({ embeds: [compactEmbed(message, 'error')] }).catch(() => {});
   }
 
   if (interaction.replied) {

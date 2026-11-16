@@ -463,6 +463,44 @@ async function sendErrorResponse(interaction, embed, context = {}) {
 }
 
 /**
+ * Moderation hierarchy/permission lines are already self-contained: they start
+ * with a ⚠️ marker and name the actor. Wrapping them in a "Permission Denied"
+ * title duplicates the message, so skip the title for those.
+ */
+function hasStandaloneStatusLine(message) {
+    return /^\s*\u26A0/.test(String(message || ''));
+}
+
+/**
+ * Resolve whether the interaction belongs to a moderation command so its
+ * denials can render as plain text instead of a "Permission Denied" card.
+ */
+function isModerationInteraction(interaction, context = {}) {
+    const declaredCategory = context.category ?? context.commandCategory;
+    if (declaredCategory) {
+        return String(declaredCategory).toLowerCase() === 'moderation';
+    }
+
+    const commandName = interaction?.commandName || context.commandName || context.command;
+    if (!commandName) {
+        return false;
+    }
+
+    const command = interaction?.client?.commands?.get?.(commandName)
+        || interaction?.client?.onyxCommands?.get?.(commandName);
+
+    return String(command?.category || '').toLowerCase() === 'moderation';
+}
+
+function shouldHideErrorTitle(errorType, message, interaction, context) {
+    if (errorType !== ErrorTypes.PERMISSION) {
+        return false;
+    }
+
+    return hasStandaloneStatusLine(message) || isModerationInteraction(interaction, context);
+}
+
+/**
  * Reply with a typed user-facing error (early-return validation, permission checks, etc.).
  */
 export async function replyUserError(interaction, {
@@ -486,7 +524,9 @@ export async function replyUserError(interaction, {
 
     logInteractionError(syntheticError, errorType, logData);
 
-    const embed = buildUserErrorEmbed(errorType, userMessage);
+    const embed = buildUserErrorEmbed(errorType, userMessage, {
+        showTitle: !shouldHideErrorTitle(errorType, userMessage, interaction, context)
+    });
     return sendErrorResponse(interaction, embed, { ...context, traceId, ephemeral, subtype });
 }
 
@@ -517,7 +557,9 @@ export async function handleInteractionError(interaction, error, context = {}) {
         ? userMessage
         : `${userMessage}\n\n-# Ref: \`${buildErrorReference(resolvedErrorCode, traceId)}\``;
 
-    const embed = buildUserErrorEmbed(errorType, description);
+    const embed = buildUserErrorEmbed(errorType, description, {
+        showTitle: !shouldHideErrorTitle(errorType, userMessage, interaction, context)
+    });
     await sendErrorResponse(interaction, embed, { ...context, traceId });
 }
 
