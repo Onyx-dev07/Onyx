@@ -3,6 +3,7 @@ import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
 import { logger } from '../utils/logger.js';
 import { getReactionRoleMessage, deleteReactionRoleMessage } from '../services/reactionRoleService.js';
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
+import { prepareDeletedAttachments } from '../utils/logging/deletedAttachments.js';
 import { consumeBrainrotDeletion } from '../services/brainrotWebhookService.js';
 
 const MAX_LOGGED_MESSAGE_CONTENT_LENGTH = 1024;
@@ -96,18 +97,26 @@ export default {
           : message.content;
       }
 
+      let attachmentFiles = [];
+      let attachmentPreview = null;
       if (message.attachments.size > 0) {
+        const prepared = await prepareDeletedAttachments(message);
+        attachmentFiles = prepared.files;
+        attachmentPreview = prepared.previewUrl;
         metaLines.push(formatLogLine('Attachments', String(message.attachments.size)));
+        metaLines.push(...prepared.lines);
       }
 
       await logEvent({
         client: message.client,
         guildId: message.guild.id,
         eventType: EVENT_TYPES.MESSAGE_DELETE,
+        attachments: attachmentFiles,
         data: {
           title: 'Message deleted',
           lines: metaLines,
           quoted: true,
+          image: attachmentPreview || undefined,
           section: messageBody ? { title: 'Message', body: messageBody || '*(empty message)*' } : null,
           userId: message.author?.id,
           channelId: message.channel.id,

@@ -46,6 +46,7 @@ export async function buildLoggingDashboardView(interaction, client) {
   const auditChannel = await formatChannelMention(interaction.guild, channels.audit);
   const applicationsChannel = await formatChannelMention(interaction.guild, channels.applications);
   const reportsChannel = await formatChannelMention(interaction.guild, channels.reports);
+  const jailChannel = await formatChannelMention(interaction.guild, channels.jail);
   const lifecycleChannel = await formatChannelMention(interaction.guild, guildConfig.ticketLogsChannelId);
   const transcriptChannel = await formatChannelMention(interaction.guild, guildConfig.ticketTranscriptChannelId);
 
@@ -78,6 +79,7 @@ export async function buildLoggingDashboardView(interaction, client) {
           `**Audit:** ${auditChannel}`,
           `**Applications:** ${applicationsChannel}`,
           `**Reports:** ${reportsChannel}`,
+          `**Jail:** ${jailChannel}`,
         ].join('\n'),
         inline: false,
       },
@@ -111,7 +113,7 @@ export async function buildLoggingCategoriesView(interaction, client) {
     .setTitle('📋 Event Categories')
     .setDescription(
       auditEnabled
-        ? 'Toggle which types of events are logged to your audit channel.'
+        ? 'Toggle which types of events are logged to their configured channels.'
         : '⚠️ Logging is disabled. Enable it from the main dashboard to send logs.',
     )
     .setColor(getColor('info'))

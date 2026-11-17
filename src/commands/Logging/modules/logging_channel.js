@@ -9,6 +9,7 @@ const DESTINATION_LABELS = {
   audit: 'Audit Log',
   applications: 'Applications',
   reports: 'Reports',
+  jail: 'Jail',
 };
 
 export default {

@@ -21,6 +21,7 @@ const EVENT_TYPES_BY_CATEGORY = Object.values(EVENT_TYPES).reduce((accumulator, 
 export const DASHBOARD_CATEGORIES = [
   'moderation',
   'message',
+  'channel',
   'role',
   'member',
   'leveling',
@@ -29,11 +30,13 @@ export const DASHBOARD_CATEGORIES = [
   'counter',
   'application',
   'report',
+  'jail',
 ];
 
 const DASHBOARD_CATEGORY_EMOJIS = {
   moderation: '🔨',
   message: '✉️',
+  channel: '📺',
   role: '🏷️',
   member: '👥',
   leveling: '📈',
@@ -42,11 +45,13 @@ const DASHBOARD_CATEGORY_EMOJIS = {
   counter: '📊',
   application: '📝',
   report: '🚨',
+  jail: '🔒',
 };
 
 export const DASHBOARD_CATEGORY_LABELS = {
   moderation: 'Moderation',
   message: 'Messages',
+  channel: 'Channels',
   role: 'Roles',
   member: 'Members',
   leveling: 'Leveling',
@@ -55,6 +60,7 @@ export const DASHBOARD_CATEGORY_LABELS = {
   counter: 'Counters',
   application: 'Applications',
   report: 'Reports',
+  jail: 'Jail',
 };
 
 function createBackButton() {
@@ -110,6 +116,11 @@ export function createLoggingMainMenuSelect() {
           .setValue('set:reports')
           .setEmoji('🚨'),
         new StringSelectMenuOptionBuilder()
+          .setLabel('Set Jail Channel')
+          .setDescription('Jail, unjail, and reset notices')
+          .setValue('set:jail')
+          .setEmoji('🔒'),
+        new StringSelectMenuOptionBuilder()
           .setLabel('Clear Audit Channel')
           .setValue('clear:audit')
           .setEmoji('🗑️'),
@@ -120,6 +131,10 @@ export function createLoggingMainMenuSelect() {
         new StringSelectMenuOptionBuilder()
           .setLabel('Clear Reports Channel')
           .setValue('clear:reports')
+          .setEmoji('🗑️'),
+        new StringSelectMenuOptionBuilder()
+          .setLabel('Clear Jail Channel')
+          .setValue('clear:jail')
           .setEmoji('🗑️'),
         new StringSelectMenuOptionBuilder()
           .setLabel('Event Categories')

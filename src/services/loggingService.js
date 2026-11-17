@@ -11,7 +11,7 @@ import {
   splitComparisonFields,
 } from '../utils/logging/logEmbeds.js';
 
-const LOG_DESTINATIONS = ['audit', 'applications', 'reports'];
+const LOG_DESTINATIONS = ['audit', 'applications', 'reports', 'jail'];
 
 const EVENT_TYPES = {
   MODERATION_BAN: 'moderation.ban',
@@ -34,6 +34,10 @@ const EVENT_TYPES = {
   MESSAGE_EDIT: 'message.edit',
   MESSAGE_BULK_DELETE: 'message.bulkdelete',
 
+  CHANNEL_CREATE: 'channel.create',
+  CHANNEL_DELETE: 'channel.delete',
+  CHANNEL_UPDATE: 'channel.update',
+
   ROLE_CREATE: 'role.create',
   ROLE_DELETE: 'role.delete',
   ROLE_UPDATE: 'role.update',
@@ -41,6 +45,8 @@ const EVENT_TYPES = {
   MEMBER_JOIN: 'member.join',
   MEMBER_LEAVE: 'member.leave',
   MEMBER_NAME_CHANGE: 'member.namechange',
+  MEMBER_ROLE_UPDATE: 'member.roleupdate',
+  MEMBER_TIMEOUT: 'member.timeout',
 
   REACTION_ROLE_ADD: 'reactionrole.add',
   REACTION_ROLE_REMOVE: 'reactionrole.remove',
@@ -60,6 +66,10 @@ const EVENT_TYPES = {
   APPLICATION_REVIEW: 'application.review',
 
   REPORT_FILE: 'report.file',
+
+  JAIL_JAIL: 'jail.jail',
+  JAIL_UNJAIL: 'jail.unjail',
+  JAIL_RESET: 'jail.reset',
 };
 
 const EVENT_COLORS = {
@@ -80,12 +90,17 @@ const EVENT_COLORS = {
   'message.delete': 0x8b0000,
   'message.edit': 0xFFA500,
   'message.bulkdelete': 0xFF0000,
+  'channel.create': 0x2ecc71,
+  'channel.delete': 0xe74c3c,
+  'channel.update': 0x3498db,
   'role.create': 0x2ecc71,
   'role.delete': 0xe74c3c,
   'role.update': 0x3498db,
   'member.join': 0x2ecc71,
   'member.leave': 0xe74c3c,
   'member.namechange': 0x3498db,
+  'member.roleupdate': 0x3498db,
+  'member.timeout': 0xF1C40F,
   'reactionrole.add': 0x2ecc71,
   'reactionrole.remove': 0xe74c3c,
   'reactionrole.create': 0x3498db,
@@ -100,6 +115,9 @@ const EVENT_COLORS = {
   'application.submit': 0x5865F2,
   'application.review': 0x57F287,
   'report.file': 0xED4245,
+  'jail.jail': 0x721919,
+  'jail.unjail': 0x2ecc71,
+  'jail.reset': 0x5865F2,
 };
 
 const EVENT_ICONS = {
@@ -120,12 +138,17 @@ const EVENT_ICONS = {
   'message.delete': '❌',
   'message.edit': '✏️',
   'message.bulkdelete': '🗑️',
+  'channel.create': '➕',
+  'channel.delete': '➖',
+  'channel.update': '🔄',
   'role.create': '➕',
   'role.delete': '➖',
   'role.update': '🔄',
   'member.join': '👋',
   'member.leave': '👋',
   'member.namechange': '🏷️',
+  'member.roleupdate': '🎭',
+  'member.timeout': '⏳',
   'reactionrole.add': '✅',
   'reactionrole.remove': '❌',
   'reactionrole.create': '🎭',
@@ -140,11 +163,15 @@ const EVENT_ICONS = {
   'application.submit': '📝',
   'application.review': '📋',
   'report.file': '🚨',
+  'jail.jail': '🔒',
+  'jail.unjail': '🔓',
+  'jail.reset': '♻️',
 };
 
 const CATEGORY_DESTINATION = {
   application: 'applications',
   report: 'reports',
+  jail: 'jail',
 };
 
 export function resolveLogChannel(config, destination) {
@@ -330,6 +357,7 @@ function createLogEmbed(guild, eventType, data) {
     title,
     description: description || undefined,
     thumbnail: data.thumbnail || undefined,
+    image: data.image || undefined,
     inlineFields,
     fields: data.blockFields || [],
     author: data.author || null,
@@ -355,7 +383,7 @@ export async function getLoggingStatus(client, guildId) {
 
   return {
     enabled: logging.enabled || false,
-    channels: logging.channels || { audit: null, applications: null, reports: null },
+    channels: logging.channels || { audit: null, applications: null, reports: null, jail: null },
     channelId: logging.channels?.audit ?? null,
     ignore: getIgnoreList(config),
     enabledEvents: logging.enabledEvents || {},

@@ -1,3 +1,4 @@
+import { Events } from 'discord.js';
 import { 
     getJoinToCreateConfig, 
     removeJoinToCreateTrigger,
@@ -6,12 +7,34 @@ import {
     saveTicketData
 } from '../utils/database.js';
 import { getServerCounters, saveServerCounters } from '../services/serverstatsService.js';
+import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
+import { formatLogLine } from '../utils/logging/logEmbeds.js';
+import { buildChannelBaseLines, channelReference } from '../utils/logging/channelAudit.js';
 import { logger } from '../utils/logger.js';
 
 export default {
-    name: 'channelDelete',
+    name: Events.ChannelDelete,
     async execute(channel, client) {
-        
+        try {
+            if (channel.guild) {
+                await logEvent({
+                    client: channel.client || client,
+                    guildId: channel.guild.id,
+                    eventType: EVENT_TYPES.CHANNEL_DELETE,
+                    data: {
+                        title: 'Channel deleted',
+                        headline: `${channelReference(channel)} was deleted`,
+                        lines: [
+                            ...buildChannelBaseLines(channel),
+                            formatLogLine('Deleted', `<t:${Math.floor(Date.now() / 1000)}:R>`),
+                        ],
+                    }
+                });
+            }
+        } catch (error) {
+            logger.warn(`Failed to log deleted channel ${channel.id}:`, error);
+        }
+
         if (channel.type === 0 && channel.guild) {
             try {
                 const ticketData = await getTicketData(channel.guild.id, channel.id);

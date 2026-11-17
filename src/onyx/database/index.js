@@ -100,7 +100,7 @@ const db = {
           blacklist: [],
           logChannelId: null
         },
-        jail: { roleId: null, channelId: null, jailedMembers: {} },
+        jail: { roleId: null, channelId: null, logChannelId: null, jailedMembers: {} },
         hardbans: [],
         modLogs: { enabled: false, channelId: null },
         warnings: {},

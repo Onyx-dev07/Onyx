@@ -140,7 +140,7 @@ Onyx treats server security as layered infrastructure rather than a single "anti
 | **AutoMod** | Nine filters — spam, caps, links, invites, mass mentions, emoji spam, NSFW links, external apps, and token spam — plus a custom word blacklist. |
 | **Whitelist &amp; owners** | Trust members per module, manage extra owners, and keep configuration authority separate from day-to-day moderation. |
 | **Fortress** | Freezes dangerous role permissions during a raid or high-risk window. |
-| **Jail** | Creates a `Jailed` role and private `#onyx-jail`, strips roles on entry, restores them on release, and releases jailed members before tearing the setup down with `!jail reset`. |
+| **Jail** | Creates a `Jailed` role, a private `#jail` containment channel, and a staff-only `#jail-logs` audit channel; strips roles on entry, restores them on release, and keeps jail notices out of the normal audit log. `!jail reset` releases jailed members and removes containment while preserving the jail log history. |
 | **Media channels** | Restricts selected channels to images, video, attachments, and media links. |
 | **Lockdown** | Locks every public text channel for `@everyone` in one command, and restores them in one command. |
 | **Security audit** | Scores the server's posture and returns concrete recommendations. |
@@ -156,7 +156,7 @@ Onyx treats server security as layered infrastructure rather than a single "anti
 /automod enable         # content filters
 /limits status          # review staff action budgets
 /whitelist add          # trust staff per module
-!jail setup             # create the jail role + channel
+!jail setup             # create the jail role + #jail and #jail-logs
 /security               # audit the result
 ```
 
@@ -188,7 +188,7 @@ Publish a select-menu panel with up to five roles, a title, and a description. M
 Members set a birthday once, view upcoming birthdays, and receive announcements. Configure the announcement channel, birthday role, and timezone.
 
 ### 📈 Logging &amp; counters
-Route event categories to their destinations: moderation, leveling, messages, roles, members, reaction roles, giveaways, counters, applications, and reports, with separate audit, application, and report channels. Live voice-channel counters track total members, humans, and bots.
+Route every event category to its destination: moderation, messages, channels, roles, members, leveling, reaction roles, giveaways, counters, applications, reports, and jail, with separate audit, application, report, and jail channels. Deleted images and videos are re-uploaded so the exact media is previewed in the log instead of a bare `#attachment` count. Jail actions stay in `#jail-logs` and never mix with the normal audit log. Live voice-channel counters track total members, humans, and bots.
 
 ### 🔌 Join to Create
 A trigger voice channel spawns a temporary channel for each member. Owners can rename, lock, unlock, set a limit, claim an abandoned channel, transfer ownership, or delete it. An optional Interface panel exposes the same controls as buttons.

@@ -2,10 +2,18 @@ const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, MessageFlags } = 
 const db = require('../../database');
 const { createEmbed } = require('../../utils/embeds');
 const { moderationBlock } = require('../../utils/moderation');
+const {
+  JAIL_EVENT_TYPES,
+  findJailLogChannel,
+  syncJailLogDestination,
+  sendJailLog,
+} = require('../../utils/jailLog');
 const config = require('../../../config.json');
 
 const JAIL_ROLE_NAME = 'Jailed';
-const JAIL_CHANNEL_NAMES = ['onyx-jail', 'jail'];
+const JAIL_CHANNEL_NAMES = ['jail', 'onyx-jail'];
+const JAIL_CHANNEL_NAME = 'jail';
+const JAIL_LOG_CHANNEL_NAME = 'jail-logs';
 
 // One-line, footer-free confirmation that matches !lock and !unlock.
 function plain(description, color = config.colors.success) {
@@ -38,22 +46,90 @@ function findJailRole(guild) {
 }
 
 function findJailChannel(guild) {
-  return [...guild.channels.cache.values()].find(channel =>
-    channel.type === ChannelType.GuildText && JAIL_CHANNEL_NAMES.includes(channel.name.toLowerCase())
-  ) || null;
+  for (const name of JAIL_CHANNEL_NAMES) {
+    const channel = [...guild.channels.cache.values()].find(entry =>
+      entry.type === ChannelType.GuildText && entry.name.toLowerCase() === name
+    );
+    if (channel) return channel;
+  }
+  return null;
 }
 
 function supportsOverwrites(channel) {
   return typeof channel.permissionOverwrites?.edit === 'function';
 }
 
+function staffRoles(guild, jailRole) {
+  return [...guild.roles.cache.values()].filter(role =>
+    role.id !== guild.id
+    && role.id !== jailRole?.id
+    && !role.managed
+    && (role.permissions.has(PermissionFlagsBits.ModerateMembers) || role.permissions.has(PermissionFlagsBits.ManageGuild))
+  ).slice(0, 10);
+}
+
+function channelOverwrites(guild, jailRole, me, { containment }) {
+  const overwrites = [
+    { id: guild.roles.everyone.id, deny: ['ViewChannel'] },
+  ];
+
+  for (const role of staffRoles(guild, jailRole)) {
+    overwrites.push({
+      id: role.id,
+      allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
+    });
+  }
+
+  if (containment && jailRole) {
+    overwrites.push({
+      id: jailRole.id,
+      allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory'],
+    });
+  }
+
+  if (!containment && jailRole) {
+    overwrites.push({
+      id: jailRole.id,
+      deny: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'Connect'],
+    });
+  }
+
+  if (me) {
+    overwrites.push({
+      id: me.id,
+      allow: ['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'ManageChannels'],
+    });
+  }
+
+  return overwrites;
+}
+
+function permissionState(overwrite) {
+  const state = {};
+  for (const permission of overwrite.allow || []) state[permission] = true;
+  for (const permission of overwrite.deny || []) state[permission] = false;
+  return state;
+}
+
+async function applyOverwrites(channel, overwrites) {
+  if (!supportsOverwrites(channel)) return;
+  for (const overwrite of overwrites) {
+    await channel.permissionOverwrites.edit(overwrite.id, permissionState(overwrite)).catch(() => {});
+  }
+}
+
 async function setupJail(guild) {
   const me = guild.members.me;
-  const previous = db.getJail(guild.id) || {};
+  const jailConfig = db.getJail(guild.id) || {};
+  const previous = jailConfig;
   let role = findJailRole(guild);
   let channel = findJailChannel(guild);
+  let logChannel = findJailLogChannel(guild) || (jailConfig.logChannelId
+    ? guild.channels.cache.get(jailConfig.logChannelId)
+    : null);
   const createdRole = !role;
   const createdChannel = !channel;
+  const createdLogChannel = !logChannel;
 
   if (!role) {
     role = await guild.roles.create({
@@ -65,56 +141,35 @@ async function setupJail(guild) {
   }
 
   if (!channel) {
-    const overwrites = [
-      { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
-      {
-        id: role.id,
-        allow: [
-          PermissionFlagsBits.ViewChannel,
-          PermissionFlagsBits.SendMessages,
-          PermissionFlagsBits.ReadMessageHistory
-        ]
-      }
-    ];
-
-    if (me) {
-      overwrites.push({
-        id: me.id,
-        allow: [
-          PermissionFlagsBits.ViewChannel,
-          PermissionFlagsBits.SendMessages,
-          PermissionFlagsBits.ManageChannels
-        ]
-      });
-    }
-
     channel = await guild.channels.create({
-      name: 'onyx-jail',
+      name: JAIL_CHANNEL_NAME,
       type: ChannelType.GuildText,
-      permissionOverwrites: overwrites,
+      permissionOverwrites: channelOverwrites(guild, role, me, { containment: true }),
       reason: '[Onyx Jail] Created jail channel'
     });
   }
 
-  // Keep the jail channel reachable for the jailed role and for staff.
-  await channel.permissionOverwrites.edit(guild.roles.everyone, { ViewChannel: false }).catch(() => {});
-  await channel.permissionOverwrites.edit(role, {
-    ViewChannel: true,
-    SendMessages: true,
-    ReadMessageHistory: true
-  }).catch(() => {});
-
-  if (me) {
-    await channel.permissionOverwrites.edit(me, {
-      ViewChannel: true,
-      SendMessages: true,
-      ManageChannels: true
-    }).catch(() => {});
+  if (!logChannel) {
+    logChannel = await guild.channels.create({
+      name: JAIL_LOG_CHANNEL_NAME,
+      type: ChannelType.GuildText,
+      permissionOverwrites: channelOverwrites(guild, role, me, { containment: false }),
+      reason: '[Onyx Jail] Created jail log channel'
+    });
   }
 
-  db.setJail(guild.id, { roleId: role.id, channelId: channel.id });
+  await applyOverwrites(channel, channelOverwrites(guild, role, me, { containment: true }));
+  await applyOverwrites(logChannel, channelOverwrites(guild, role, me, { containment: false }));
 
-  // Hide the jail role everywhere except the jail channel itself.
+  db.setJail(guild.id, {
+    roleId: role.id,
+    channelId: channel.id,
+    logChannelId: logChannel.id,
+  });
+  await syncJailLogDestination(guild, logChannel.id);
+
+  // Hide the jail role everywhere except the jail channel. Jail logs stay
+  // staff-only so jailed members never see their own audit trail.
   const targets = [...guild.channels.cache.values()].filter(entry =>
     entry.id !== channel.id && supportsOverwrites(entry)
   );
@@ -128,11 +183,14 @@ async function setupJail(guild) {
   return {
     role,
     channel,
+    logChannel,
     alreadyConfigured: Boolean(
       previous.roleId === role.id
       && previous.channelId === channel.id
+      && previous.logChannelId === logChannel.id
       && !createdRole
       && !createdChannel
+      && !createdLogChannel
     )
   };
 }
@@ -141,9 +199,10 @@ async function resetJail(guild) {
   const jail = db.getJail(guild.id) || {};
   const role = jail.roleId ? guild.roles.cache.get(jail.roleId) : null;
   const channel = jail.channelId ? guild.channels.cache.get(jail.channelId) : null;
+  const logChannel = jail.logChannelId ? guild.channels.cache.get(jail.logChannelId) : findJailLogChannel(guild);
   const jailedMembers = jail.jailedMembers || {};
 
-  if (!role && !channel && !jail.roleId && !jail.channelId && !Object.keys(jailedMembers).length) {
+  if (!role && !channel && !logChannel && !jail.roleId && !jail.channelId && !jail.logChannelId && !Object.keys(jailedMembers).length) {
     return { error: 'Jail is not set up.' };
   }
 
@@ -175,10 +234,24 @@ async function resetJail(guild) {
     }
   }
 
+  await sendJailLog(guild, JAIL_EVENT_TYPES.RESET, {
+    title: 'Jail reset',
+    lines: [
+      `**Released:** ${released}`,
+      `**Jail channel:** ${channel ? channel.toString() : '`(missing)`'}`,
+      `**Note:** Jail logs are kept for the audit trail.`,
+    ],
+  }, { ...jail, logChannelId: logChannel?.id || jail.logChannelId });
+
   if (channel) await channel.delete('[Onyx Jail] Reset').catch(() => {});
   if (role) await role.delete('[Onyx Jail] Reset').catch(() => {});
 
-  db.setJail(guild.id, { roleId: null, channelId: null, jailedMembers: {} });
+  db.setJail(guild.id, {
+    roleId: null,
+    channelId: null,
+    logChannelId: logChannel?.id || jail.logChannelId || null,
+    jailedMembers: {},
+  });
 
   return { released };
 }
@@ -187,7 +260,7 @@ async function setupReply(guild) {
   try {
     const result = await setupJail(guild);
     const status = result.alreadyConfigured ? 'already set up' : 'setup complete';
-    return plain(`🔒 Jail ${status} — ${result.role} · ${result.channel}.`);
+    return plain(`🔒 Jail ${status} — ${result.role} · ${result.channel} · ${result.logChannel}.`);
   } catch (err) {
     return plain(`Could not set up jail: ${err.message}`, config.colors.error);
   }
@@ -296,7 +369,12 @@ module.exports = {
 };
 
 async function jailMember(guild, member, reason, moderator) {
-  const jailConfig = db.getJail(guild.id);
+  let jailConfig = db.getJail(guild.id);
+  if (!jailConfig.logChannelId && !findJailLogChannel(guild)) {
+    await setupJail(guild);
+    jailConfig = db.getJail(guild.id);
+  }
+
   if (!jailConfig.roleId || !jailConfig.channelId) {
     return { error: 'Jail is not set up. Run `!jail setup` first.' };
   }
@@ -333,6 +411,18 @@ async function jailMember(guild, member, reason, moderator) {
     });
 
     await jailChannel.send({ content: `<@${member.id}>`, embeds: [jailAlert] });
+
+    await sendJailLog(guild, JAIL_EVENT_TYPES.JAIL, {
+      title: 'Member jailed',
+      lines: [
+        `**User:** <@${member.id}> (\`${member.id}\`)`,
+        `**Moderator:** <@${moderator.id}> (\`${moderator.id}\`)`,
+        `**Reason:** ${reason}`,
+        `**Jail channel:** ${jailChannel.toString()}`,
+      ],
+      thumbnail: member.user.displayAvatarURL({ dynamic: true }),
+      userId: member.id,
+    }, jailConfig);
 
     return { member };
   } catch (err) {

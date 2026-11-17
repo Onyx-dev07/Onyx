@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('discord.js');
 const db = require('../../database');
 const { createEmbed } = require('../../utils/embeds');
+const { JAIL_EVENT_TYPES, sendJailLog } = require('../../utils/jailLog');
 const config = require('../../../config.json');
 
 // One-line, footer-free confirmation that matches !lock and !unlock.
@@ -86,6 +87,17 @@ async function unjailMember(guild, member, moderator) {
 
     await member.roles.set(validRolesToRestore, `[Onyx Unjail] Released by ${moderator.tag}`);
     db.removeJailedMember(guild.id, member.id);
+
+    await sendJailLog(guild, JAIL_EVENT_TYPES.UNJAIL, {
+      title: 'Member unjailed',
+      lines: [
+        `**User:** <@${member.id}> (\`${member.id}\`)`,
+        `**Moderator:** <@${moderator.id}> (\`${moderator.id}\`)`,
+        `**Roles restored:** ${validRolesToRestore.length}`,
+      ],
+      thumbnail: member.user.displayAvatarURL({ dynamic: true }),
+      userId: member.id,
+    }, db.getJail(guild.id));
 
     return { restored: validRolesToRestore.length };
   } catch (err) {
