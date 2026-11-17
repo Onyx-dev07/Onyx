@@ -102,8 +102,8 @@ function rolePayload(member, results) {
   const removed = changed.filter((result) => !result.added).map((result) => `${result.role}`);
   const lines = [];
 
-  if (added.length) lines.push(`${added.join(', ')} added to <@${member.id}>.`);
-  if (removed.length) lines.push(`${removed.join(', ')} removed from <@${member.id}>.`);
+  if (added.length) lines.push(`➕ ${added.join(', ')} added to <@${member.id}>.`);
+  if (removed.length) lines.push(`➖ ${removed.join(', ')} removed from <@${member.id}>.`);
   for (const problem of problems) lines.push(problem);
 
   return plainPayload(

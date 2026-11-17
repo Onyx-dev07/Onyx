@@ -56,10 +56,10 @@ export default {
           formatLogLine('User', `${newMember.toString()} (\`${newMember.id}\`)`),
         ];
         if (addedRoles.length) {
-          lines.push(formatLogLine('Roles added', addedRoles.map((roleId) => roleMention(newMember.guild, roleId)).join(', ')));
+          lines.push(`➕ ${formatLogLine('Roles added', addedRoles.map((roleId) => roleMention(newMember.guild, roleId)).join(', '))}`);
         }
         if (removedRoles.length) {
-          lines.push(formatLogLine('Roles removed', removedRoles.map((roleId) => roleMention(newMember.guild, roleId)).join(', ')));
+          lines.push(`➖ ${formatLogLine('Roles removed', removedRoles.map((roleId) => roleMention(newMember.guild, roleId)).join(', '))}`);
         }
 
         await logEvent({
