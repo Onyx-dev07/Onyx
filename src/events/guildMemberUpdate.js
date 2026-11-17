@@ -2,6 +2,7 @@ import { Events } from 'discord.js';
 import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
 import { logger } from '../utils/logger.js';
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
+import emojiConfig from '../onyx/utils/emojiConfig.js';
 
 function timeoutTimestamp(value) {
   if (!value) return null;
@@ -56,10 +57,10 @@ export default {
           formatLogLine('User', `${newMember.toString()} (\`${newMember.id}\`)`),
         ];
         if (addedRoles.length) {
-          lines.push(`➕ ${formatLogLine('Roles added', addedRoles.map((roleId) => roleMention(newMember.guild, roleId)).join(', '))}`);
+          lines.push(`${emojiConfig.resolveEmoji('roleAdd', '➕')} ${formatLogLine('Roles added', addedRoles.map((roleId) => roleMention(newMember.guild, roleId)).join(', '))}`);
         }
         if (removedRoles.length) {
-          lines.push(`➖ ${formatLogLine('Roles removed', removedRoles.map((roleId) => roleMention(newMember.guild, roleId)).join(', '))}`);
+          lines.push(`${emojiConfig.resolveEmoji('roleRemove', '➖')} ${formatLogLine('Roles removed', removedRoles.map((roleId) => roleMention(newMember.guild, roleId)).join(', '))}`);
         }
 
         await logEvent({

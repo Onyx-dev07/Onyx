@@ -2,6 +2,7 @@ const { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } = require('disc
 const db = require('../../database');
 const config = require('../../../config.json');
 const { createEmbed, UI } = require('../../utils/embeds');
+const emojiConfig = require('../../utils/emojiConfig');
 
 const ACTION_WORDS = {
   add: 'add',
@@ -102,8 +103,10 @@ function rolePayload(member, results) {
   const removed = changed.filter((result) => !result.added).map((result) => `${result.role}`);
   const lines = [];
 
-  if (added.length) lines.push(`➕ ${added.join(', ')} added to <@${member.id}>.`);
-  if (removed.length) lines.push(`➖ ${removed.join(', ')} removed from <@${member.id}>.`);
+  const addMark = emojiConfig.resolveEmoji('roleAdd', '➕');
+  const removeMark = emojiConfig.resolveEmoji('roleRemove', '➖');
+  if (added.length) lines.push(`${addMark} ${added.join(', ')} added to <@${member.id}>.`);
+  if (removed.length) lines.push(`${removeMark} ${removed.join(', ')} removed from <@${member.id}>.`);
   for (const problem of problems) lines.push(problem);
 
   return plainPayload(
