@@ -9,17 +9,15 @@ const emojiConfig = require('../../utils/emojiConfig');
 
 const KNOWN_SLOTS = ['roleAdd', 'roleRemove'];
 
-function isBotOwner(userId) {
-  const owners = String(process.env.OWNER_IDS || '')
-    .split(',')
-    .map(id => id.trim())
-    .filter(Boolean);
-  return owners.includes(String(userId));
+function isServerOwner(context) {
+  const ownerId = context.guild?.ownerId;
+  const userId = context.user?.id ?? context.author?.id;
+  return Boolean(ownerId && userId && String(userId) === ownerId);
 }
 
 function ownerDenied() {
   return {
-    embeds: [errorEmbed('Only the bot owner can manage the emoji server connection.')],
+    embeds: [errorEmbed('Only the server owner can manage the emoji server connection.')],
   };
 }
 
@@ -153,7 +151,7 @@ module.exports = {
       .setDescription('Disconnect the emoji server and clear all mappings')),
 
   async executeSlash(interaction) {
-    if (!isBotOwner(interaction.user.id)) {
+    if (!isServerOwner(interaction)) {
       return interaction.reply({ ...ownerDenied(), flags: MessageFlags.Ephemeral });
     }
 
@@ -168,7 +166,7 @@ module.exports = {
   },
 
   async executePrefix(message, args) {
-    if (!isBotOwner(message.author.id)) return message.reply(ownerDenied());
+    if (!isServerOwner(message)) return message.reply(ownerDenied());
 
     const sub = (args[0] || 'list').toLowerCase();
     const params = {
