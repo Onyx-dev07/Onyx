@@ -91,10 +91,12 @@ function rolePayload(member, results) {
   const failed = results.filter((result) => !result.ok);
   const blocked = failed.some((result) => !result.warning);
   const problems = [...new Set(failed.map((result) => result.problem))];
+  const crossMark = emojiConfig.resolveEmoji('cross', '❌');
+  const problemLines = problems.map(problem => `${crossMark} ${String(problem).replace(/^⚠️\s*/, '')}`);
 
   if (changed.length === 0) {
     return plainPayload(
-      problems.join('\n'),
+      problemLines.join('\n'),
       blocked ? config.colors.error : config.colors.warning
     );
   }
@@ -107,7 +109,7 @@ function rolePayload(member, results) {
   const removeMark = emojiConfig.resolveEmoji('roleRemove', '➖');
   if (added.length) lines.push(`${addMark} ${added.join(', ')} added to <@${member.id}>.`);
   if (removed.length) lines.push(`${removeMark} ${removed.join(', ')} removed from <@${member.id}>.`);
-  for (const problem of problems) lines.push(problem);
+  lines.push(...problemLines);
 
   return plainPayload(
     lines.join('\n'),

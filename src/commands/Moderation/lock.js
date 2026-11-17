@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -31,7 +31,7 @@ export default {
       const currentPermissions = channel.permissionsFor(everyoneRole);
       if (currentPermissions.has(PermissionFlagsBits.SendMessages) === false) {
         return await InteractionHelper.safeEditReply(interaction, {
-          embeds: [compactEmbed(`${channel} is already locked.`, 'warning')],
+          embeds: [moderationEmbed(`${channel} is already locked.`, 'warning')],
         });
       }
 
@@ -57,12 +57,12 @@ export default {
       });
 
       await InteractionHelper.safeEditReply(interaction, {
-        embeds: [compactEmbed(`🔒 ${channel} locked for @everyone.`, 'success')],
+        embeds: [moderationEmbed(`🔒 ${channel} locked for @everyone.`, 'success')],
       });
     } catch (error) {
       logger.error('Lock command error:', error);
       await InteractionHelper.safeEditReply(interaction, {
-        embeds: [compactEmbed(`Could not lock ${channel}. Check that I have **Manage Channels** and try again.`, 'error')],
+        embeds: [moderationEmbed(`Could not lock ${channel}. Check that I have **Manage Channels** and try again.`, 'error')],
       });
     }
   }

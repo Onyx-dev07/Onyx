@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { compactEmbed, createEmbed } from '../../utils/embeds.js';
+import { moderationEmbed, createEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { WarningService } from '../../services/moderation/warningService.js';
@@ -38,7 +38,7 @@ export default {
         if (totalWarns === 0) {
             await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
-                    compactEmbed(`✅ **No warnings** — <@${target.id}> has a clean record.`, 'success'),
+                    moderationEmbed(`✅ **No warnings** — <@${target.id}> has a clean record.`, 'success'),
                 ],
             });
             return;

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { createEmbed } = require('../../utils/embeds');
+const emojiConfig = require('../../utils/emojiConfig');
 const {
   failurePayload,
   moderationBlock,
@@ -8,13 +9,15 @@ const {
 
 const ACTION = 'change the nickname of';
 
-// Plain one-line confirmation, matching !role: no emoji, moderator prefix, or
-// metadata block.
+// Plain one-line confirmation led by the global tick emoji: no moderator
+// prefix or metadata block.
 function nicknamePayload({ member, nickname }) {
+  const tick = emojiConfig.resolveEmoji('tick', '✅');
+
   if (!nickname) {
     return {
       embeds: [createEmbed({
-        description: `Nickname of <@${member.id}> cleared.`,
+        description: `${tick} Nickname of <@${member.id}> cleared.`,
         footer: false,
         timestamp: false
       })]
@@ -25,7 +28,7 @@ function nicknamePayload({ member, nickname }) {
 
   return {
     embeds: [createEmbed({
-      description: `Nickname of <@${member.id}> set to \`${safeNickname}\`.`,
+      description: `${tick} Nickname of <@${member.id}> set to \`${safeNickname}\`.`,
       footer: false,
       timestamp: false
     })]

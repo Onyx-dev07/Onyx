@@ -7,7 +7,7 @@ const config = require('../../../config.json');
 const { securityEmbed, errorEmbed, muted, mark, UI } = require('../../utils/embeds');
 const emojiConfig = require('../../utils/emojiConfig');
 
-const KNOWN_SLOTS = ['roleAdd', 'roleRemove'];
+const KNOWN_SLOTS = ['roleAdd', 'roleRemove', 'tick', 'cross'];
 
 function isServerOwner(context) {
   const ownerId = context.guild?.ownerId;

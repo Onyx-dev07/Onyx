@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 
 function relativeAge(deletedAt) {
   const seconds = Math.max(0, Math.floor((Date.now() - deletedAt) / 1000));
@@ -39,12 +39,12 @@ export default {
 
     if (!snipe) {
       return interaction.reply({
-        embeds: [compactEmbed('No recently deleted messages in this channel.', 'warning')],
+        embeds: [moderationEmbed('No recently deleted messages in this channel.', 'warning')],
       });
     }
 
     return interaction.reply({
-      embeds: [compactEmbed(snipeDescription(snipe), 'primary')],
+      embeds: [moderationEmbed(snipeDescription(snipe), 'primary')],
     });
   },
 };

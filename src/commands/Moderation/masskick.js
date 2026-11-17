@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logModerationAction } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
@@ -143,7 +143,7 @@ export default {
             if (results.failed.length > 0) summary.push(`**${results.failed.length}** failed.`);
 
             return await InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(summary.join(' '), kicked > 0 ? 'success' : 'warning')],
+                embeds: [moderationEmbed(summary.join(' '), kicked > 0 ? 'success' : 'warning')],
             });
 
         } catch (error) {

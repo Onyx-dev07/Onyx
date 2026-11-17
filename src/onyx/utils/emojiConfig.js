@@ -68,8 +68,11 @@ function resolveEmoji(slot, fallback = '') {
     return stored.emojis[slotValue];
   }
 
-  const configured = config.emojis?.[slot];
-  if (isEmojiToken(configured) || (typeof configured === 'string' && configured)) return configured;
+  // `tick` and `cross` also honour the older `check`/`cross` config keys so
+  // existing emoji maps keep working before `!cx set` is run.
+  const alias = { tick: 'check', success: 'check', error: 'cross' }[slot];
+  const configured = config.emojis?.[slot] || (alias ? config.emojis?.[alias] : null);
+  if (typeof configured === 'string' && configured) return configured;
 
   return fallback;
 }

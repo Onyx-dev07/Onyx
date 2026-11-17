@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 
@@ -33,7 +33,7 @@ export default {
 
     if (amount < 1 || amount > MAX_PURGE_AMOUNT) {
       const response = {
-        embeds: [compactEmbed(`Specify a number between 1 and ${MAX_PURGE_AMOUNT}.`, 'error')],
+        embeds: [moderationEmbed(`Specify a number between 1 and ${MAX_PURGE_AMOUNT}.`, 'error')],
       };
       if (!interaction._isPrefixCommand) {
         response.flags = MessageFlags.Ephemeral;
@@ -85,7 +85,7 @@ export default {
       });
 
       const response = {
-        embeds: [compactEmbed(`Deleted **${deletedCount}** messages in <#${channel.id}>.`, 'success')],
+        embeds: [moderationEmbed(`Deleted **${deletedCount}** messages in <#${channel.id}>.`, 'success')],
       };
       if (!interaction._isPrefixCommand) {
         response.flags = MessageFlags.Ephemeral;
@@ -101,7 +101,7 @@ export default {
     } catch (error) {
       logger.error('Purge command error:', error);
       await InteractionHelper.safeEditReply(interaction, {
-        embeds: [compactEmbed('Could not delete those messages. Messages older than 14 days cannot be bulk deleted.', 'error')],
+        embeds: [moderationEmbed('Could not delete those messages. Messages older than 14 days cannot be bulk deleted.', 'error')],
       });
     }
   }

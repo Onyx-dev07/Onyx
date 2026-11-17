@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logModerationAction } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { WarningService } from '../../services/moderation/warningService.js';
@@ -97,7 +97,7 @@ export default {
         });
 
         await InteractionHelper.safeEditReply(interaction, {
-            embeds: [compactEmbed(`⚠️ <@${target.id}> warned.`, 'success')],
+            embeds: [moderationEmbed(`⚠️ <@${target.id}> warned.`, 'success')],
         });
     }
 };

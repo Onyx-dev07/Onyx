@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { replyUserError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -62,7 +62,7 @@ export default {
         });
 
         await InteractionHelper.safeEditReply(interaction, {
-            embeds: [compactEmbed(`🔓 <@${targetUser.id}> unbanned.`, 'success')],
+            embeds: [moderationEmbed(`🔓 <@${targetUser.id}> unbanned.`, 'success')],
         });
     },
 };

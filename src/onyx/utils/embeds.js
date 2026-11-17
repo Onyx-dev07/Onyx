@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../../config.json');
+const emojiConfig = require('./emojiConfig');
 
 // Onyx visual language: near-black surfaces, soft pink accents, title-case
 // status headings, and typographic separators instead of decoration.
@@ -107,14 +108,15 @@ function mark(active) {
   return active ? (emoji('enabled') || UI.active) : (emoji('disabled') || UI.inactive);
 }
 
-// Approve marker that leads every completed action line.
+// Approve marker that leads every completed action line. Sourced from the
+// global emoji config so `!cx set tick <emoji>` updates moderation everywhere.
 function approve() {
-  return emoji('check') || '✅';
+  return emojiConfig.resolveEmoji('tick', '✅');
 }
 
 // Deny marker that leads blocked and failed action cards.
 function deny() {
-  return emoji('cross') || '❌';
+  return emojiConfig.resolveEmoji('cross', '❌');
 }
 
 /**
@@ -280,10 +282,18 @@ function createEmbed(options = {}) {
 
 // Thin action replies: status emoji, title-case heading, one line, one accent.
 function actionReply(kind, description, color) {
+  const marker = kind === 'success'
+    ? approve()
+    : kind === 'error'
+      ? deny()
+      : STATUS_EMOJI[kind] || '';
+
   return createEmbed({
-    title: `${STATUS_EMOJI[kind] || ''} ${STATUS_TITLES[kind] || ''}`.trim(),
+    title: `${marker} ${STATUS_TITLES[kind] || ''}`.trim(),
     description: String(description || ''),
-    color
+    color,
+    footer: false,
+    timestamp: false
   });
 }
 

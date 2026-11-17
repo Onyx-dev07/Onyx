@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -82,14 +82,14 @@ export default {
             await removeTimeout(interaction, targetUser.id);
 
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(`🔊 <@${targetUser.id}> unmuted.`, 'success')],
+                embeds: [moderationEmbed(`🔊 <@${targetUser.id}> unmuted.`, 'success')],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
                 logger.error('Untimeout command error:', error);
             }
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(errorText(error), 'error')],
+                embeds: [moderationEmbed(errorText(error), 'error')],
             });
         }
     },
@@ -100,21 +100,21 @@ export default {
 
         if (!targetId) {
             return interaction.reply({
-                embeds: [compactEmbed('Mention a member to unmute. Usage: `!unmute @user`.', 'error')],
+                embeds: [moderationEmbed('Mention a member to unmute. Usage: `!unmute @user`.', 'error')],
             });
         }
 
         try {
             await removeTimeout(interaction, targetId);
             return interaction.reply({
-                embeds: [compactEmbed(`🔊 <@${targetId}> unmuted.`, 'success')],
+                embeds: [moderationEmbed(`🔊 <@${targetId}> unmuted.`, 'success')],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
                 logger.error('Prefix unmute command error:', error);
             }
             return interaction.reply({
-                embeds: [compactEmbed(errorText(error), 'error')],
+                embeds: [moderationEmbed(errorText(error), 'error')],
             });
         }
     },

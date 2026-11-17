@@ -147,7 +147,7 @@ Onyx treats server security as layered infrastructure rather than a single "anti
 
 > **Field note.** For full containment, the bot's highest role must sit above the roles it manages. Many deployments grant Administrator so a rogue admin can be contained; the security suite is designed around that assumption.
 
-> **Custom emoji.** The server owner can connect a dedicated emoji server with `!cx add <server id>` — the bot must already be a member, since Discord does not let bots join a server by ID. Its emojis are synced into `data/emojiConfig.json`, where the `roleAdd` and `roleRemove` slots can be mapped by hand or with `!cx set <slot> <emoji>`. Role give/take replies and audit logs use those mappings, falling back to ➕/➖ when unset. `!cx list`, `!cx sync`, and `!cx clear` manage the connection.
+> **Custom emoji.** The server owner can connect a dedicated emoji server with `!cx add <server id>` — the bot must already be a member, since Discord does not let bots join a server by ID. Its emojis are synced into `data/emojiConfig.json`, where the `roleAdd`, `roleRemove`, `tick`, and `cross` slots can be mapped by hand or with `!cx set <slot> <emoji>`. Role give/take replies and audit logs use the role markers (falling back to ➕/➖), while moderation receipts use `tick`/`cross` (falling back to ✅/❌). `!cx list`, `!cx sync`, and `!cx clear` manage the connection.
 
 ### Security setup path
 

@@ -4,7 +4,7 @@ import {
     ChannelType,
     MessageFlags,
 } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -122,7 +122,7 @@ export default {
         });
 
         await InteractionHelper.safeEditReply(interaction, {
-            embeds: [compactEmbed(`💬 Message sent in <#${channel.id}>.`, 'success')],
+            embeds: [moderationEmbed(`💬 Message sent in <#${channel.id}>.`, 'success')],
             flags: MessageFlags.Ephemeral,
         });
     },

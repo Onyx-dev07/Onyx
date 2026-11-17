@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags } from 'discord.js';
-import { compactEmbed, createEmbed } from '../../utils/embeds.js';
+import { moderationEmbed, createEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { sanitizeMarkdown } from '../../utils/validation.js';
@@ -91,7 +91,7 @@ export default {
             });
 
             return await InteractionHelper.safeEditReply(interaction, {
-                embeds: [compactEmbed(`📨 Direct message sent to <@${targetUser.id}>.`, 'success')],
+                embeds: [moderationEmbed(`📨 Direct message sent to <@${targetUser.id}>.`, 'success')],
             });
         } catch (error) {
             logger.error('DM command error:', error);

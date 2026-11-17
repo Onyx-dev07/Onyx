@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
@@ -67,7 +67,7 @@ export default {
         });
 
         await InteractionHelper.universalReply(interaction, {
-            embeds: [compactEmbed(`<@${targetUser.id}> kicked.`, 'success')],
+            embeds: [moderationEmbed(`<@${targetUser.id}> kicked.`, 'success')],
         });
     },
 };

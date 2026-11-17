@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { compactEmbed } from '../../utils/embeds.js';
+import { moderationEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logger } from '../../utils/logger.js';
 import { addBrainrotLock, removeBrainrotLock } from '../../services/brainrotLockService.js';
@@ -7,7 +7,7 @@ import { ModerationService } from '../../services/moderation/moderationService.j
 
 function reply(interaction, description, color) {
   return InteractionHelper.safeReply(interaction, {
-    embeds: [compactEmbed(description, color)],
+    embeds: [moderationEmbed(description, color)],
   });
 }
 

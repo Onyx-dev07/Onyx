@@ -3,6 +3,7 @@
 import { EmbedBuilder } from 'discord.js';
 import { getColor, botConfig } from '../config/bot.js';
 import { DEFAULT_FOOTER, EMOJI, statusTitle } from './theme.js';
+import emojiConfig from '../onyx/utils/emojiConfig.js';
 
 const EMBED_FOOTER_SYMBOL = Symbol('OnyxFooterText');
 const EMBED_BASE_DESCRIPTION_SYMBOL = Symbol('OnyxBaseDescription');
@@ -370,6 +371,25 @@ export function compactEmbed(description, color = 'primary') {
     footer: false,
     timestamp: false,
   });
+}
+
+/**
+ * Moderation receipt built on compactEmbed. Success and error receipts lead
+ * with the globally configured tick/cross emojis, so `!cx set tick/cross`
+ * updates every moderation response without editing command files.
+ */
+export function moderationEmbed(description, kind = 'success') {
+  const marker = kind === 'success'
+    ? emojiConfig.resolveEmoji('tick', '✅')
+    : kind === 'error'
+      ? emojiConfig.resolveEmoji('cross', '❌')
+      : null;
+
+  const text = marker
+    ? `${marker} ${String(description).replace(/^\p{Extended_Pictographic}(?:\uFE0F)?\s*/u, '')}`
+    : description;
+
+  return compactEmbed(text, kind);
 }
 
 /**
