@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { moderationEmbed, formatDuration } from '../../utils/embeds.js';
+import { compactEmbed, formatDuration } from '../../utils/embeds.js';
 import { logger } from '../../utils/logger.js';
 import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -151,14 +151,14 @@ export default {
             });
 
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [moderationEmbed(muteText(targetUser.id, durationMs), 'success')],
+                embeds: [compactEmbed(muteText(targetUser.id, durationMs), 'success')],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
                 logger.error('Timeout command error:', error);
             }
             return InteractionHelper.safeEditReply(interaction, {
-                embeds: [moderationEmbed(errorText(error), 'error')],
+                embeds: [compactEmbed(errorText(error), 'error')],
             });
         }
     },
@@ -169,7 +169,7 @@ export default {
 
         if (!targetId) {
             return interaction.reply({
-                embeds: [moderationEmbed(
+                embeds: [compactEmbed(
                     'Mention a member to mute. Usage: `!mute @user [duration] [reason]` — e.g. `!mute @user 10m spam`.',
                     'error',
                 )],
@@ -215,14 +215,14 @@ export default {
             });
 
             return interaction.reply({
-                embeds: [moderationEmbed(muteText(targetId, durationMs), 'success')],
+                embeds: [compactEmbed(muteText(targetId, durationMs), 'success')],
             });
         } catch (error) {
             if (!(error instanceof OnyxError)) {
                 logger.error('Prefix mute command error:', error);
             }
             return interaction.reply({
-                embeds: [moderationEmbed(errorText(error), 'error')],
+                embeds: [compactEmbed(errorText(error), 'error')],
             });
         }
     },

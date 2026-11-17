@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { moderationEmbed } from '../../utils/embeds.js';
+import { compactEmbed } from '../../utils/embeds.js';
 import { logEvent } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
@@ -36,7 +36,7 @@ export default {
                     null
             ) {
                 return await InteractionHelper.safeEditReply(interaction, {
-                    embeds: [moderationEmbed(`${channel} is already unlocked.`, 'warning')],
+                    embeds: [compactEmbed(`${channel} is already unlocked.`, 'warning')],
                 });
             }
 
@@ -64,12 +64,12 @@ export default {
             });
 
             await InteractionHelper.safeEditReply(interaction, {
-                embeds: [moderationEmbed(`🔓 ${channel} unlocked for @everyone.`, 'success')],
+                embeds: [compactEmbed(`🔓 ${channel} unlocked for @everyone.`, 'success')],
             });
         } catch (error) {
             logger.error('Unlock command error:', error);
             await InteractionHelper.safeEditReply(interaction, {
-                embeds: [moderationEmbed(`Could not unlock ${channel}. Check that I have **Manage Channels** and try again.`, 'error')],
+                embeds: [compactEmbed(`Could not unlock ${channel}. Check that I have **Manage Channels** and try again.`, 'error')],
             });
         }
     }
