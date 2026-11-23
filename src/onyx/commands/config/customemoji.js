@@ -72,18 +72,27 @@ function errorPayload(error) {
 
 async function handle(sub, params, client) {
   if (sub === 'add') {
-    const result = await emojiConfig.syncFromGuild(client, params.guildId);
+    const result = await emojiConfig.syncFromGuild(client, params.guildId, { autoMap: true });
     if (result.error) return errorPayload(result.error);
+
+    const mappedLines = Object.entries(result.mappedSlots || {})
+      .map(([slot, name]) => `${mark(true)} \`${slot}\` ${UI.separator} ${name} ${result.emojis[name]}`);
+
     return simplePayload(
       'Emoji server connected',
       [
         `Synced **${result.count}** emoji from **${result.guild.name}**.`,
+        mappedLines.length ? ['', '**Auto-mapped slots**', ...mappedLines] : '',
         '',
         Object.entries(result.emojis).slice(0, 12)
           .map(([name, token]) => `${name} ${token}`).join('\n'),
         '',
-        muted(`Map a slot with \`!cx set roleAdd ${Object.keys(result.emojis)[0]}\`.`),
-      ].join('\n'),
+        muted(mappedLines.length === 4
+          ? 'All four bot markers are configured. Use `!cx set <slot> <emoji>` to override any of them.'
+          : mappedLines.length
+            ? `Configured ${mappedLines.length}/4 slots. Use \`!cx set <slot> <emoji>\` to finish the rest.`
+            : `Map a slot with \`!cx set roleAdd ${Object.keys(result.emojis)[0]}\`.`),
+      ].flat().filter(Boolean).join('\n'),
     );
   }
 
@@ -92,7 +101,16 @@ async function handle(sub, params, client) {
     if (!stored.sourceGuildId) {
       return errorPayload('No emoji server is connected. Run `!cx add <server id>` first.');
     }
-    return handle('add', { guildId: stored.sourceGuildId }, client);
+    const result = await emojiConfig.syncFromGuild(client, stored.sourceGuildId);
+    if (result.error) return errorPayload(result.error);
+    return simplePayload(
+      'Emoji server re-synced',
+      [
+        `Synced **${result.count}** emoji from **${result.guild.name}**.`,
+        '',
+        muted('Existing slot mappings were kept. Use `!cx set <slot> <emoji>` to change them.'),
+      ].join('\n'),
+    );
   }
 
   if (sub === 'set') {

@@ -14,6 +14,15 @@ const DEFAULT_CONFIG = {
   slots: {},
 };
 
+// Exact names in the dedicated emoji server. `!cx add` uses these to wire up
+// every bot marker in one step, so no manual `!cx set` calls are needed.
+const AUTO_SLOT_EMOJIS = Object.freeze({
+  roleAdd: 'Blue_Plus_Icon',
+  roleRemove: 'Blue_Minus_Icon',
+  tick: 'Glossy_Green_Icon',
+  cross: 'Glossy_Red_Icon',
+});
+
 function normalizeConfig(raw) {
   const source = raw && typeof raw === 'object' ? raw : {};
   return {
@@ -50,6 +59,24 @@ function saveEmojiConfig(value) {
 
 function isEmojiToken(value) {
   return typeof value === 'string' && /^<a?:\w{2,}:\d{17,20}>$/.test(value);
+}
+
+/**
+ * Match the known emoji names in a synced registry to their bot slots. Returns
+ * only the slots that were found, so callers decide when to persist them:
+ * `!cx add` auto-maps, while a plain re-sync leaves manual mappings alone.
+ */
+function autoMapSlots(registry, options = {}) {
+  const only = options.slots ? new Set(options.slots) : null;
+  const mapped = {};
+
+  for (const [slot, name] of Object.entries(AUTO_SLOT_EMOJIS)) {
+    if (only && !only.has(slot)) continue;
+    if (!Object.prototype.hasOwnProperty.call(registry, name)) continue;
+    mapped[slot] = name;
+  }
+
+  return mapped;
 }
 
 /**
@@ -97,7 +124,7 @@ function setSlot(slot, value) {
   return { value: trimmed, resolved: resolveEmoji(slot, '') };
 }
 
-async function syncFromGuild(client, guildId) {
+async function syncFromGuild(client, guildId, options = {}) {
   const id = String(guildId ?? '').trim();
   if (!/^\d{17,20}$/.test(id)) {
     return { error: 'That does not look like a server ID (17–20 digits).' };
@@ -134,9 +161,14 @@ async function syncFromGuild(client, guildId) {
   stored.syncedAt = new Date().toISOString();
   stored.emojis = registry;
 
+  // `add` opts in to auto-mapping; a plain `sync` only refreshes the registry
+  // and preserves whatever the owner mapped by hand.
+  const mappedSlots = options.autoMap ? autoMapSlots(registry, options) : {};
+  Object.assign(stored.slots, mappedSlots);
+
   if (!saveEmojiConfig(stored)) return { error: 'Could not write the emoji config file.' };
 
-  return { guild, count: Object.keys(registry).length, emojis: registry };
+  return { guild, count: Object.keys(registry).length, emojis: registry, mappedSlots };
 }
 
 function clearConfig() {
@@ -148,10 +180,12 @@ function clearConfig() {
 
 module.exports = {
   CONFIG_FILE,
+  AUTO_SLOT_EMOJIS,
   getEmojiConfig,
   saveEmojiConfig,
   resolveEmoji,
   setSlot,
+  autoMapSlots,
   syncFromGuild,
   clearConfig,
   isEmojiToken,
