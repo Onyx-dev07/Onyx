@@ -556,12 +556,13 @@ A channel-scoped counting game with streak tracking, reset controls, and a leade
 
 <a name="utility"></a>
 <details>
-<summary><b>🔧 Utility</b> · 9 commands</summary>
+<summary><b>🔧 Utility</b> · 10 commands</summary>
 
 *The everyday drawer.*
 
 | Command | Description | Subcommands |
 | --- | --- | --- |
+| `afk` | Set an AFK status; returning shows elapsed time and missed mentions with jump links | — |
 | `avatar` | Display a member's avatar (`av`, `pfp`) | — |
 | `banner` | Display a member's profile banner | — |
 | `firstmsg` | Link to the first message in a channel | — |

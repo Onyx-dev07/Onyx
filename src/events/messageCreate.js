@@ -20,6 +20,7 @@ import {
 } from '../services/countingGameService.js';
 import { isBrainrotLocked, pickBrainrotPhrase } from '../services/brainrotLockService.js';
 import { impersonateBrainrotMessage } from '../services/brainrotWebhookService.js';
+import afk from '../onyx/utils/afk.js';
 
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
 const MESSAGE_XP_RATE_LIMIT_WINDOW_MS = 10000;
@@ -32,6 +33,11 @@ export default {
       if (message.author.bot || !message.guild) return;
 
       logger.debug(`Message received from ${message.author.tag}: ${message.content}`);
+
+      // AFK bookkeeping runs before command parsing so a reply still clears the
+      // status, and pings sent while someone is away are kept for their return.
+      afk.trackAfkMentions(message);
+      await afk.handleAfkReturn(message);
 
       const countingProcessed = await handleCountingGame(message, client);
       if (countingProcessed) {

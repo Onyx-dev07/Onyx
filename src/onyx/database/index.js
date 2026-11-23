@@ -577,12 +577,24 @@ const db = {
   setAfk(guildId, userId, reason) {
     const g = this.getGuild(guildId);
     if (!g.afk) g.afk = {};
-    g.afk[userId] = { reason, timestamp: Date.now() };
+    g.afk[userId] = { reason, timestamp: Date.now(), mentions: [] };
     save();
   },
 
   getAfk(guildId, userId) {
     return this.getGuild(guildId).afk?.[userId] || null;
+  },
+
+  // Keeps a short, bounded history of messages that mentioned an AFK member so
+  // the welcome-back notice can report what they missed.
+  addAfkMention(guildId, userId, mention) {
+    const entry = this.getGuild(guildId).afk?.[userId];
+    if (!entry || !mention) return false;
+    if (!Array.isArray(entry.mentions)) entry.mentions = [];
+    entry.mentions.push(mention);
+    if (entry.mentions.length > 20) entry.mentions = entry.mentions.slice(-20);
+    save();
+    return true;
   },
 
   removeAfk(guildId, userId) {
