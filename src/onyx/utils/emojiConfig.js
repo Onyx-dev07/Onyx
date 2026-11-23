@@ -19,8 +19,8 @@ const DEFAULT_CONFIG = {
 const AUTO_SLOT_EMOJIS = Object.freeze({
   roleAdd: 'Blue_Plus_Icon',
   roleRemove: 'Blue_Minus_Icon',
-  tick: 'Glossy_Green_Icon',
-  cross: 'Glossy_Red_Icon',
+  tick: 'Green_Checkmark',
+  cross: 'Red_Cross',
 });
 
 function normalizeConfig(raw) {
