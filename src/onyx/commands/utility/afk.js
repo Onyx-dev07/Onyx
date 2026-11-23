@@ -5,10 +5,13 @@ const emojiConfig = require('../../utils/emojiConfig');
 
 function afkPayload(userId, status) {
   const tick = emojiConfig.resolveEmoji('tick', '✅');
+  // Inline code renders as a small shaded box around the status. Backticks in
+  // the text would close it early, so swap them for apostrophes.
+  const safeStatus = String(status).replace(/`/g, "'");
 
   return {
     embeds: [createEmbed({
-      description: `${tick} <@${userId}>: You're now afk with the status: ${status}`,
+      description: `${tick} <@${userId}>: You're now afk with the status: \`${safeStatus}\``,
       footer: false,
       timestamp: false
     })]
