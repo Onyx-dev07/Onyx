@@ -27,7 +27,7 @@ export default {
     return interaction.reply({
       embeds: [
         createEmbed({
-          description: `${userMention(user)}'s puh is ${color}.`,
+          description: `${userMention(user)}'s puh is \`${color}\`.`,
           color: 'primary',
           footer: false,
           timestamp: false,

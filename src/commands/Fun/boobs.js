@@ -29,7 +29,7 @@ export default {
     return interaction.reply({
       embeds: [
         createEmbed({
-          description: `${userMention(user)}'s boob size is ${size}.`,
+          description: `${userMention(user)}'s boob size is \`${size}\`.`,
           color: 'primary',
           footer: false,
           timestamp: false,

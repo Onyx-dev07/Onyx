@@ -21,7 +21,7 @@ export default {
     return interaction.reply({
       embeds: [
         createEmbed({
-          description: `${userMention(user)} is ${percent}% lesbian.`,
+          description: `${userMention(user)} is \`${percent}%\` lesbian.`,
           color: 'primary',
           footer: false,
           timestamp: false,

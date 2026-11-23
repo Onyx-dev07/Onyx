@@ -28,7 +28,7 @@ export default {
     return interaction.reply({
       embeds: [
         createEmbed({
-          description: `${userMention(user)}'s dih is ${size} inches.`,
+          description: `${userMention(user)}'s dih is \`${size} inches\`.`,
           color: 'primary',
           footer: false,
           timestamp: false,

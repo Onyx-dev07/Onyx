@@ -13,7 +13,7 @@ export default {
     const result = Math.random() < 0.5 ? "Heads" : "Tails";
     const emoji = result === "Heads" ? "🪙" : "🔮";
 
-    const embed = compactEmbed(`The coin landed on... **${result}** ${emoji}!`);
+    const embed = compactEmbed(`The coin landed on... \`${result}\` ${emoji}!`);
 
     await InteractionHelper.safeReply(interaction, { embeds: [embed] });
     logger.debug(`Flip command executed by user ${interaction.user.id} in guild ${interaction.guildId}`);

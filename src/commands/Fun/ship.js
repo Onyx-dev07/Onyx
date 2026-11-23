@@ -83,10 +83,12 @@ function shipEmbed(first, second, stats) {
   return compactEmbed(
     [
       `🩷 ${userMention(first)} + ${userMention(second)}`,
-      progressLabel(stats.percent),
+      // Keep the rank bar's bold percentage unchanged elsewhere; on the ship
+      // fallback the result itself gets the same small code box as other rolls.
+      progressLabel(stats.percent).replace(/\*\*(\d+%)\*\*/, '`$1`'),
       '',
       stats.verdict,
-      `**Ship name:** ${stats.name}`,
+      `**Ship name:** \`${stats.name}\``,
     ].join('\n'),
     color,
   );

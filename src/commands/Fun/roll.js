@@ -67,13 +67,13 @@ export default {
     const finalTotal = totalRoll + modifier;
 
     const resultsDetail =
-      numDice > 1 ? `**Rolls:** ${rolls.join(" + ")}\n` : "";
+      numDice > 1 ? `**Rolls:** \`${rolls.join(" + ")}\`\n` : "";
     const modifierText = modifier !== 0 ? `+ (${modifier})` : "";
 
     const embed = compactEmbed(
       [
         `🎲 **Rolling ${numDice}d${numSides}${modifier !== 0 ? match[3] : ""}**`,
-        `${resultsDetail}**Total Roll:** ${totalRoll}${modifierText} = **${finalTotal}**`,
+        `${resultsDetail}**Total Roll:** ${totalRoll}${modifierText} = \`${finalTotal}\``,
       ].join('\n'),
     );
 
