@@ -13,6 +13,7 @@ import {
     logConfigurationChange,
     getConfiguration
 } from '../../services/joinToCreateService.js';
+import { ensureInterfaceChannel } from '../../services/joinToCreatePanelService.js';
 
 export default {
     data: new SlashCommandBuilder()
@@ -69,6 +70,17 @@ export default {
                         .setRequired(true)
                         .addChannelTypes(ChannelType.GuildVoice)
                 )
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName("interface")
+                .setDescription("Create or select the text channel for voice control panels.")
+                .addChannelOption((option) =>
+                    option
+                        .setName("channel")
+                        .setDescription("Existing text channel to use for voice interfaces.")
+                        .addChannelTypes(ChannelType.GuildText)
+                )
         ),
     category: "utility",
 
@@ -93,6 +105,9 @@ export default {
                 return;
             } else if (subcommand === "dashboard") {
                 await handleConfigSubcommand(interaction, client);
+                return;
+            } else if (subcommand === "interface") {
+                await handleInterfaceSubcommand(interaction, client);
                 return;
             }
 
@@ -679,6 +694,35 @@ async function handleChannelDeletion(interaction, triggerChannel, currentConfig,
             `Deletion error: ${error.message}`,
             ErrorTypes.UNKNOWN,
             'An error occurred while removing the channel.'
+        );
+    }
+}
+
+async function handleInterfaceSubcommand(interaction, client) {
+    try {
+        const requestedChannel = interaction.options.getChannel('channel');
+        const channel = await ensureInterfaceChannel(client, interaction.guild.id, requestedChannel?.id);
+
+        if (!channel) {
+            throw new OnyxError(
+                'Could not resolve voice interface channel',
+                ErrorTypes.VALIDATION,
+                'I could not create or find the voice interface channel. Check my channel permissions.'
+            );
+        }
+
+        await InteractionHelper.safeEditReply(interaction, {
+            embeds: [successEmbed('Voice interface ready', `${channel.toString()} will hold voice control panels.`)],
+            components: [],
+        });
+    } catch (error) {
+        if (error instanceof OnyxError) throw error;
+
+        logger.error('Failed to configure voice interface channel:', error);
+        throw new OnyxError(
+            `Voice interface error: ${error.message}`,
+            ErrorTypes.UNKNOWN,
+            'An error occurred while configuring the voice interface.'
         );
     }
 }

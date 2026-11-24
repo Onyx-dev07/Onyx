@@ -11,6 +11,7 @@ import { logEvent, EVENT_TYPES } from '../services/loggingService.js';
 import { formatLogLine } from '../utils/logging/logEmbeds.js';
 import { buildChannelBaseLines, channelReference } from '../utils/logging/channelAudit.js';
 import { logger } from '../utils/logger.js';
+import { deletePanel } from '../services/joinToCreatePanelService.js';
 
 export default {
     name: Events.ChannelDelete,
@@ -92,7 +93,9 @@ if (channel.type !== 2 && channel.type !== 4) {
 
             if (config.temporaryChannels[channel.id]) {
                 logger.info(`Join to Create temporary channel ${channel.name} (${channel.id}) was deleted, cleaning up database`);
-                
+
+                await deletePanel(client, guildId, channel.id);
+
                 const success = await unregisterTemporaryChannel(client, guildId, channel.id);
                 if (success) {
                     logger.info(`Successfully cleaned up temporary channel ${channel.id} from database`);

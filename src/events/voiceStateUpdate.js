@@ -8,6 +8,7 @@ import {
 } from '../utils/database.js';
 import { sanitizeInput } from '../utils/validation.js';
 import { logger } from '../utils/logger.js';
+import { deletePanel, refreshPanel, sendPanel } from '../services/joinToCreatePanelService.js';
 
 const channelCreationCooldown = new Map();
 const VOICE_CREATE_COOLDOWN_MS = 2000;
@@ -221,6 +222,8 @@ userLimit: userLimit === 0 ? undefined : userLimit,
                     logger.debug(`Skipped moving ${member.id} to temporary channel ${tempChannel.id} because voice state changed`);
                 }
 
+                await sendPanel(client, guild.id, tempChannel);
+
                 logger.info(`Created temporary voice channel ${tempChannel.name} (${tempChannel.id}) for user ${member.user.tag} in guild ${guild.name} with user limit ${userLimit}`);
 
             } catch (error) {
@@ -240,6 +243,7 @@ userLimit: userLimit === 0 ? undefined : userLimit,
 
         async function deleteTemporaryChannel(client, channel, guildId) {
             try {
+                await deletePanel(client, guildId, channel.id);
                 await unregisterTemporaryChannel(client, guildId, channel.id);
 
                 await channel.delete('Temporary voice channel - empty');
@@ -276,6 +280,8 @@ userLimit: userLimit === 0 ? undefined : userLimit,
 
                     await channel.setName(newChannelName);
                 }
+
+                await refreshPanel(client, guildId, channel);
 
                 logger.info(`Transferred ownership of temporary channel ${channel.id} to user ${newOwnerId}`);
 

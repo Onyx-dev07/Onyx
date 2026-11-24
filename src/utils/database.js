@@ -1012,6 +1012,7 @@ export async function getJoinToCreateConfig(client, guildId) {
             enabled: false,
             triggerChannels: [],
             categoryId: null,
+            interfaceChannelId: null,
             channelNameTemplate: "{username}'s Room",
             userLimit: 0,
             bitrate: 64000,
@@ -1028,6 +1029,7 @@ export async function getJoinToCreateConfig(client, guildId) {
             enabled: unwrapped.enabled || false,
             triggerChannels: unwrapped.triggerChannels || [],
             categoryId: unwrapped.categoryId || null,
+            interfaceChannelId: unwrapped.interfaceChannelId || null,
             channelNameTemplate: unwrapped.channelNameTemplate || "{username}'s Room",
             userLimit: unwrapped.userLimit || 0,
             bitrate: unwrapped.bitrate || 64000,
@@ -1040,6 +1042,7 @@ export async function getJoinToCreateConfig(client, guildId) {
             enabled: false,
             triggerChannels: [],
             categoryId: null,
+            interfaceChannelId: null,
             channelNameTemplate: "{username}'s Room",
             userLimit: 0,
             bitrate: 64000,
@@ -1140,6 +1143,21 @@ export async function registerTemporaryChannel(client, guildId, channelId, owner
         return await saveJoinToCreateConfig(client, guildId, config);
     } catch (error) {
         logger.error(`Error registering temporary channel for guild ${guildId}:`, error);
+        return false;
+    }
+}
+
+export async function updateTemporaryChannelInfo(client, guildId, channelId, updates = {}) {
+    try {
+        const config = await getJoinToCreateConfig(client, guildId);
+        const info = config.temporaryChannels?.[channelId];
+
+        if (!info) return false;
+
+        config.temporaryChannels[channelId] = { ...info, ...updates };
+        return await saveJoinToCreateConfig(client, guildId, config);
+    } catch (error) {
+        logger.error(`Error updating temporary channel info for guild ${guildId}:`, error);
         return false;
     }
 }
