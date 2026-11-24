@@ -20,6 +20,10 @@ import { isCollectorManagedComponent } from '../utils/collectorComponents.js';
 import { ResponseCoordinator } from '../utils/responseCoordinator.js';
 import { enforceDefaultCommandPermissions } from '../utils/permissionGuard.js';
 
+// These setup commands open multi-step/config flows. Acknowledge them before
+// any downstream guard can throw so Discord never sits on "thinking".
+const J2C_ACK_COMMANDS = new Set(['j2c-setup', 'j2c-interface']);
+
 const COMMAND_ERROR_SUBTYPES = {
   warn: 'warn_failed',
   kick: 'kick_failed',
@@ -108,6 +112,10 @@ export default {
                 'Sorry, that command does not exist.',
                 withTraceContext({ commandName: interaction.commandName }, interactionTraceContext)
               );
+            }
+
+            if (J2C_ACK_COMMANDS.has(interaction.commandName)) {
+              await InteractionHelper.safeDefer(interaction, { flags: MessageFlags.Ephemeral });
             }
 
             if (isMaintenanceMode() && !isBotOwner(interaction.user.id)) {
