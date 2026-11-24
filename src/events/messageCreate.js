@@ -287,6 +287,10 @@ async function handleBrainrotLock(message, client, context = {}) {
 
     const phrase = pickBrainrotPhrase();
 
+    report('Applying brainrot', 'Attempting to repost the message as the locked member.', [
+      { name: 'Phrase', value: systemLogCode(phrase) },
+    ]);
+
     // Repost the message as the member through a channel webhook. If the bot
     // is missing Manage Webhooks or Manage Messages, fall back to a quoted
     // reply so the joke still lands.
@@ -297,6 +301,8 @@ async function handleBrainrotLock(message, client, context = {}) {
       ], 'success');
       return true;
     }
+
+    report('Webhook unavailable', 'Falling back to a quoted reply.', [], 'warning');
 
     const text = message.content?.trim()?.slice(0, BRAINROT_QUOTE_LIMIT);
     const quote = text

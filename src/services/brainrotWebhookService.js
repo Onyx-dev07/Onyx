@@ -15,9 +15,19 @@ const MAX_CONTENT_LENGTH = 2000;
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_TOTAL_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_USERNAME_LENGTH = 80;
+const BRAINROT_SEND_TIMEOUT_MS = 5000;
 
 const hooks = new Map();
 const deletedOriginals = new Map();
+
+function withTimeout(promise, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out`)), BRAINROT_SEND_TIMEOUT_MS);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 function dropHook(channelId) {
   const entry = hooks.get(channelId);
@@ -205,11 +215,18 @@ export async function impersonateBrainrotMessage(message, phrase) {
     const content = buildContent(message.content, phrase);
     const files = await buildFiles(message);
 
-    await sendAsMember(message, content, files);
+    await withTimeout(sendAsMember(message, content, files), 'brainrot webhook send');
     replaced = true;
 
     markBrainrotDeletion(message.id);
-    await message.delete().catch(error => {
+    await withTimeout(
+      message.delete().catch(error => {
+        unmarkBrainrotDeletion(message.id);
+        logger.debug(`Could not remove brainrotted original ${message.id}: ${error.message}`);
+        return false;
+      }),
+      'brainrot original delete',
+    ).catch(error => {
       unmarkBrainrotDeletion(message.id);
       logger.debug(`Could not remove brainrotted original ${message.id}: ${error.message}`);
     });

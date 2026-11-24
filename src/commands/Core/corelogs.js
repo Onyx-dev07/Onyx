@@ -123,7 +123,23 @@ export default {
         { command: 'core-logs', userId: interaction.user.id },
       );
 
-      await sendSystemLog(client, guild.id, {
+      logger.info('Core system log channel configured', {
+        guildId: guild.id,
+        channelId: channel.id,
+        userId: interaction.user.id,
+        created,
+      });
+
+      const replyPromise = interaction.editReply({
+        embeds: [compactEmbed([
+          `${created ? 'Created' : 'Using'} ${channel.toString()} for core logs.`,
+          `Only you and Onyx can view it.`,
+        ].join('\n'), 'success')],
+      });
+
+      // Diagnostics must never hold the interaction open. The channel setup is
+      // already saved, so acknowledge the command first and log in the background.
+      void sendSystemLog(client, guild.id, {
         title: 'Core logs ready',
         description: `${created ? 'Created' : 'Selected'} ${channel.toString()} for core diagnostics.`,
         fields: [
@@ -132,19 +148,7 @@ export default {
         ],
       }, savedConfig ?? config);
 
-      logger.info('Core system log channel configured', {
-        guildId: guild.id,
-        channelId: channel.id,
-        userId: interaction.user.id,
-        created,
-      });
-
-      return interaction.editReply({
-        embeds: [compactEmbed([
-          `${created ? 'Created' : 'Using'} ${channel.toString()} for core logs.`,
-          `Only you and Onyx can view it.`,
-        ].join('\n'), 'success')],
-      });
+      return replyPromise;
     } catch (error) {
       logger.error('Core logs command error:', error);
 

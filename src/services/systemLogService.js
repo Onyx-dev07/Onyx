@@ -6,6 +6,17 @@ import { getGuildConfig } from './config/guildConfig.js';
 import { createEmbed } from '../utils/embeds.js';
 import { logger } from '../utils/logger.js';
 
+const SYSTEM_LOG_TIMEOUT_MS = 4000;
+
+function withTimeout(promise, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timed out`)), SYSTEM_LOG_TIMEOUT_MS);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 function code(value) {
   return `\`${String(value ?? '').replace(/`/g, "'")}\``;
 }
@@ -19,7 +30,8 @@ export async function sendSystemLog(client, guildId, payload, suppliedConfig = n
   }
 
   try {
-    const config = suppliedConfig ?? await getGuildConfig(client, guildId);
+    const config = suppliedConfig
+      ?? await withTimeout(getGuildConfig(client, guildId), 'system log config read');
     const channelId = config?.logging?.channels?.system;
     if (!channelId) return false;
 
@@ -64,7 +76,7 @@ export async function sendSystemLog(client, guildId, payload, suppliedConfig = n
       timestamp: payload.timestamp === undefined ? true : payload.timestamp,
     });
 
-    await channel.send({ embeds: [embed] });
+    await withTimeout(channel.send({ embeds: [embed] }), 'system log send');
     return true;
   } catch (error) {
     logger.debug('Could not send system log:', error.message);
