@@ -47,7 +47,7 @@ const MODALS = {
   ban: { title: 'Ban Member', input: 'jvc_ban_input', label: 'Member @mention or ID', placeholder: '@username or user ID' },
   permit: { title: 'Permit Member', input: 'jvc_permit_input', label: 'Member @mention or ID', placeholder: '@username or user ID' },
   rename: { title: 'Rename Channel', input: 'jvc_rename_input', label: 'New channel name', placeholder: 'Enter new name' },
-  bitrate: { title: 'Set Bitrate', input: 'jvc_bitrate_input', label: 'Bitrate in kbps (8000-96000)', placeholder: 'e.g. 64000' },
+  bitrate: { title: 'Set Bitrate', input: 'jvc_bitrate_input', label: 'Bitrate in kbps (8-96)', placeholder: 'e.g. 64' },
   template: { title: 'Channel Template', input: 'jvc_template_input', label: 'Template name', placeholder: 'Template save/load' },
   chat: { title: 'Chat Permissions', input: 'jvc_chat_input', label: 'Allow or Deny chat messages', placeholder: 'allow or deny' },
   transfer: { title: 'Transfer Ownership', input: 'jvc_transfer_input', label: 'Member @mention or ID', placeholder: '@username or user ID' },
