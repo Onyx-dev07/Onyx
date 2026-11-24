@@ -214,8 +214,26 @@ async function handleCountingGame(message, client) {
 async function handleBrainrotLock(message, client, context = {}) {
   try {
     const { prefix, parsedCommand } = context;
+    const lockContext = {
+      guildId: message.guild.id,
+      userId: message.author.id,
+      messageId: message.id,
+    };
+
+    // Check the lock before any content/prefix shortcut. If a locked user's
+    // message is skipped for any reason, we want a log explaining exactly why.
+    if (!(await isBrainrotLocked(client, message.guild.id, message.author.id))) {
+      return false;
+    }
+
+    logger.info('Brainrot lock matched', {
+      ...lockContext,
+      contentLength: message.content?.length ?? 0,
+      hasAttachments: Boolean(message.attachments?.size),
+    });
 
     if (!message.content?.trim() && !message.attachments?.size) {
+      logger.info('Brainrot lock skipped', { ...lockContext, reason: 'empty-message' });
       return false;
     }
 
@@ -224,23 +242,20 @@ async function handleBrainrotLock(message, client, context = {}) {
     if (parsedCommand) {
       const resolved = resolveCommandAlias(parsedCommand.commandName);
       if (client.commands?.has(resolved)) {
+        logger.info('Brainrot lock skipped', {
+          ...lockContext,
+          reason: 'prefix-command',
+          command: resolved,
+        });
         return false;
       }
     } else if (prefix && message.content?.startsWith(prefix)) {
       // Keep the old safeguard for parsers that could not resolve the command.
-      return false;
-    }
-
-    if (!(await isBrainrotLocked(client, message.guild.id, message.author.id))) {
+      logger.info('Brainrot lock skipped', { ...lockContext, reason: 'prefix-only' });
       return false;
     }
 
     const phrase = pickBrainrotPhrase();
-    const lockContext = {
-      guildId: message.guild.id,
-      userId: message.author.id,
-      messageId: message.id,
-    };
 
     // Repost the message as the member through a channel webhook. If the bot
     // is missing Manage Webhooks or Manage Messages, fall back to a quoted
