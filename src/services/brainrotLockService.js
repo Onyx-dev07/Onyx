@@ -1,14 +1,63 @@
 import { logger } from '../utils/logger.js';
 import { BRAINROT_PHRASES } from '../config/brainrotPhrases.js';
+import { getBrainrotLockKey } from '../utils/database/keys.js';
 
-const STORAGE_KEY_PREFIX = 'brainrotlock:';
 const lockedUsersByGuild = new Map();
 const pendingLoads = new Map();
 
 let lastPhraseIndex = -1;
 
-function storageKey(guildId) {
-  return `${STORAGE_KEY_PREFIX}${guildId}`;
+/**
+ * Database backends have returned this list as an array, a JSON string and an
+ * { ok, value } envelope. Normalize every shape before deciding whether a user
+ * is locked, otherwise a successful write can be silently ignored on read.
+ */
+function unwrapStoredValue(value, depth = 0) {
+  if (depth > 6) return value;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return value;
+
+    try {
+      return unwrapStoredValue(JSON.parse(trimmed), depth + 1);
+    } catch {
+      return value;
+    }
+  }
+
+  if (Array.isArray(value)) return value;
+  if (value instanceof Set) return [...value];
+
+  if (value && typeof value === 'object') {
+    if ('ok' in value && 'value' in value) {
+      return unwrapStoredValue(value.value, depth + 1);
+    }
+    if ('value' in value) {
+      return unwrapStoredValue(value.value, depth + 1);
+    }
+
+    for (const field of ['users', 'lockedUsers', 'ids']) {
+      if (Array.isArray(value[field])) {
+        return value[field];
+      }
+    }
+  }
+
+  return value;
+}
+
+function normalizeUserIds(stored) {
+  const parsed = unwrapStoredValue(stored);
+  if (!Array.isArray(parsed)) {
+    return null;
+  }
+
+  return new Set(
+    parsed
+      .map(id => (id === null || id === undefined ? null : String(id)))
+      .filter(Boolean),
+  );
 }
 
 async function persist(client, guildId, users) {
@@ -16,27 +65,18 @@ async function persist(client, guildId, users) {
     throw new Error('Database unavailable');
   }
 
-  await client.db.set(storageKey(guildId), [...users]);
+  const saved = await client.db.set(getBrainrotLockKey(guildId), [...users]);
+  if (saved === false) {
+    throw new Error('Database rejected the brainrot lock write');
+  }
+
+  return true;
 }
 
 async function readLockedUsers(client, guildId) {
   try {
-    const stored = await client?.db?.get?.(storageKey(guildId), []);
-
-    // Some database backends return JSONB arrays as text. Accept both shapes
-    // so a persisted lock is never silently ignored.
-    let parsed = stored;
-    if (typeof parsed === 'string') {
-      try {
-        parsed = JSON.parse(parsed);
-      } catch {
-        return null;
-      }
-    }
-
-    return Array.isArray(parsed)
-      ? new Set(parsed.filter(id => typeof id === 'string'))
-      : null;
+    const stored = await client?.db?.get?.(getBrainrotLockKey(guildId), []);
+    return normalizeUserIds(stored);
   } catch (error) {
     logger.error('Failed to load brainrot locks:', { guildId, error });
     return null;
@@ -74,8 +114,8 @@ export async function isBrainrotLocked(client, guildId, userId) {
   if (users.has(userId)) return true;
 
   // The cache can be stale when a lock was added by another process or before
-  // this process started. Re-read storage on a miss before deciding the user
-  // is unlocked, and fold any persisted lock back into the cache.
+  // this process started. Re-read storage on a miss before deciding the user is
+  // unlocked, and fold any persisted lock back into the cache.
   const stored = await readLockedUsers(client, guildId);
   if (!stored?.has(userId)) return false;
 
@@ -93,6 +133,14 @@ export async function addBrainrotLock(client, guildId, userId) {
 
   try {
     await persist(client, guildId, users);
+
+    // Do not report success unless the saved value can be read back in the
+    // shape the message handler uses.
+    const confirmed = await readLockedUsers(client, guildId);
+    if (!confirmed?.has(userId)) {
+      throw new Error('Brainrot lock was not returned by a read-back check');
+    }
+
     return true;
   } catch (error) {
     users.delete(userId);
@@ -110,6 +158,12 @@ export async function removeBrainrotLock(client, guildId, userId) {
 
   try {
     await persist(client, guildId, users);
+
+    const confirmed = await readLockedUsers(client, guildId);
+    if (confirmed?.has(userId)) {
+      throw new Error('Brainrot lock removal was not confirmed by a read-back check');
+    }
+
     return true;
   } catch (error) {
     users.add(userId);

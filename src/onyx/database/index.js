@@ -203,6 +203,10 @@ const db = {
     return cache[guildId];
   },
 
+  listGuildIds() {
+    return Object.keys(cache);
+  },
+
   getPrefix(guildId, defaultPrefix = '!') {
     return this.getGuild(guildId).prefix || defaultPrefix;
   },

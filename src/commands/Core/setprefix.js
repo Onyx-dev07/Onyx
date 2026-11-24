@@ -2,6 +2,7 @@ import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 import { compactEmbed } from '../../utils/embeds.js';
 import { getGuildConfig, updateGuildConfig } from '../../services/config/guildConfig.js';
 import { getCommandPrefix } from '../../config/bot.js';
+import { syncPrefixToOnyx } from '../../services/prefixSyncService.js';
 import { logger } from '../../utils/logger.js';
 
 function validatePrefix(value) {
@@ -65,6 +66,10 @@ export default {
       command: 'setprefix',
       userId: interaction.user?.id,
     });
+
+    // Keep Onyx help/usage helpers on the same prefix. They read the legacy
+    // data/guilds.json store rather than the native guild config.
+    syncPrefixToOnyx(guildId, newPrefix);
 
     logger.info(`Prefix changed to "${newPrefix}" in guild ${guildId}`, {
       userId: interaction.user?.id,

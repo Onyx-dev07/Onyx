@@ -47,11 +47,15 @@ export default {
       }
 
       const prefix = guildConfig?.prefix || getCommandPrefix();
+      const parsedCommand = parsePrefixCommand(message.content, prefix);
 
       // Brainrot takes priority over the counting game and normal command
       // handling. Otherwise a locked member's message can be swallowed before
       // the lock ever gets a chance to rewrite it.
-      const brainrotProcessed = await handleBrainrotLock(message, client, prefix);
+      const brainrotProcessed = await handleBrainrotLock(message, client, {
+        prefix,
+        parsedCommand,
+      });
       if (brainrotProcessed) {
         return;
       }
@@ -61,7 +65,7 @@ export default {
         return;
       }
 
-      await handlePrefixCommand(message, client, { guildConfig, prefix });
+      await handlePrefixCommand(message, client, { guildConfig, prefix, parsedCommand });
       await handleLeveling(message, client);
     } catch (error) {
       logger.error('Error in messageCreate event:', error);
@@ -73,7 +77,7 @@ async function handlePrefixCommand(message, client, context = {}) {
   try {
     const guildConfig = context.guildConfig ?? await getGuildConfig(client, message.guild.id);
     const prefix = context.prefix || guildConfig?.prefix || getCommandPrefix();
-    const parsed = parsePrefixCommand(message.content, prefix);
+    const parsed = context.parsedCommand ?? parsePrefixCommand(message.content, prefix);
     
     if (!parsed) {
       return; 
@@ -207,13 +211,23 @@ async function handleCountingGame(message, client) {
   }
 }
 
-async function handleBrainrotLock(message, client, prefix) {
+async function handleBrainrotLock(message, client, context = {}) {
   try {
+    const { prefix, parsedCommand } = context;
+
     if (!message.content?.trim() && !message.attachments?.size) {
       return false;
     }
 
-    if (prefix && message.content?.startsWith(prefix)) {
+    // Only real prefix commands are exempt. A normal message that happens to
+    // begin with the prefix (for example "?bro") must still be brainrotted.
+    if (parsedCommand) {
+      const resolved = resolveCommandAlias(parsedCommand.commandName);
+      if (client.commands?.has(resolved)) {
+        return false;
+      }
+    } else if (prefix && message.content?.startsWith(prefix)) {
+      // Keep the old safeguard for parsers that could not resolve the command.
       return false;
     }
 
@@ -222,11 +236,17 @@ async function handleBrainrotLock(message, client, prefix) {
     }
 
     const phrase = pickBrainrotPhrase();
+    const lockContext = {
+      guildId: message.guild.id,
+      userId: message.author.id,
+      messageId: message.id,
+    };
 
     // Repost the message as the member through a channel webhook. If the bot
     // is missing Manage Webhooks or Manage Messages, fall back to a quoted
     // reply so the joke still lands.
     if (await impersonateBrainrotMessage(message, phrase)) {
+      logger.info('Brainrot lock applied', { ...lockContext, method: 'webhook' });
       return true;
     }
 
@@ -246,10 +266,12 @@ async function handleBrainrotLock(message, client, prefix) {
       return false;
     });
     if (replied) {
+      logger.info('Brainrot lock applied', { ...lockContext, method: 'reply' });
       return true;
     }
 
     if (typeof message.channel?.send !== 'function') {
+      logger.warn('Brainrot lock found but no delivery method succeeded', lockContext);
       return false;
     }
 
@@ -257,7 +279,14 @@ async function handleBrainrotLock(message, client, prefix) {
       logger.debug('Failed to send brainrot fallback:', error.message);
       return false;
     });
-    return Boolean(sent);
+
+    if (sent) {
+      logger.info('Brainrot lock applied', { ...lockContext, method: 'channel' });
+      return true;
+    }
+
+    logger.warn('Brainrot lock found but no delivery method succeeded', lockContext);
+    return false;
   } catch (error) {
     logger.error('Error handling brainrot lock:', error);
     return false;

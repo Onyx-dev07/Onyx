@@ -4,6 +4,7 @@
  */
 
 export const getGuildConfigKey = (guildId) => `guild:${guildId}:config`;
+export const getBrainrotLockKey = (guildId) => `brainrotlock:${guildId}`;
 export const getGuildBirthdaysKey = (guildId) => `guild:${guildId}:birthdays`;
 export const getBirthdayLeftBackupKey = (guildId) => `guild:${guildId}:birthdays:left`;
 export const getBirthdayTrackingKey = (guildId) => `guild:${guildId}:birthdays:tracking`;

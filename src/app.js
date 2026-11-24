@@ -7,6 +7,7 @@ import cron from 'node-cron';
 import config from './config/application.js';
 import { initializeDatabase } from './utils/database.js';
 import { getGuildConfig } from './services/config/guildConfig.js';
+import { syncPrefixesOnStartup } from './services/prefixSyncService.js';
 import { getServerCounters, saveServerCounters, updateCounter } from './services/serverstatsService.js';
 import { logger, startupLog, shutdownLog } from './utils/logger.js';
 import { checkBirthdays } from './services/birthdayService.js';
@@ -84,10 +85,13 @@ class Onyx extends Client {
       await this.loadHandlers();
       startupLog('Handlers loaded');
 
+      startupLog('Syncing server prefixes...');
+      await syncPrefixesOnStartup(this);
+
       startupLog('Logging into Discord...');
       await this.login(this.config.bot.token);
       startupLog('Discord login successful');
-      
+
       startupLog('Registering slash commands globally...');
       await this.registerCommands();
       startupLog('Slash commands registration complete');
