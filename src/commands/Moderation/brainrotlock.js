@@ -3,6 +3,7 @@ import { moderationEmbed } from '../../utils/embeds.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 import { logger } from '../../utils/logger.js';
 import { addBrainrotLock, removeBrainrotLock } from '../../services/brainrotLockService.js';
+import { sendSystemLog, systemLogCode } from '../../services/systemLogService.js';
 import { ModerationService } from '../../services/moderation/moderationService.js';
 
 function reply(interaction, description, color) {
@@ -75,6 +76,16 @@ export default {
 
         const added = await addBrainrotLock(client, interaction.guild.id, target.id);
 
+        void sendSystemLog(client, interaction.guild.id, {
+          title: added ? 'Brainrot · Lock added' : 'Brainrot · Lock already active',
+          description: `<@${target.id}> ${added ? 'is now' : 'was already'} brainrot locked.`,
+          color: added ? 'success' : 'warning',
+          fields: [
+            { name: 'Target', value: `<@${target.id}>`, inline: true },
+            { name: 'Staff', value: `<@${interaction.user.id}>`, inline: true },
+          ],
+        }, config);
+
         return reply(
           interaction,
           added
@@ -86,6 +97,16 @@ export default {
 
       if (subcommand === 'remove') {
         const removed = await removeBrainrotLock(client, interaction.guild.id, target.id);
+
+        void sendSystemLog(client, interaction.guild.id, {
+          title: removed ? 'Brainrot · Lock removed' : 'Brainrot · Lock not found',
+          description: `<@${target.id}> ${removed ? 'is no longer' : 'was not'} brainrot locked.`,
+          color: removed ? 'success' : 'warning',
+          fields: [
+            { name: 'Target', value: `<@${target.id}>`, inline: true },
+            { name: 'Staff', value: `<@${interaction.user.id}>`, inline: true },
+          ],
+        }, config);
 
         return reply(
           interaction,
@@ -99,6 +120,11 @@ export default {
       return reply(interaction, 'Unknown brainrotlock action.', 'error');
     } catch (error) {
       logger.error('Brainrot lock command error:', error);
+      void sendSystemLog(client, interaction.guild?.id, {
+        title: 'Brainrot · Command error',
+        description: systemLogCode(error?.message || 'Unknown error'),
+        color: 'error',
+      }, config);
       return reply(interaction, 'Could not update the brainrot lock. Try again.', 'error');
     }
   },

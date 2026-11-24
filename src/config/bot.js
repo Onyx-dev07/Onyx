@@ -563,10 +563,19 @@ export function getCommandPrefix() {
   return botConfig.commands?.prefix ?? "!";
 }
 
+// Bot-level extra owners. These IDs are allowed to run owner-scoped core
+// utilities (such as /core-logs) without granting every global bot-owner
+// bypass (maintenance mode, cooldowns, permission guard, etc.).
+export const BOT_EXTRA_OWNER_IDS = Object.freeze(['984304325679521852']);
+
 export function getBotOwners() {
   return (botConfig.commands?.owners ?? [])
     .map((id) => String(id).trim())
     .filter(Boolean);
+}
+
+export function getBotExtraOwners() {
+  return [...new Set([...getBotOwners(), ...BOT_EXTRA_OWNER_IDS])];
 }
 
 export function isBotOwner(userId) {
@@ -575,6 +584,14 @@ export function isBotOwner(userId) {
   }
 
   return getBotOwners().includes(String(userId));
+}
+
+export function isBotExtraOwner(userId) {
+  if (!userId) {
+    return false;
+  }
+
+  return getBotExtraOwners().includes(String(userId));
 }
 
 export function isMaintenanceMode() {

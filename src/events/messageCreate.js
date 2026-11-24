@@ -20,6 +20,7 @@ import {
 } from '../services/countingGameService.js';
 import { isBrainrotLocked, pickBrainrotPhrase } from '../services/brainrotLockService.js';
 import { impersonateBrainrotMessage } from '../services/brainrotWebhookService.js';
+import { sendSystemLog, systemLogCode } from '../services/systemLogService.js';
 import afk from '../onyx/utils/afk.js';
 
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
@@ -55,6 +56,7 @@ export default {
       const brainrotProcessed = await handleBrainrotLock(message, client, {
         prefix,
         parsedCommand,
+        guildConfig,
       });
       if (brainrotProcessed) {
         return;
@@ -213,11 +215,25 @@ async function handleCountingGame(message, client) {
 
 async function handleBrainrotLock(message, client, context = {}) {
   try {
-    const { prefix, parsedCommand } = context;
+    const { prefix, parsedCommand, guildConfig } = context;
     const lockContext = {
       guildId: message.guild.id,
       userId: message.author.id,
       messageId: message.id,
+    };
+
+    const report = (title, description, fields = [], color = 'primary') => {
+      void sendSystemLog(client, message.guild.id, {
+        title: `Brainrot · ${title}`,
+        description,
+        color,
+        fields: [
+          { name: 'User', value: `<@${message.author.id}>`, inline: true },
+          { name: 'Channel', value: message.channel?.id ? `<#${message.channel.id}>` : '`unknown`', inline: true },
+          { name: 'Message', value: systemLogCode(message.id), inline: true },
+          ...fields,
+        ],
+      }, guildConfig);
     };
 
     // Check the lock before any content/prefix shortcut. If a locked user's
@@ -231,9 +247,16 @@ async function handleBrainrotLock(message, client, context = {}) {
       contentLength: message.content?.length ?? 0,
       hasAttachments: Boolean(message.attachments?.size),
     });
+    report('Lock matched', 'The locked member sent a message.', [
+      { name: 'Content length', value: systemLogCode(message.content?.length ?? 0), inline: true },
+      { name: 'Attachments', value: systemLogCode(Boolean(message.attachments?.size)), inline: true },
+    ]);
 
     if (!message.content?.trim() && !message.attachments?.size) {
       logger.info('Brainrot lock skipped', { ...lockContext, reason: 'empty-message' });
+      report('Lock skipped', 'The message had no usable text or attachment.', [
+        { name: 'Reason', value: systemLogCode('empty-message') },
+      ], 'warning');
       return false;
     }
 
@@ -247,11 +270,18 @@ async function handleBrainrotLock(message, client, context = {}) {
           reason: 'prefix-command',
           command: resolved,
         });
+        report('Lock skipped', 'The message matched a real prefix command.', [
+          { name: 'Reason', value: systemLogCode('prefix-command') },
+          { name: 'Command', value: systemLogCode(resolved) },
+        ], 'warning');
         return false;
       }
     } else if (prefix && message.content?.startsWith(prefix)) {
       // Keep the old safeguard for parsers that could not resolve the command.
       logger.info('Brainrot lock skipped', { ...lockContext, reason: 'prefix-only' });
+      report('Lock skipped', 'The message began with the server prefix.', [
+        { name: 'Reason', value: systemLogCode('prefix-only') },
+      ], 'warning');
       return false;
     }
 
@@ -262,6 +292,9 @@ async function handleBrainrotLock(message, client, context = {}) {
     // reply so the joke still lands.
     if (await impersonateBrainrotMessage(message, phrase)) {
       logger.info('Brainrot lock applied', { ...lockContext, method: 'webhook' });
+      report('Lock applied', 'The message was reposted as the locked member.', [
+        { name: 'Method', value: systemLogCode('webhook') },
+      ], 'success');
       return true;
     }
 
@@ -282,11 +315,15 @@ async function handleBrainrotLock(message, client, context = {}) {
     });
     if (replied) {
       logger.info('Brainrot lock applied', { ...lockContext, method: 'reply' });
+      report('Lock applied', 'The message was quoted with the brainrot phrase.', [
+        { name: 'Method', value: systemLogCode('reply') },
+      ], 'success');
       return true;
     }
 
     if (typeof message.channel?.send !== 'function') {
       logger.warn('Brainrot lock found but no delivery method succeeded', lockContext);
+      report('Delivery failed', 'No available send method could post the brainrot reply.', [], 'error');
       return false;
     }
 
@@ -297,13 +334,26 @@ async function handleBrainrotLock(message, client, context = {}) {
 
     if (sent) {
       logger.info('Brainrot lock applied', { ...lockContext, method: 'channel' });
+      report('Lock applied', 'The message was posted through the channel fallback.', [
+        { name: 'Method', value: systemLogCode('channel') },
+      ], 'success');
       return true;
     }
 
     logger.warn('Brainrot lock found but no delivery method succeeded', lockContext);
+    report('Delivery failed', 'The reply and channel fallback were both rejected.', [], 'error');
     return false;
   } catch (error) {
     logger.error('Error handling brainrot lock:', error);
+    void sendSystemLog(client, message.guild.id, {
+      title: 'Brainrot · Handler error',
+      description: systemLogCode(error?.message || 'Unknown error'),
+      color: 'error',
+      fields: [
+        { name: 'User', value: `<@${message.author.id}>`, inline: true },
+        { name: 'Message', value: systemLogCode(message.id), inline: true },
+      ],
+    }, context.guildConfig);
     return false;
   }
 }
