@@ -48,7 +48,14 @@ async function brainrotHook(channel) {
   // Adopt a webhook left behind by a restart instead of stacking another
   // sender in the same channel.
   const existing = (await channel.fetchWebhooks().catch(() => null))
-    ?.find(hook => hook.name === WEBHOOK_NAME && hook.owner?.id === channel.client.user.id);
+    ?.find(hook => {
+      if (hook.name !== WEBHOOK_NAME) return false;
+      if (hook.owner?.id === channel.client.user.id) return true;
+
+      // Application-created webhooks expose the application instead of a user
+      // owner. Reuse those too so we never hit the per-channel webhook cap.
+      return Boolean(hook.applicationId && hook.applicationId === channel.client.application?.id);
+    });
 
   const webhook = existing || await channel.createWebhook({
     name: WEBHOOK_NAME,

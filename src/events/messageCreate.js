@@ -39,11 +39,6 @@ export default {
       afk.trackAfkMentions(message);
       await afk.handleAfkReturn(message);
 
-      const countingProcessed = await handleCountingGame(message, client);
-      if (countingProcessed) {
-        return;
-      }
-
       let guildConfig = null;
       try {
         guildConfig = await getGuildConfig(client, message.guild.id);
@@ -53,8 +48,20 @@ export default {
 
       const prefix = guildConfig?.prefix || getCommandPrefix();
 
+      // Brainrot takes priority over the counting game and normal command
+      // handling. Otherwise a locked member's message can be swallowed before
+      // the lock ever gets a chance to rewrite it.
+      const brainrotProcessed = await handleBrainrotLock(message, client, prefix);
+      if (brainrotProcessed) {
+        return;
+      }
+
+      const countingProcessed = await handleCountingGame(message, client);
+      if (countingProcessed) {
+        return;
+      }
+
       await handlePrefixCommand(message, client, { guildConfig, prefix });
-      await handleBrainrotLock(message, client, prefix);
       await handleLeveling(message, client);
     } catch (error) {
       logger.error('Error in messageCreate event:', error);
@@ -203,15 +210,15 @@ async function handleCountingGame(message, client) {
 async function handleBrainrotLock(message, client, prefix) {
   try {
     if (!message.content?.trim() && !message.attachments?.size) {
-      return;
+      return false;
     }
 
     if (prefix && message.content?.startsWith(prefix)) {
-      return;
+      return false;
     }
 
     if (!(await isBrainrotLocked(client, message.guild.id, message.author.id))) {
-      return;
+      return false;
     }
 
     const phrase = pickBrainrotPhrase();
@@ -220,22 +227,40 @@ async function handleBrainrotLock(message, client, prefix) {
     // is missing Manage Webhooks or Manage Messages, fall back to a quoted
     // reply so the joke still lands.
     if (await impersonateBrainrotMessage(message, phrase)) {
-      return;
+      return true;
     }
 
     const text = message.content?.trim()?.slice(0, BRAINROT_QUOTE_LIMIT);
     const quote = text
       ? text.split('\n').map(line => `> ${line}`).join('\n')
       : '';
-
-    await message.reply({
+    const payload = {
       content: quote ? `${quote} ${phrase}` : phrase,
       allowedMentions: { parse: [], repliedUser: false },
-    }).catch(error => {
+    };
+
+    // A reply can be rejected when the original message is in a thread that
+    // the bot cannot see anymore. Try a normal channel send before giving up.
+    const replied = await message.reply(payload).catch(error => {
       logger.debug('Failed to send brainrot reply:', error.message);
+      return false;
     });
+    if (replied) {
+      return true;
+    }
+
+    if (typeof message.channel?.send !== 'function') {
+      return false;
+    }
+
+    const sent = await message.channel.send(payload).catch(error => {
+      logger.debug('Failed to send brainrot fallback:', error.message);
+      return false;
+    });
+    return Boolean(sent);
   } catch (error) {
     logger.error('Error handling brainrot lock:', error);
+    return false;
   }
 }
 

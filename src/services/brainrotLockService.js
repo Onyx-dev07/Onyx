@@ -19,6 +19,30 @@ async function persist(client, guildId, users) {
   await client.db.set(storageKey(guildId), [...users]);
 }
 
+async function readLockedUsers(client, guildId) {
+  try {
+    const stored = await client?.db?.get?.(storageKey(guildId), []);
+
+    // Some database backends return JSONB arrays as text. Accept both shapes
+    // so a persisted lock is never silently ignored.
+    let parsed = stored;
+    if (typeof parsed === 'string') {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch {
+        return null;
+      }
+    }
+
+    return Array.isArray(parsed)
+      ? new Set(parsed.filter(id => typeof id === 'string'))
+      : null;
+  } catch (error) {
+    logger.error('Failed to load brainrot locks:', { guildId, error });
+    return null;
+  }
+}
+
 export async function getLockedUsers(client, guildId) {
   if (lockedUsersByGuild.has(guildId)) {
     return lockedUsersByGuild.get(guildId);
@@ -29,16 +53,8 @@ export async function getLockedUsers(client, guildId) {
   }
 
   const load = (async () => {
-    let users = new Set();
-
-    try {
-      const stored = await client?.db?.get?.(storageKey(guildId), []);
-      if (Array.isArray(stored)) {
-        users = new Set(stored.filter(id => typeof id === 'string'));
-      }
-    } catch (error) {
-      logger.error('Failed to load brainrot locks:', { guildId, error });
-    }
+    const stored = await readLockedUsers(client, guildId);
+    const users = stored ?? new Set();
 
     lockedUsersByGuild.set(guildId, users);
     return users;
@@ -55,7 +71,16 @@ export async function getLockedUsers(client, guildId) {
 
 export async function isBrainrotLocked(client, guildId, userId) {
   const users = await getLockedUsers(client, guildId);
-  return users.has(userId);
+  if (users.has(userId)) return true;
+
+  // The cache can be stale when a lock was added by another process or before
+  // this process started. Re-read storage on a miss before deciding the user
+  // is unlocked, and fold any persisted lock back into the cache.
+  const stored = await readLockedUsers(client, guildId);
+  if (!stored?.has(userId)) return false;
+
+  users.add(userId);
+  return true;
 }
 
 export async function addBrainrotLock(client, guildId, userId) {
