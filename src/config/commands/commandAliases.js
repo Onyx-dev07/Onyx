@@ -138,8 +138,11 @@ export const commandAliases = {
     'rr': 'reactroles',
     'reactionroles': 'reactroles',
 
-    'jtc': 'jointocreate',
-    'jointocreate': 'jointocreate',
+    'jtc': 'j2c-setup',
+    'j2c': 'j2c-setup',
+    'jointocreate': 'j2c-setup',
+    'j2c-setup': 'j2c-setup',
+    'j2c-interface': 'j2c-interface',
 
     'np': 'nowplaying',
     'now': 'nowplaying',

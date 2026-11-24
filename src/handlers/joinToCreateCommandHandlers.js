@@ -1,9 +1,25 @@
-import { getColor } from '../../config/bot.js';
-import { SlashCommandBuilder, PermissionFlagsBits, MessageFlags, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder, LabelBuilder } from 'discord.js';
-import { successEmbed, warningEmbed } from '../../utils/embeds.js';
-import { logger } from '../../utils/logger.js';
-import { OnyxError, ErrorTypes, replyUserError } from '../../utils/errorHandler.js';
-import { InteractionHelper } from '../../utils/interactionHelper.js';
+// Shared handlers for the /j2c-setup and /j2c-interface commands.
+
+import { getColor } from '../config/bot.js';
+import {
+    MessageFlags,
+    ChannelType,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ComponentType,
+    StringSelectMenuBuilder,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle,
+    EmbedBuilder,
+    LabelBuilder,
+    PermissionFlagsBits
+} from 'discord.js';
+import { successEmbed, warningEmbed } from '../utils/embeds.js';
+import { logger } from '../utils/logger.js';
+import { OnyxError, ErrorTypes } from '../utils/errorHandler.js';
+import { InteractionHelper } from '../utils/interactionHelper.js';
 import {
     initializeJoinToCreate,
     getChannelConfiguration,
@@ -12,126 +28,10 @@ import {
     hasManageGuildPermission,
     logConfigurationChange,
     getConfiguration
-} from '../../services/joinToCreateService.js';
-import { ensureInterfaceChannel } from '../../services/joinToCreatePanelService.js';
+} from '../services/joinToCreateService.js';
+import { ensureInterfaceChannel } from '../services/joinToCreatePanelService.js';
 
-export default {
-    data: new SlashCommandBuilder()
-        .setName("jointocreate")
-        .setDescription("Manage Join to Create voice channels system.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
-        .setDMPermission(false)
-        .addSubcommand((subcommand) =>
-            subcommand
-                .setName("setup")
-                .setDescription("Set up a new Join to Create voice channel.")
-                .addChannelOption((option) =>
-                    option
-                        .setName("category")
-                        .setDescription("Category to create the channel in.")
-                        .addChannelTypes(ChannelType.GuildCategory)
-                )
-                .addStringOption((option) =>
-                    option
-                        .setName("channel_name")
-                        .setDescription("Select a template for naming temporary voice channels.")
-                        .addChoices(
-                            { name: "{username}'s Room (Default)", value: "{username}'s Room" },
-                            { name: "{username}'s Channel", value: "{username}'s Channel" },
-                            { name: "{username}'s Lounge", value: "{username}'s Lounge" },
-                            { name: "{username}'s Space", value: "{username}'s Space" },
-                            { name: "{displayName}'s Room", value: "{displayName}'s Room" },
-                            { name: "{username}'s VC", value: "{username}'s VC" },
-                            { name: "{username}'s Music Room", value: "{username}'s Music Room" },
-                            { name: "{username}'s Gaming Room", value: "{username}'s Gaming Room" },
-                            { name: "{username}'s Chat Room", value: "{username}'s Chat Room" },
-                            { name: "{username}'s Private Room", value: "{username}'s Private Room" }
-                        )
-                )
-                .addIntegerOption((option) =>
-                    option
-                        .setName("user_limit")
-                        .setDescription("Maximum number of users in temporary channels. (0 = unlimited)")
-                )
-                .addIntegerOption((option) =>
-                    option
-                        .setName("bitrate")
-                        .setDescription("Bitrate for temporary channels in kbps (8-96).")
-                )
-        )
-        .addSubcommand((subcommand) =>
-            subcommand
-                .setName("dashboard")
-                .setDescription("Configure an existing Join to Create system.")
-                .addChannelOption((option) =>
-                    option
-                        .setName("trigger_channel")
-                        .setDescription("The Join to Create trigger channel to configure.")
-                        .setRequired(true)
-                        .addChannelTypes(ChannelType.GuildVoice)
-                )
-        )
-        .addSubcommand((subcommand) =>
-            subcommand
-                .setName("interface")
-                .setDescription("Create or select the text channel for voice control panels.")
-                .addChannelOption((option) =>
-                    option
-                        .setName("channel")
-                        .setDescription("Existing text channel to use for voice interfaces.")
-                        .addChannelTypes(ChannelType.GuildText)
-                )
-        ),
-    category: "utility",
-
-    async execute(interaction, config, client) {
-        try {
-            
-            if (!hasManageGuildPermission(interaction.member)) {
-                throw new OnyxError(
-                    'User lacks ManageGuild permission',
-                    ErrorTypes.PERMISSION,
-                    'You need **Manage Server** permission to use this command.'
-                );
-            }
-
-            const subcommand = interaction.options.getSubcommand();
-            await InteractionHelper.safeDefer(interaction, { flags: MessageFlags.Ephemeral });
-
-            let responseEmbed;
-
-            if (subcommand === "setup") {
-                await handleSetupSubcommand(interaction, client);
-                return;
-            } else if (subcommand === "dashboard") {
-                await handleConfigSubcommand(interaction, client);
-                return;
-            } else if (subcommand === "interface") {
-                await handleInterfaceSubcommand(interaction, client);
-                return;
-            }
-
-        } catch (error) {
-            try {
-                let errorMessage = 'An error occurred while executing this command.';
-                
-                if (error instanceof OnyxError) {
-                    errorMessage = error.userMessage || 'An error occurred. Please try again.';
-                    logger.debug(`OnyxError [${error.type}]: ${error.message}`, error.context || {});
-                } else {
-                    logger.error('Unexpected error in jointocreate command:', error);
-                    errorMessage = 'An unexpected error occurred. Please try again or contact support.';
-                }
-
-                return replyUserError(interaction, { type: ErrorTypes.UNKNOWN, message: errorMessage });
-            } catch (replyError) {
-                logger.error('Failed to send error message:', replyError);
-            }
-        }
-    }
-};
-
-async function handleSetupSubcommand(interaction, client) {
+export async function handleSetup(interaction, client) {
     try {
         const category = interaction.options.getChannel('category');
         const nameTemplate = interaction.options.getString('channel_name') || "{username}'s Room";
@@ -142,7 +42,7 @@ async function handleSetupSubcommand(interaction, client) {
         logger.debug(`Setting up Join to Create in guild ${guildId} with template: ${nameTemplate}`);
 
         const existingConfig = await getConfiguration(client, guildId);
-        
+
         if (Array.isArray(existingConfig.triggerChannels) && existingConfig.triggerChannels.length > 0) {
             const activeTriggerChannels = [];
             const staleTriggerChannelIds = [];
@@ -165,7 +65,7 @@ async function handleSetupSubcommand(interaction, client) {
 
             if (activeTriggerChannels.length > 0) {
                 const primaryTrigger = activeTriggerChannels[0];
-                const errorMessage = `This server already has a Join to Create channel set up: ${primaryTrigger}\n\nUse \`/jointocreate dashboard\` to modify it, or remove it first before creating a new one.`;
+                const errorMessage = `This server already has a Join to Create channel set up: ${primaryTrigger}\n\nUse \`/j2c-setup\` with \`trigger_channel:${primaryTrigger.id}\` to modify it, or remove it first before creating a new one.`;
 
                 throw new OnyxError(
                     'Guild already has a Join to Create channel',
@@ -182,7 +82,7 @@ async function handleSetupSubcommand(interaction, client) {
         }
 
         logger.debug('Creating Join to Create trigger channel...');
-        let triggerChannel = await interaction.guild.channels.create({
+        const triggerChannel = await interaction.guild.channels.create({
             name: 'Join to Create',
             type: ChannelType.GuildVoice,
             parent: category?.id,
@@ -198,9 +98,9 @@ async function handleSetupSubcommand(interaction, client) {
 
         logger.debug(`Created trigger channel ${triggerChannel.id}, initializing config...`);
 
-        const config = await initializeJoinToCreate(client, guildId, triggerChannel.id, {
-            nameTemplate: nameTemplate,
-            userLimit: userLimit,
+        await initializeJoinToCreate(client, guildId, triggerChannel.id, {
+            nameTemplate,
+            userLimit,
             bitrate: bitrate * 1000,
             categoryId: category?.id
         });
@@ -221,13 +121,13 @@ async function handleSetupSubcommand(interaction, client) {
             `• Template: \`${nameTemplate}\`\n` +
             `• User Limit: ${userLimit === 0 ? 'Unlimited' : userLimit + ' users'}\n` +
             `• Bitrate: ${bitrate} kbps\n` +
-            `${category ?`• Category: ${category.name}`: '• Category: Root level'}`
+            `${category ? `• Category: ${category.name}` : '• Category: Root level'}`
         );
 
         return await InteractionHelper.safeEditReply(interaction, { embeds: [responseEmbed] });
 
     } catch (error) {
-        logger.error('Error in handleSetupSubcommand:', error);
+        logger.error('Error in j2c setup handler:', error);
         if (error instanceof OnyxError) {
             throw error;
         }
@@ -239,7 +139,7 @@ async function handleSetupSubcommand(interaction, client) {
     }
 }
 
-async function handleConfigSubcommand(interaction, client) {
+export async function handleConfigure(interaction, client) {
     try {
         const triggerChannel = interaction.options.getChannel('trigger_channel');
         const guildId = interaction.guild.id;
@@ -304,7 +204,7 @@ async function handleConfigSubcommand(interaction, client) {
             throw new OnyxError(
                 'Failed to fetch interaction reply for collector setup',
                 ErrorTypes.DISCORD_API,
-                'Failed to open configuration controls. Please run `/jointocreate dashboard` again.'
+                'Failed to open configuration controls. Please run `/j2c-setup` with `trigger_channel` again.'
             );
         }
 
@@ -315,7 +215,6 @@ async function handleConfigSubcommand(interaction, client) {
 
         collector.on('collect', async (buttonInteraction) => {
             try {
-                
                 if (!hasManageGuildPermission(buttonInteraction.member)) {
                     await buttonInteraction.reply({
                         content: '❌ You need **Manage Server** permission to use these controls.',
@@ -375,6 +274,35 @@ async function handleConfigSubcommand(interaction, client) {
             `Config failed: ${error.message}`,
             ErrorTypes.DATABASE,
             'Failed to load configuration.'
+        );
+    }
+}
+
+export async function handleInterface(interaction, client) {
+    try {
+        const requestedChannel = interaction.options.getChannel('channel');
+        const channel = await ensureInterfaceChannel(client, interaction.guild.id, requestedChannel?.id);
+
+        if (!channel) {
+            throw new OnyxError(
+                'Could not resolve voice interface channel',
+                ErrorTypes.VALIDATION,
+                'I could not create or find the voice interface channel. Check my channel permissions.'
+            );
+        }
+
+        await InteractionHelper.safeEditReply(interaction, {
+            embeds: [successEmbed('Voice interface ready', `${channel.toString()} will hold voice control panels.`)],
+            components: [],
+        });
+    } catch (error) {
+        if (error instanceof OnyxError) throw error;
+
+        logger.error('Failed to configure voice interface channel:', error);
+        throw new OnyxError(
+            `Voice interface error: ${error.message}`,
+            ErrorTypes.UNKNOWN,
+            'An error occurred while configuring the voice interface.'
         );
     }
 }
@@ -623,8 +551,8 @@ async function handleChannelDeletion(interaction, triggerChannel, currentConfig,
         const message = await interaction.fetchReply();
         const deleteCollector = message.createMessageComponentCollector({
             componentType: ComponentType.Button,
-            filter: (i) => i.user.id === interaction.user.id && 
-                          (i.customId === `jtc_delete_confirm_${triggerChannel.id}` || 
+            filter: (i) => i.user.id === interaction.user.id &&
+                          (i.customId === `jtc_delete_confirm_${triggerChannel.id}` ||
                            i.customId === `jtc_delete_cancel_${triggerChannel.id}`),
             time: 600_000,
             max: 1
@@ -632,7 +560,6 @@ async function handleChannelDeletion(interaction, triggerChannel, currentConfig,
 
         deleteCollector.on('collect', async (buttonInteraction) => {
             try {
-                
                 if (!hasManageGuildPermission(buttonInteraction.member)) {
                     await buttonInteraction.reply({
                         content: '❌ You need **Manage Server** permission to remove channels.',
@@ -642,7 +569,6 @@ async function handleChannelDeletion(interaction, triggerChannel, currentConfig,
                 }
 
                 if (buttonInteraction.customId === `jtc_delete_confirm_${triggerChannel.id}`) {
-                    
                     await removeTriggerChannel(client, interaction.guild.id, triggerChannel.id);
 
                     await logConfigurationChange(client, interaction.guild.id, interaction.user.id, 'Removed Join to Create trigger', {
@@ -656,7 +582,6 @@ async function handleChannelDeletion(interaction, triggerChannel, currentConfig,
                         }
                     } catch (deleteError) {
                         logger.warn(`Could not delete channel ${triggerChannel.id}: ${deleteError.message}`);
-                        
                     }
 
                     await buttonInteraction.update({
@@ -694,35 +619,6 @@ async function handleChannelDeletion(interaction, triggerChannel, currentConfig,
             `Deletion error: ${error.message}`,
             ErrorTypes.UNKNOWN,
             'An error occurred while removing the channel.'
-        );
-    }
-}
-
-async function handleInterfaceSubcommand(interaction, client) {
-    try {
-        const requestedChannel = interaction.options.getChannel('channel');
-        const channel = await ensureInterfaceChannel(client, interaction.guild.id, requestedChannel?.id);
-
-        if (!channel) {
-            throw new OnyxError(
-                'Could not resolve voice interface channel',
-                ErrorTypes.VALIDATION,
-                'I could not create or find the voice interface channel. Check my channel permissions.'
-            );
-        }
-
-        await InteractionHelper.safeEditReply(interaction, {
-            embeds: [successEmbed('Voice interface ready', `${channel.toString()} will hold voice control panels.`)],
-            components: [],
-        });
-    } catch (error) {
-        if (error instanceof OnyxError) throw error;
-
-        logger.error('Failed to configure voice interface channel:', error);
-        throw new OnyxError(
-            `Voice interface error: ${error.message}`,
-            ErrorTypes.UNKNOWN,
-            'An error occurred while configuring the voice interface.'
         );
     }
 }
