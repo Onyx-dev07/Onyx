@@ -25,7 +25,6 @@ import afk from '../onyx/utils/afk.js';
 
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
 const MESSAGE_XP_RATE_LIMIT_WINDOW_MS = 10000;
-const BRAINROT_QUOTE_LIMIT = 1200;
 
 export default {
   name: Events.MessageCreate,
@@ -291,10 +290,10 @@ async function handleBrainrotLock(message, client, context = {}) {
       { name: 'Phrase', value: systemLogCode(phrase) },
     ]);
 
-    // Repost the message as the member through a channel webhook. If the bot
-    // is missing Manage Webhooks or Manage Messages, fall back to a quoted
-    // reply so the joke still lands.
-    if (await impersonateBrainrotMessage(message, phrase)) {
+    // Brainrot lock is webhook-only. The locked member must always appear as
+    // the sender ("APP" webhook message), so never downgrade to a bot reply.
+    const result = await impersonateBrainrotMessage(message, phrase);
+    if (result?.ok) {
       logger.info('Brainrot lock applied', { ...lockContext, method: 'webhook' });
       report('Lock applied', 'The message was reposted as the locked member.', [
         { name: 'Method', value: systemLogCode('webhook') },
@@ -302,52 +301,10 @@ async function handleBrainrotLock(message, client, context = {}) {
       return true;
     }
 
-    report('Webhook unavailable', 'Falling back to a quoted reply.', [], 'warning');
-
-    const text = message.content?.trim()?.slice(0, BRAINROT_QUOTE_LIMIT);
-    const quote = text
-      ? text.split('\n').map(line => `> ${line}`).join('\n')
-      : '';
-    const payload = {
-      content: quote ? `${quote} ${phrase}` : phrase,
-      allowedMentions: { parse: [], repliedUser: false },
-    };
-
-    // A reply can be rejected when the original message is in a thread that
-    // the bot cannot see anymore. Try a normal channel send before giving up.
-    const replied = await message.reply(payload).catch(error => {
-      logger.debug('Failed to send brainrot reply:', error.message);
-      return false;
-    });
-    if (replied) {
-      logger.info('Brainrot lock applied', { ...lockContext, method: 'reply' });
-      report('Lock applied', 'The message was quoted with the brainrot phrase.', [
-        { name: 'Method', value: systemLogCode('reply') },
-      ], 'success');
-      return true;
-    }
-
-    if (typeof message.channel?.send !== 'function') {
-      logger.warn('Brainrot lock found but no delivery method succeeded', lockContext);
-      report('Delivery failed', 'No available send method could post the brainrot reply.', [], 'error');
-      return false;
-    }
-
-    const sent = await message.channel.send(payload).catch(error => {
-      logger.debug('Failed to send brainrot fallback:', error.message);
-      return false;
-    });
-
-    if (sent) {
-      logger.info('Brainrot lock applied', { ...lockContext, method: 'channel' });
-      report('Lock applied', 'The message was posted through the channel fallback.', [
-        { name: 'Method', value: systemLogCode('channel') },
-      ], 'success');
-      return true;
-    }
-
-    logger.warn('Brainrot lock found but no delivery method succeeded', lockContext);
-    report('Delivery failed', 'The reply and channel fallback were both rejected.', [], 'error');
+    logger.warn('Brainrot webhook failed', { ...lockContext, reason: result?.reason });
+    report('Webhook failed', 'The message was not reposted. No bot-reply fallback was used.', [
+      { name: 'Reason', value: systemLogCode(result?.reason || 'unknown') },
+    ], 'error');
     return false;
   } catch (error) {
     logger.error('Error handling brainrot lock:', error);

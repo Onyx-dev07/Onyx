@@ -15,7 +15,7 @@ const MAX_CONTENT_LENGTH = 2000;
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_TOTAL_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_USERNAME_LENGTH = 80;
-const BRAINROT_SEND_TIMEOUT_MS = 5000;
+const BRAINROT_SEND_TIMEOUT_MS = 3000;
 
 const hooks = new Map();
 const deletedOriginals = new Map();
@@ -135,16 +135,36 @@ async function buildFiles(message) {
   return files;
 }
 
-export function canImpersonate(message) {
+async function impersonationBlocker(message) {
   if (typeof message.channel?.createWebhook !== 'function') {
-    return false;
+    return 'webhook-unsupported';
   }
 
-  const permissions = message.guild?.members?.me?.permissionsIn?.(message.channel);
-  if (!permissions) return false;
+  const me = message.guild?.members?.me
+    ?? await message.guild?.members?.fetchMe?.().catch(() => null)
+    ?? null;
+  if (!me) return 'bot-member-unavailable';
 
-  return permissions.has(PermissionFlagsBits.ManageWebhooks)
-    && permissions.has(PermissionFlagsBits.ManageMessages);
+  const permissions = (typeof message.channel.permissionsFor === 'function'
+    ? message.channel.permissionsFor(me)
+    : null)
+    ?? me.permissionsIn?.(message.channel)
+    ?? null;
+  if (!permissions) return 'permissions-unavailable';
+
+  const required = [
+    ['ManageWebhooks', PermissionFlagsBits.ManageWebhooks],
+    ['ManageMessages', PermissionFlagsBits.ManageMessages],
+  ];
+  const missing = required
+    .filter(([, flag]) => !permissions.has(flag))
+    .map(([name]) => name);
+
+  return missing.length ? `missing:${missing.join(',')}` : null;
+}
+
+export async function canImpersonate(message) {
+  return (await impersonationBlocker(message)) === null;
 }
 
 // messageDelete fires for the original after we remove it. Suppress the
@@ -201,22 +221,42 @@ async function sendAsMember(message, content, files) {
 }
 
 /**
- * Repost a locked member's message under their name and avatar.
- * @returns {Promise<boolean>} true when the webhook message was posted
+ * Repost a locked member's message under their name and avatar. This is the
+ * only delivery method for brainrot lock — there is intentionally no bot-reply
+ * fallback, because the locked member must always appear as the sender.
+ * @returns {Promise<{ ok: boolean, reason?: string }>}
  */
 export async function impersonateBrainrotMessage(message, phrase) {
-  if (!canImpersonate(message)) {
-    return false;
+  const blocker = await impersonationBlocker(message);
+  if (blocker) {
+    logger.debug(`Brainrot webhook unavailable: ${blocker}`);
+    return { ok: false, reason: blocker };
   }
-
-  let replaced = false;
 
   try {
     const content = buildContent(message.content, phrase);
     const files = await buildFiles(message);
 
-    await withTimeout(sendAsMember(message, content, files), 'brainrot webhook send');
-    replaced = true;
+    let posted = false;
+    let lastError = null;
+
+    // Retry with a fresh webhook. The webhook sender is the whole point of the
+    // lock, so never downgrade to a normal bot message when one attempt fails.
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        await withTimeout(sendAsMember(message, content, files), 'brainrot webhook send');
+        posted = true;
+        break;
+      } catch (error) {
+        lastError = error;
+        dropHook(message.channel.id);
+        logger.debug(`Brainrot webhook attempt ${attempt} failed: ${error.message}`);
+      }
+    }
+
+    if (!posted) {
+      return { ok: false, reason: lastError?.message || 'webhook-send-failed' };
+    }
 
     markBrainrotDeletion(message.id);
     await withTimeout(
@@ -231,9 +271,9 @@ export async function impersonateBrainrotMessage(message, phrase) {
       logger.debug(`Could not remove brainrotted original ${message.id}: ${error.message}`);
     });
 
-    return true;
+    return { ok: true };
   } catch (error) {
     logger.debug(`Brainrot webhook impersonation failed: ${error.message}`);
-    return replaced;
+    return { ok: false, reason: error?.message || 'webhook-failed' };
   }
 }
