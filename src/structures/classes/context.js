@@ -19,7 +19,7 @@ export class CommandContext {
                 this.message = message;
                 this.interaction = interaction;
                 this.args = args || [];
-                this.prefix = prefix ?? '-';
+                this.prefix = prefix ?? '!';
                 this.isSlash = !!interaction;
                 this.isPrefix = !!message;
                 this.isInteraction = this.isSlash;

@@ -3,7 +3,7 @@
 
 import 'dotenv/config';
 
-const prefix = process.env.PREFIX || process.env.DEFAULT_PREFIX || '-';
+const prefix = process.env.PREFIX || process.env.DEFAULT_PREFIX || '!';
 const clientId = process.env.CLIENT_ID || process.env.DISCORD_CLIENT_ID || '';
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || '';
 const supportServer =

@@ -49,7 +49,7 @@ export class Command {
          * @param {CommandContext} ctx
          */
         async sendUsage(ctx) {
-                const prefix = ctx.prefix ?? '-';
+                const prefix = ctx.prefix ?? '!';
                 const lines = [
                         `⚠️ Missing required argument(s).`,
                         `Usage: \`${prefix}${this.usage}\``,

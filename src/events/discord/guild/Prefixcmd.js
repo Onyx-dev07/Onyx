@@ -331,7 +331,7 @@ export default {
                         }
 
                         try {
-                                const usedPrefix = commandInfo.prefix ?? guildPrefixes[0] ?? '-';
+                                const usedPrefix = commandInfo.prefix ?? guildPrefixes[0] ?? config.prefix ?? '!';
                                 const ctx = new CommandContext({ client, message, args, prefix: usedPrefix });
                                 const permissionValidation = await validateCommand(ctx, command);
                                 if (!permissionValidation.valid) {
