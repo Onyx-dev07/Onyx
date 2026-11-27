@@ -14,7 +14,7 @@ import {
 import { emoji } from '#emoji';
 import { getUserInviteCount } from '#utils';
 
-const SERVER_LINK = 'https://discord.gg/onyx';
+const SERVER_LINK = 'https://discord.gg/QnWNz2dKCE';
 
 const resolveTarget = async (ctx) => {
         if (ctx.isSlash) {

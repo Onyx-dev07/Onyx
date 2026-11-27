@@ -102,7 +102,7 @@ class RemoveMessagesCommand extends Command {
                                 [
                                         `Successfully removed **${amount}** messages from **${target.displayName}**`,
                                         ``,
-                                        `Add daily, weekly messages using **[${botName} Premium](https://discord.gg/onyx)**`,
+                                        `Add daily, weekly messages using **[${botName} Premium](https://discord.gg/QnWNz2dKCE)**`,
                                 ].join('\n'),
                         ),
                 );

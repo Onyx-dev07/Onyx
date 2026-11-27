@@ -13,7 +13,7 @@
 
   ## Overview
 
-  Onyx is a powerful, modular Discord bot engineered for performance and extensibility. It supports both **prefix commands** and **slash commands**, backed by a persistent **MongoDB** database. Every feature is purpose-built with clean separation between commands, events, and data layers.
+  Onyx is a powerful, modular Discord bot engineered for performance and extensibility. It supports both **prefix commands** and **slash commands**, backed by **MongoDB** when configured and a local JSON store as a safe fallback. Every feature is purpose-built with clean separation between commands, events, and data layers.
 
   ---
 
@@ -94,7 +94,7 @@
 
   ## Setup
 
-  **Requirements:** Node.js >= 18, MongoDB instance
+  **Requirements:** Node.js >= 20.10. MongoDB is optional; if `MONGODB_URI` is missing, invalid, or unreachable, Onyx automatically uses local JSON storage at `data/onyx-db.json` (override with `ONYX_DB_FILE`).
 
   ```bash
   # 1. Clone the repository
@@ -105,7 +105,7 @@
   npm install
 
   # 3. Configure the bot
-  # Edit src/config/config.js with your token, client ID, MongoDB URI, and owner IDs
+  # Set DISCORD_TOKEN, CLIENT_ID, OWNER_IDS, and optionally MONGODB_URI in your environment
 
   # 4. Start the bot
   node src/bot.js
@@ -132,7 +132,7 @@
   ├── structures/               Core framework
   │   ├── classes/              Command, Context, Client, Cache
   │   └── handlers/             Command loader, event loader
-  ├── database/                 MongoDB models, repositories & services
+  ├── database/                 MongoDB/JSON storage, repositories & services
   ├── utils/                    Shared utility functions
   └── config/                   Bot config & emoji definitions
   ```
@@ -151,7 +151,7 @@
 
   Join the Onyx Discord server for help, updates, and community support.
 
-  **[discord.gg/onyx](https://discord.gg/onyx)**
+  **[discord.gg/QnWNz2dKCE](https://discord.gg/QnWNz2dKCE)**
 
   ---
 

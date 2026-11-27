@@ -85,7 +85,7 @@ class MessagesCommand extends Command {
                                         `**All time** • **${totalFormatted}** messages in this server !`,
                                         `**Today** • **${todayFormatted}** messages in this server`,
                                         ``,
-                                        `${emoji.arrow} Discover new events [here](https://discord.gg/onyx)!`,
+                                        `${emoji.arrow} Discover new events [here](https://discord.gg/QnWNz2dKCE)!`,
                                 ].join('\n'),
                         ),
                 );

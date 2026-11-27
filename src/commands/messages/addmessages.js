@@ -102,7 +102,7 @@ class AddMessagesCommand extends Command {
                                 [
                                         `Successfully added **${amount}** messages to **${target.displayName}**`,
                                         ``,
-                                        `Add daily, weekly messages using **[${botName} Premium](https://discord.gg/onyx)**`,
+                                        `Add daily, weekly messages using **[${botName} Premium](https://discord.gg/QnWNz2dKCE)**`,
                                 ].join('\n'),
                         ),
                 );

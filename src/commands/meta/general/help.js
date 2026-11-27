@@ -155,7 +155,7 @@ const CATEGORY_DATA = {
         },
         contact: {
                 title: 'Contact us',
-                description: 'Contact us in case of bug report or feedback or suggestions by joining our **[Support Server](https://discord.gg/onyx)**',
+                description: 'Contact us in case of bug report or feedback or suggestions by joining our **[Support Server](https://discord.gg/QnWNz2dKCE)**',
                 commands: [],
         },
 };

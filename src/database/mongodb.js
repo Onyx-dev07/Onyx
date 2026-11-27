@@ -139,6 +139,23 @@ export class MongoDatabase {
             await Model.insertMany(data);
         }
     }
+
+    /**
+     * Finds documents matching a simple equality filter, with optional sorting.
+     * @param {string} collection
+     * @param {Object} [filter]
+     * @param {Object} [sort]
+     * @returns {Promise<Object[]>}
+     */
+    async query(collection, filter = {}, sort = {}) {
+        const Model = this._getModel(collection);
+        let cursor = Model.find(filter);
+        if (Object.keys(sort).length > 0) {
+            cursor = cursor.sort(sort);
+        }
+        const docs = await cursor.lean();
+        return docs.map((doc) => this._clean(doc));
+    }
 }
 
 /**

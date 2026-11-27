@@ -54,15 +54,12 @@ export class MemberInviterRepository {
 
         async findAllByInviter(guildId, inviterId) {
                 if (!guildId || !inviterId) return [];
-                const Model = this.db._getModel(COLLECTION);
-                const docs = await Model.find({ guildId, inviterId }).lean();
-                return docs.map((doc) => this.db._clean(doc));
+                return await this.db.query(COLLECTION, { guildId, inviterId });
         }
 
         async delete(guildId, userId) {
                 if (!guildId || !userId) return;
-                const Model = this.db._getModel(COLLECTION);
-                await Model.deleteOne({ id: this._id(guildId, userId) });
+                await this.db.delete(COLLECTION, this._id(guildId, userId));
                 await getClient().c.del(`${CACHE_PREFIX}${this._id(guildId, userId)}`);
         }
 }
