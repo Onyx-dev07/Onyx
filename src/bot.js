@@ -4,6 +4,7 @@
 import 'dotenv/config';
 import { Bot } from '#classes/client';
 import { logger } from '#utils';
+import { startHealthServer, stopHealthServer } from './healthServer.js';
 
 const _emitWarning = process.emitWarning.bind(process);
 process.emitWarning = (warning, ...args) => {
@@ -29,6 +30,9 @@ const banner = [
 
 console.log(banner);
 
+// Render Web Services need a bound port before any long-running initialization.
+startHealthServer();
+
 const client = new Bot();
 let isShuttingDown = false;
 
@@ -38,6 +42,7 @@ const shutdown = async (signal) => {
         logger.info('Shutdown', `Received ${signal}, shutting down gracefully`);
         try {
                 await client.cleanup();
+                await stopHealthServer();
                 logger.success('Shutdown', 'Bot shut down successfully');
                 process.exit(0);
         } catch (error) {

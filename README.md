@@ -111,6 +111,8 @@
   node src/bot.js
   ```
 
+  On Render Web Services, Onyx automatically binds to `$PORT` and serves `GET /health` for port checks. No extra configuration is needed.
+
   ---
 
   ## Project Structure
