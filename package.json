@@ -6,7 +6,15 @@
   "type": "module",
   "scripts": {
     "start": "node src/bot.js",
-    "format": "prettier --write \"src/**/*.js\""
+    "format": "prettier --write \"src/**/*.js\"",
+    "migrate": "node scripts/migrate.js apply",
+    "migrate:check": "node scripts/migrate.js check",
+    "migrate:status": "node scripts/migrate.js status",
+    "migrate:keys": "node scripts/migrate.js keys",
+    "migrate:keys:dry": "node scripts/migrate.js keys",
+    "backup:db": "node scripts/migrate.js backup:db",
+    "restore:db": "node scripts/migrate.js restore:db",
+    "backup:drill": "node scripts/migrate.js backup:drill"
   },
   "imports": {
     "#commands/*": "./src/commands/*.js",
