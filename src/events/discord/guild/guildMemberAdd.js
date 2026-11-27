@@ -3,6 +3,7 @@
 import { db } from '#dbManager';
 import { resolveInviteVariables, DEFAULT_JOIN_MESSAGE } from '#utils';
 import { resolveGreetVariables } from '../../../utils/resolveGreetVariables.js';
+import { applyAutoroles } from '../../../utils/roleAutomation.js';
 import {
         MessageFlags,
         ContainerBuilder,
@@ -148,6 +149,7 @@ export default {
                 await Promise.allSettled([
                         handleInviteTracking(member, guild, client),
                         handleGreetMessage(member, guild),
+                        applyAutoroles(member),
                 ]);
         },
 };

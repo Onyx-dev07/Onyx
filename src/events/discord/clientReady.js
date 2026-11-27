@@ -3,6 +3,7 @@
 import { logger } from '#utils';
 import { ActivityType } from 'discord.js';
 import { config } from '#config';
+import { restoreTempRoles } from '../../utils/roleAutomation.js';
 
 export const cacheGuildInvites = async (guild, client) => {
         try {
@@ -37,6 +38,14 @@ export default {
                 logger.info('Bot', 'Invite cache populated');
 
                 await client.commandHandler.syncSlashCommands(client.user.id);
+
+                const restored = await restoreTempRoles(client).catch((error) => {
+                        logger.warn('Bot', `Could not restore temporary roles: ${error.message}`);
+                        return 0;
+                });
+                if (restored > 0) {
+                        logger.info('Bot', `Restored ${restored} temporary role timer(s)`);
+                }
         },
 };
 

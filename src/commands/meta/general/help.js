@@ -104,8 +104,8 @@ const CATEGORY_DATA = {
                         ['unban',  'Unbans a banned user from a Discord server'],
                         ['mute',   'Mutes a server member for a specified amount of time'],
                         ['unmute', 'Unmutes a server member'],
-                        ['nick',   'Changes or clears a member\'s nickname'],
-                        ['role',   'Adds, removes, or toggles a member role'],
+                        ['nick',   'Sets, resets, locks, and views member nicknames'],
+                        ['role',   'Assigns, creates, edits, locks, automates, and times roles'],
                 ],
         },
         timer: {

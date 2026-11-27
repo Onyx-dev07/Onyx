@@ -3,92 +3,54 @@
 import { Command } from '#command';
 import {
         ApplicationCommandOptionType,
-        MessageFlags,
         PermissionFlagsBits,
 } from 'discord.js';
-import { emoji } from '#emoji';
+import { moderationStore, ids } from '#db/moderationStore';
+import {
+        cross,
+        nicknameHierarchyProblem,
+        panelPayload,
+        replyPanel,
+        resolveMember,
+        tick,
+} from '../../utils/moderation.js';
 
-const CLEAR_WORDS = new Set(['clear', 'reset', 'none', 'remove']);
+const USAGE_LINES = [
+        'Use nick set @user <nickname>, nick reset @user, nick lock @user [nickname],',
+        'nick unlock @user, nick view [@user], or nick channel setup.',
+];
 
-/**
- * Resolves a guild member from a prefix-command token.
- * @param {import('#context').CommandContext} ctx
- * @param {string} [token]
- * @returns {Promise<import('discord.js').GuildMember|null>}
- */
-const resolveMember = async (ctx, token) => {
-        if (!token) return null;
-
-        const idMatch = token.match(/^<@!?(\d+)>$/) || token.match(/^(\d{17,20})$/);
-        if (idMatch) {
-                return ctx.guild.members.fetch(idMatch[1]).catch(() => null);
-        }
-
-        await ctx.guild.members.fetch().catch(() => {});
-        const query = token.toLowerCase();
-
-        return (
-                ctx.guild.members.cache.find(
-                        (m) =>
-                                m.user.username.toLowerCase() === query ||
-                                m.displayName.toLowerCase() === query ||
-                                m.user.globalName?.toLowerCase() === query,
-                ) ?? null
+const errorPanel = async (ctx, message, showUsage = true) =>
+        ctx.reply(
+                panelPayload({
+                        title: 'Nickname Error',
+                        lines: [`${cross()} ${message}`, ...(showUsage ? ['', ...USAGE_LINES] : [])],
+                        author: ctx.author,
+                }),
         );
-};
 
-/**
- * Checks role hierarchy before a nickname change.
- * @param {import('#context').CommandContext} ctx
- * @param {import('discord.js').GuildMember} member
- * @returns {string|null} A denial reason, or null when allowed.
- */
-const hierarchyProblem = (ctx, member) => {
-        const botMember = ctx.guild.members.cache.get(ctx.client.user.id);
-
-        if (member.id === ctx.client.user.id) {
-                return 'I cannot change my own nickname.';
-        }
-
-        if (member.id === ctx.guild.ownerId && ctx.author.id !== ctx.guild.ownerId) {
-                return 'You cannot change the server owner\'s nickname.';
-        }
-
-        if (
-                botMember &&
-                member.id !== ctx.guild.ownerId &&
-                botMember.roles.highest.position <= member.roles.highest.position
-        ) {
-                return 'I don\'t have a high enough role to change this member\'s nickname.';
-        }
-
-        if (
-                ctx.member?.roles?.highest &&
-                ctx.author.id !== ctx.guild.ownerId &&
-                ctx.member.roles.highest.position <= member.roles.highest.position
-        ) {
-                return 'You don\'t have a high enough role to change this member\'s nickname.';
-        }
-
-        return null;
-};
+const lockId = (guildId, userId) => ids.nickLock(guildId, userId);
 
 class NicknameCommand extends Command {
         constructor() {
                 super({
                         name: 'nick',
                         aliases: ['nickname', 'setnick'],
-                        description: 'Changes or clears a member\'s nickname.',
-                        usage: 'nick <@member | userID | username> [new nickname | clear]',
+                        description: 'Sets, resets, locks, and views member nicknames.',
+                        usage: 'nick <set|reset|lock|unlock|view|channel setup> ...',
                         cooldown: 3,
-                        minArgs: 1,
-                        examples: ['nick @user New Name', 'nick @user clear'],
+                        examples: [
+                                'nick set @user New Name',
+                                'nick reset @user',
+                                'nick lock @user',
+                                'nick view @user',
+                        ],
                         userPermissions: [PermissionFlagsBits.ManageNicknames],
                         permissions: [PermissionFlagsBits.ManageNicknames],
                         enabledSlash: true,
                         slashData: {
                                 name: 'nickname',
-                                description: 'Changes or clears a member\'s nickname.',
+                                description: 'Sets or clears a member nickname.',
                                 defaultMemberPermissions: PermissionFlagsBits.ManageNicknames,
                                 options: [
                                         {
@@ -108,81 +70,201 @@ class NicknameCommand extends Command {
                 });
         }
 
-        async execute({ ctx }) {
-                if (!ctx.guild) {
-                        return ctx.reply({
-                                content: `${emoji.get('cross', '❌')} This command can only be used in a server.`,
-                                flags: MessageFlags.Ephemeral,
-                        });
-                }
-
-                let member = null;
+        async resolveTarget(ctx, token) {
                 if (ctx.isSlash) {
-                        member = ctx.options.getMember('member');
+                        let member = ctx.options.getMember('member');
                         if (!member) {
                                 const user = ctx.options.getUser('member');
                                 if (user) {
                                         member = await ctx.guild.members.fetch(user.id).catch(() => null);
                                 }
                         }
-                } else {
-                        member = await resolveMember(ctx, ctx.args[0]);
+                        return member;
                 }
+                return await resolveMember(ctx, token);
+        }
 
-                if (!member) {
-                        return ctx.reply({
-                                content: `${emoji.get('cross', '❌')} Could not find that member.\nUsage: \`${ctx.prefix ?? '!'}nick <@member> [new nickname | clear]\``,
-                                flags: MessageFlags.Ephemeral,
-                        });
-                }
+        async ensureCanModify(ctx, member) {
+                const problem = nicknameHierarchyProblem({
+                        guild: ctx.guild,
+                        member,
+                        moderator: ctx.member,
+                        botMember: ctx.guild.members.cache.get(ctx.client.user.id),
+                        botId: ctx.client.user.id,
+                });
 
-                const requested = ctx.isSlash
-                        ? ctx.options.getString('nickname')
-                        : ctx.args.slice(1).join(' ');
-                const trimmed = typeof requested === 'string' ? requested.trim() : '';
-                const shouldClear = ctx.isSlash
-                        ? !trimmed
-                        : !trimmed || CLEAR_WORDS.has(trimmed.toLowerCase());
-                const nickname = shouldClear ? null : trimmed;
-
-                if (nickname && nickname.length > 32) {
-                        return ctx.reply({
-                                content: `${emoji.get('cross', '❌')} Nicknames cannot be longer than 32 characters.`,
-                                flags: MessageFlags.Ephemeral,
-                        });
-                }
-
-                const problem = hierarchyProblem(ctx, member);
                 if (problem) {
-                        return ctx.reply({
-                                content: `${emoji.get('cross', '❌')} ${problem}`,
-                                flags: MessageFlags.Ephemeral,
-                        });
+                        await errorPanel(ctx, problem, false);
+                        return false;
                 }
+
+                const lock = await moderationStore.get(lockId(ctx.guild.id, member.id));
+                if (lock && ctx.author.id !== ctx.guild.ownerId) {
+                        await errorPanel(
+                                ctx,
+                                `<@${member.id}>'s nickname is locked by <@${lock.lockedBy}>.`,
+                                false,
+                        );
+                        return false;
+                }
+
+                return true;
+        }
+
+        async applyNickname(ctx, member, nickname, verb) {
+                if (nickname && nickname.length > 32) {
+                        return errorPanel(ctx, 'Nicknames cannot be longer than 32 characters.', false);
+                }
+                if (!(await this.ensureCanModify(ctx, member))) return;
 
                 try {
                         await member.setNickname(
                                 nickname,
-                                `[Onyx] Nickname ${nickname ? 'set' : 'cleared'} by ${ctx.author.tag}`,
+                                `[Onyx] Nickname ${verb} by ${ctx.author.tag}`,
                         );
 
-                        const safeNickname = nickname
-                                ? `\`${nickname.replace(/`/g, "'")}\``
-                                : null;
-                        const action = safeNickname
-                                ? `set to ${safeNickname}`
-                                : 'cleared';
-
-                        return ctx.reply({
-                                content: `${emoji.get('tick', '✅')} Nickname of <@${member.id}> ${action}.`,
-                                allowedMentions: { parse: [] },
+                        const safe = nickname ? `\`${nickname.replace(/`/g, "'")}\`` : null;
+                        return replyPanel(ctx, {
+                                title: 'Nickname Management',
+                                lines: [
+                                        `${tick()} Nickname of <@${member.id}> ${safe ? `set to ${safe}` : 'cleared'}.`,
+                                ],
                         });
                 } catch (error) {
-                        return ctx.reply({
-                                content: `${emoji.get('cross', '❌')} I could not update that nickname: ${error.message}`,
-                                flags: MessageFlags.Ephemeral,
+                        return errorPanel(ctx, `I could not update that nickname: ${error.message}`, false);
+                }
+        }
+
+        async execute({ ctx }) {
+                if (!ctx.guild) {
+                        return errorPanel(ctx, 'This command can only be used in a server.', false);
+                }
+
+                if (ctx.isSlash) {
+                        const member = await this.resolveTarget(ctx);
+                        if (!member) return errorPanel(ctx, 'Could not find that member.', false);
+
+                        const requested = ctx.options.getString('nickname')?.trim() ?? '';
+                        return this.applyNickname(ctx, member, requested || null, requested ? 'set' : 'cleared');
+                }
+
+                const args = [...ctx.args];
+                const sub = args.shift()?.toLowerCase();
+
+                if (!sub || !['set', 'reset', 'clear', 'lock', 'unlock', 'view', 'channel'].includes(sub)) {
+                        if (!sub) return errorPanel(ctx, 'Missing nickname action.');
+
+                        // Backwards-compatible shorthand: nick @user New Name
+                        const member = await resolveMember(ctx, sub);
+                        if (!member) return errorPanel(ctx, 'Could not find that member.');
+                        const nickname = args.join(' ').trim();
+                        return this.applyNickname(ctx, member, nickname || null, nickname ? 'set' : 'cleared');
+                }
+
+                if (sub === 'channel') {
+                        if (args.shift()?.toLowerCase() !== 'setup') {
+                                const config = await moderationStore.get(ids.nickConfig(ctx.guild.id));
+                                return replyPanel(ctx, {
+                                        title: 'Nickname Channel',
+                                        lines: config?.channelId
+                                                ? [`${tick()} Nickname requests are configured in <#${config.channelId}>.`]
+                                                : [`${cross()} No nickname request channel is configured.`],
+                                });
+                        }
+
+                        const channelId = ctx.channel?.id;
+                        if (!channelId) return errorPanel(ctx, 'Could not resolve this channel.', false);
+
+                        await moderationStore.set(ids.nickConfig(ctx.guild.id), {
+                                kind: 'nickconfig',
+                                guildId: ctx.guild.id,
+                                channelId,
+                                configuredBy: ctx.author.id,
+                                configuredAt: Date.now(),
+                        });
+
+                        return replyPanel(ctx, {
+                                title: 'Nickname Channel',
+                                lines: [`${tick()} Nickname request channel set to <#${channelId}>.`],
                         });
                 }
+
+                if (sub === 'view') {
+                        const member = (await this.resolveTarget(ctx, args[0])) ?? ctx.member;
+                        const row = await moderationStore.get(lockId(ctx.guild.id, member.id));
+                        const config = await moderationStore.get(ids.nickConfig(ctx.guild.id));
+
+                        return replyPanel(ctx, {
+                                title: `Nickname View ﹒ ${member.displayName}`,
+                                lines: [
+                                        `**Nickname :** ${member.nickname ?? 'None'}`,
+                                        `**Locked :** ${row ? `Yes${row.nickname ? ` as \`${row.nickname}\`` : ''}` : 'No'}`,
+                                        `**Request channel :** ${config?.channelId ? `<#${config.channelId}>` : 'Not configured'}`,
+                                ],
+                        });
+                }
+
+                const member = await this.resolveTarget(ctx, args.shift());
+                if (!member) return errorPanel(ctx, 'Could not find that member.');
+
+                if (sub === 'set') {
+                        const nickname = args.join(' ').trim();
+                        if (!nickname) return errorPanel(ctx, 'Provide a nickname to set.');
+                        return this.applyNickname(ctx, member, nickname, 'set');
+                }
+
+                if (sub === 'reset' || sub === 'clear') {
+                        return this.applyNickname(ctx, member, null, 'cleared');
+                }
+
+                if (sub === 'unlock') {
+                        const row = await moderationStore.get(lockId(ctx.guild.id, member.id));
+                        if (!row) {
+                                return replyPanel(ctx, {
+                                        title: 'Nickname Management',
+                                        lines: [`${cross()} <@${member.id}> does not have a locked nickname.`],
+                                });
+                        }
+
+                        await moderationStore.delete(lockId(ctx.guild.id, member.id));
+                        return replyPanel(ctx, {
+                                title: 'Nickname Management',
+                                lines: [`${tick()} Nickname lock removed from <@${member.id}>.`],
+                        });
+                }
+
+                // sub === 'lock'
+                if (!(await this.ensureCanModify(ctx, member))) return;
+
+                const requested = args.join(' ').trim();
+                if (requested && requested.length > 32) {
+                        return errorPanel(ctx, 'Nicknames cannot be longer than 32 characters.', false);
+                }
+
+                if (requested) {
+                        try {
+                                await member.setNickname(
+                                        requested,
+                                        `[Onyx] Nickname locked by ${ctx.author.tag}`,
+                                );
+                        } catch (error) {
+                                return errorPanel(ctx, `I could not set that nickname: ${error.message}`, false);
+                        }
+                }
+
+                await moderationStore.set(lockId(ctx.guild.id, member.id), {
+                        kind: 'nicklock',
+                        guildId: ctx.guild.id,
+                        userId: member.id,
+                        nickname: requested || member.nickname || null,
+                        lockedBy: ctx.author.id,
+                        lockedAt: Date.now(),
+                });
+
+                return replyPanel(ctx, {
+                        title: 'Nickname Management',
+                        lines: [`${tick()} <@${member.id}>'s nickname is now locked.`],
+                });
         }
 }
 
