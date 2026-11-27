@@ -1,184 +1,153 @@
-import { SlashCommandBuilder, PermissionFlagsBits, PermissionsBitField, ChannelType, MessageFlags } from 'discord.js';
-import { errorEmbed, successEmbed } from '../../utils/embeds.js';
-import { logger } from '../../utils/logger.js';
-import { OnyxError, ErrorTypes } from '../../utils/errorHandler.js';
-import { saveGiveaway } from '../../utils/giveaways.js';
-import { 
-    parseDuration, 
-    validatePrize, 
-    validateWinnerCount,
-    createGiveawayEmbed, 
-    createGiveawayButtons 
-} from '../../services/giveawayService.js';
-import { logEvent, EVENT_TYPES } from '../../services/loggingService.js';
-import { InteractionHelper } from '../../utils/interactionHelper.js';
+// Onyx Discord Bot
+// Author: Onyx
+import { Command } from '#command';
+import { MessageFlags, ApplicationCommandOptionType, PermissionFlagsBits } from 'discord.js';
+import { emoji } from '#emoji';
+import {
+        giveawayStore,
+        GWAY_EMOJI_ID,
+        buildActiveComponents,
+        endGiveaway,
+} from '#giveawayUtils';
 
-import { botConfig } from '../../config/bot.js';
-
-const GIVEAWAY_MIN_WINNERS = botConfig.giveaways?.minimumWinners ?? 1;
-const GIVEAWAY_MAX_WINNERS = botConfig.giveaways?.maximumWinners ?? 10;
-
-export default {
-    data: new SlashCommandBuilder()
-        .setName("gcreate")
-        .setDescription("Starts a new giveaway in a specified channel.")
-        .addStringOption((option) =>
-            option
-                .setName("duration")
-                .setDescription(
-                    "How long the giveaway should last (e.g., 1h, 30m, 5d).",
-                )
-                .setRequired(true),
-        )
-        .addIntegerOption((option) =>
-            option
-                .setName("winners")
-                .setDescription("The number of winners to pick.")
-                .setMinValue(GIVEAWAY_MIN_WINNERS)
-                .setMaxValue(GIVEAWAY_MAX_WINNERS)
-                .setRequired(true),
-        )
-        .addStringOption((option) =>
-            option
-                .setName("prize")
-                .setDescription("The prize being given away.")
-                .setRequired(true),
-        )
-        .addChannelOption((option) =>
-            option
-                .setName("channel")
-                .setDescription("The channel to send the giveaway to (defaults to current channel).")
-                .addChannelTypes(ChannelType.GuildText)
-                .setRequired(false),
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
-
-    async execute(interaction) {
-        // Defer up front: sending the giveaway message + DB write can exceed the 3s window
-        await InteractionHelper.safeDefer(interaction, { flags: MessageFlags.Ephemeral });
-
-        if (!interaction.inGuild()) {
-            throw new OnyxError(
-                'Giveaway command used outside guild',
-                ErrorTypes.VALIDATION,
-                'This command can only be used in a server.',
-                { userId: interaction.user.id }
-            );
-        }
-
-        if (!interaction.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
-            throw new OnyxError(
-                'User lacks ManageGuild permission',
-                ErrorTypes.PERMISSION,
-                "You need the 'Manage Server' permission to start a giveaway.",
-                { userId: interaction.user.id, guildId: interaction.guildId }
-            );
-        }
-
-        logger.info(`Giveaway creation started by ${interaction.user.tag} in guild ${interaction.guildId}`);
-
-        const durationString = interaction.options.getString("duration");
-        const winnerCount = interaction.options.getInteger("winners");
-        const prize = interaction.options.getString("prize");
-        const targetChannel = interaction.options.getChannel("channel") || interaction.channel;
-
-        const durationMs = parseDuration(durationString);
-        validateWinnerCount(winnerCount);
-        const prizeName = validatePrize(prize);
-
-        if (!targetChannel.isTextBased()) {
-            throw new OnyxError(
-                'Target channel is not text-based',
-                ErrorTypes.VALIDATION,
-                'The channel must be a text channel.',
-                { channelId: targetChannel.id, channelType: targetChannel.type }
-            );
-        }
-
-        const endTime = Date.now() + durationMs;
-
-        const initialGiveawayData = {
-            messageId: "placeholder",
-            channelId: targetChannel.id,
-            guildId: interaction.guildId,
-            prize: prizeName,
-            hostId: interaction.user.id,
-            endTime: endTime,
-            endsAt: endTime,
-            winnerCount: winnerCount,
-            participants: [],
-            isEnded: false,
-            ended: false,
-            createdAt: new Date().toISOString()
-        };
-
-        const embed = createGiveawayEmbed(initialGiveawayData, "active");
-        const row = createGiveawayButtons(false);
-
-        const giveawayMessage = await targetChannel.send({
-            content: "🎉 **NEW GIVEAWAY** 🎉",
-            embeds: [embed],
-            components: [row],
-        });
-
-        initialGiveawayData.messageId = giveawayMessage.id;
-        const saved = await saveGiveaway(
-            interaction.client,
-            interaction.guildId,
-            initialGiveawayData,
-        );
-
-        if (!saved) {
-            logger.warn(`Failed to save giveaway to database: ${giveawayMessage.id}`);
-        }
-
-        try {
-            await logEvent({
-                client: interaction.client,
-                guildId: interaction.guildId,
-                eventType: EVENT_TYPES.GIVEAWAY_CREATE,
-                data: {
-                    description: `Giveaway created: ${prizeName}`,
-                    channelId: targetChannel.id,
-                    userId: interaction.user.id,
-                    fields: [
-                        {
-                            name: 'Prize',
-                            value: prizeName,
-                            inline: true
-                        },
-                        {
-                            name: 'Winners',
-                            value: winnerCount.toString(),
-                            inline: true
-                        },
-                        {
-                            name: 'Duration',
-                            value: durationString,
-                            inline: true
-                        },
-                        {
-                            name: 'Channel',
-                            value: targetChannel.toString(),
-                            inline: true
-                        }
-                    ]
-                }
-            });
-        } catch (logError) {
-            logger.debug('Error logging giveaway creation event:', logError);
-        }
-
-        logger.info(`Giveaway created successfully: ${giveawayMessage.id} in ${targetChannel.name}`);
-
-        await InteractionHelper.safeReply(interaction, {
-            embeds: [
-                successEmbed(
-                    `Giveaway Started! 🎉`,
-                    `A new giveaway for **${prizeName}** has been started in ${targetChannel} and will end in **${durationString}**.`,
-                ),
-            ],
-            flags: MessageFlags.Ephemeral,
-        });
-    },
+const parseTime = (str) => {
+        const match = str?.match(/^(\d+)(s|m|h|d)$/i);
+        if (!match) return null;
+        const value = parseInt(match[1]);
+        const unit = match[2].toLowerCase();
+        const multipliers = { s: 1000, m: 60000, h: 3600000, d: 86400000 };
+        return value * multipliers[unit];
 };
+
+class GCreateCommand extends Command {
+        constructor() {
+                super({
+                        name: 'gcreate',
+                        description: 'Creates a new giveaway',
+                        usage: 'gcreate <duration> <winners> <prize>',
+                        aliases: ['gstart'],
+                        cooldown: 5,
+                        minArgs: 3,
+                        examples: ['gcreate 1h 2 Nitro Classic'],
+                        userPermissions: [PermissionFlagsBits.ManageGuild],
+                        permissions: [PermissionFlagsBits.ManageGuild],
+                        enabledSlash: true,
+                        slashData: {
+                                name: 'gcreate',
+                                description: 'Creates a new giveaway',
+                                defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
+                                options: [
+                                        {
+                                                type: ApplicationCommandOptionType.String,
+                                                name: 'duration',
+                                                description: 'Duration e.g. 30s, 10m, 1h, 2d',
+                                                required: true,
+                                        },
+                                        {
+                                                type: ApplicationCommandOptionType.Integer,
+                                                name: 'winners',
+                                                description: 'Number of winners',
+                                                required: true,
+                                                min_value: 1,
+                                                max_value: 20,
+                                        },
+                                        {
+                                                type: ApplicationCommandOptionType.String,
+                                                name: 'prize',
+                                                description: 'The giveaway prize',
+                                                required: true,
+                                        },
+                                ],
+                        },
+                });
+        }
+
+        async execute({ ctx }) {
+                let durationStr, winnersCount, prize;
+
+                if (ctx.isSlash) {
+                        durationStr = ctx.options.getString('duration');
+                        winnersCount = ctx.options.getInteger('winners');
+                        prize = ctx.options.getString('prize');
+                } else {
+                        durationStr = ctx.args[0];
+                        winnersCount = parseInt(ctx.args[1]);
+                        prize = ctx.args.slice(2).join(' ');
+                }
+
+                const duration = parseTime(durationStr);
+                if (!duration) {
+                        return ctx.reply({
+                                content: `${emoji.cross} Invalid duration. Use \`30s\`, \`10m\`, \`1h\`, \`2d\`.`,
+                                flags: MessageFlags.Ephemeral,
+                        });
+                }
+
+                if (!winnersCount || winnersCount < 1 || isNaN(winnersCount)) {
+                        return ctx.reply({
+                                content: `${emoji.cross} Please provide a valid winner count (minimum 1).`,
+                                flags: MessageFlags.Ephemeral,
+                        });
+                }
+
+                if (!prize || !prize.trim()) {
+                        return ctx.reply({
+                                content: `${emoji.cross} Please provide a prize for the giveaway.`,
+                                flags: MessageFlags.Ephemeral,
+                        });
+                }
+
+                const endDate = new Date(Date.now() + duration);
+                const endTimestamp = Math.floor(endDate.getTime() / 1000);
+                const activeComponents = buildActiveComponents(prize, winnersCount, endTimestamp, ctx.author.id);
+
+                let giveawayMsg;
+
+                if (ctx.isSlash) {
+                        await ctx.reply({ components: activeComponents, flags: MessageFlags.IsComponentsV2 });
+                        giveawayMsg = await ctx.fetchReply();
+                } else {
+                        await ctx.message?.delete().catch(() => null);
+                        giveawayMsg = await ctx.channel.send({
+                                components: activeComponents,
+                                flags: MessageFlags.IsComponentsV2,
+                        });
+                }
+
+                giveawayStore.set(giveawayMsg.id, {
+                        prize,
+                        winners: winnersCount,
+                        hostId: ctx.author.id,
+                        participants: new Set(),
+                        endTimestamp,
+                        timerId: null,
+                        giveawayMsg,
+                        status: 'active',
+                        lastWinners: [],
+                });
+
+                await giveawayMsg.react(GWAY_EMOJI_ID).catch(() => null);
+
+                const timerId = setTimeout(async () => {
+                        const entry = giveawayStore.get(giveawayMsg.id);
+                        if (!entry || entry.status !== 'active') return;
+                        await endGiveaway(giveawayMsg.id, entry);
+                }, duration);
+
+                const entry = giveawayStore.get(giveawayMsg.id);
+                entry.timerId = timerId;
+                giveawayStore.set(giveawayMsg.id, entry);
+        }
+}
+
+export default new GCreateCommand();
+
+/**
+ * Project: Onyx
+ * Author: Onyx 
+ * Organization: Onyx
+ * GitHub: https://github.com/Onyx-dev07
+ * License: Custom
+ *
+ * © 2026 Onyx. All rights reserved.
+ */

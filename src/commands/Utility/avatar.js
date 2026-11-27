@@ -1,61 +1,116 @@
-import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed, compactEmbed } from '../../utils/embeds.js';
-import { InteractionHelper } from '../../utils/interactionHelper.js';
-import { logger } from '../../utils/logger.js';
-import { userMention } from '../../utils/theme.js';
+// Onyx Discord Bot
+// Author: Onyx
+import { Command } from '#command';
+import {
+        MessageFlags,
+        ContainerBuilder,
+        TextDisplayBuilder,
+        SeparatorBuilder,
+        SeparatorSpacingSize,
+        MediaGalleryBuilder,
+        MediaGalleryItemBuilder,
+        ApplicationCommandOptionType,
+} from 'discord.js';
 
-/**
- * Prefix invocations can hand back a lightweight stub when the member is not
- * cached, so make sure we always end up with a real User instance.
- */
-async function resolveUser(interaction, target) {
-  if (target && typeof target.displayAvatarURL === 'function') {
-    return target;
-  }
+const resolveUser = async (ctx) => {
+        if (ctx.isSlash) {
+                return ctx.options.getUser('user') ?? ctx.user;
+        }
 
-  const id = target?.id;
-  if (!id) {
-    return interaction.user;
-  }
+        const arg = ctx.args[0];
+        if (arg) {
+                const idMatch = arg.match(/^<@!?(\d+)>$/) || arg.match(/^(\d{17,20})$/);
+                const userId = idMatch ? idMatch[1] : null;
+                if (userId) {
+                        return ctx.client.users.fetch(userId).catch(() => null);
+                }
+        }
 
-  return interaction.client.users.fetch(id).catch(() => null);
+        return ctx.user;
+};
+
+class AvatarCommand extends Command {
+        constructor() {
+                super({
+                        name: 'avatar',
+                        description: 'Displays the avatar of a user',
+                        usage: 'avatar [@user | userID]',
+                        aliases: ['av', 'pfp'],
+                        cooldown: 5,
+                        enabledSlash: true,
+                        slashData: {
+                                name: 'avatar',
+                                description: 'Displays the avatar of a user',
+                                options: [
+                                        {
+                                                type: ApplicationCommandOptionType.User,
+                                                name: 'user',
+                                                description: 'The user whose avatar to show (defaults to yourself)',
+                                                required: false,
+                                        },
+                                ],
+                        },
+                });
+        }
+
+        async execute({ ctx }) {
+                const user = await resolveUser(ctx);
+
+                if (!user) {
+                        return ctx.reply({
+                                content: 'Could not find that user.',
+                                flags: MessageFlags.Ephemeral,
+                        });
+                }
+
+                if (!user.avatar) {
+                        return ctx.reply({
+                                content: 'The user has no avatar.',
+                                flags: MessageFlags.Ephemeral,
+                        });
+                }
+
+                const member = ctx.guild?.members.cache.get(user.id);
+                const displayName = member?.displayName ?? user.globalName ?? user.username;
+
+                const avatarURL = user.displayAvatarURL({ size: 1024, extension: 'png' });
+                const downloadURL = user.displayAvatarURL({ size: 1024, extension: user.avatar.startsWith('a_') ? 'gif' : 'png' });
+
+                const container = new ContainerBuilder();
+                container.setAccentColor(0xffffff);
+
+                container.addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                                `**${displayName}'s avatar**
+[Download](${downloadURL})`,
+                        ),
+                );
+
+                container.addSeparatorComponents(
+                        new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true),
+                );
+
+                container.addMediaGalleryComponents(
+                        new MediaGalleryBuilder().addItems(
+                                new MediaGalleryItemBuilder().setURL(avatarURL),
+                        ),
+                );
+
+                await ctx.reply({
+                        components: [container],
+                        flags: MessageFlags.IsComponentsV2,
+                });
+        }
 }
 
-export default {
-  data: new SlashCommandBuilder()
-    .setName('avatar')
-    .setDescription("Display a member's avatar")
-    .addUserOption((option) =>
-      option
-        .setName('target')
-        .setDescription('The member whose avatar you want to see (defaults to you)'),
-    ),
+export default new AvatarCommand();
 
-  async execute(interaction) {
-    const target = interaction.options.getUser('target') || interaction.user;
-    const user = (await resolveUser(interaction, target)) || interaction.user;
-
-    if (!user) {
-      return InteractionHelper.safeReply(interaction, {
-        embeds: [compactEmbed("I couldn't load that member's avatar.", 'error')],
-      });
-    }
-
-    const avatarUrl = user.displayAvatarURL({ size: 4096, dynamic: true });
-
-    const embed = createEmbed({
-      description: `${userMention(user)}'s avatar\n[Open full size](${avatarUrl})`,
-      color: 'primary',
-      image: avatarUrl,
-      footer: false,
-      timestamp: false,
-    });
-
-    await InteractionHelper.safeReply(interaction, { embeds: [embed] });
-    logger.info('Avatar command executed', {
-      userId: interaction.user.id,
-      targetUserId: user.id,
-      guildId: interaction.guildId,
-    });
-  },
-};
+/**
+ * Project: Onyx
+ * Author: Onyx 
+ * Organization: Onyx
+ * GitHub: https://github.com/Onyx-dev07
+ * License: Custom
+ *
+ * © 2026 Onyx. All rights reserved.
+ */

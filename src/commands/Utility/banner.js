@@ -1,75 +1,117 @@
-import { SlashCommandBuilder } from 'discord.js';
-import { createEmbed, compactEmbed } from '../../utils/embeds.js';
-import { InteractionHelper } from '../../utils/interactionHelper.js';
-import { logger } from '../../utils/logger.js';
-import { userMention } from '../../utils/theme.js';
+// Onyx Discord Bot
+// Author: Onyx
+import { Command } from '#command';
+import {
+        MessageFlags,
+        ContainerBuilder,
+        TextDisplayBuilder,
+        SeparatorBuilder,
+        SeparatorSpacingSize,
+        MediaGalleryBuilder,
+        MediaGalleryItemBuilder,
+        ApplicationCommandOptionType,
+} from 'discord.js';
+
+const resolveUser = async (ctx) => {
+        if (ctx.isSlash) {
+                const picked = ctx.options.getUser('user') ?? ctx.user;
+                return ctx.client.users.fetch(picked.id, { force: true }).catch(() => null);
+        }
+
+        const arg = ctx.args[0];
+        if (arg) {
+                const idMatch = arg.match(/^<@!?(\d+)>$/) || arg.match(/^(\d{17,20})$/);
+                const userId = idMatch ? idMatch[1] : null;
+                if (userId) {
+                        return ctx.client.users.fetch(userId, { force: true }).catch(() => null);
+                }
+        }
+
+        return ctx.client.users.fetch(ctx.user.id, { force: true }).catch(() => null);
+};
+
+class BannerCommand extends Command {
+        constructor() {
+                super({
+                        name: 'banner',
+                        description: 'Displays the banner of a user',
+                        usage: 'banner [@user | userID]',
+                        aliases: ['userbanner'],
+                        cooldown: 5,
+                        enabledSlash: true,
+                        slashData: {
+                                name: 'banner',
+                                description: 'Displays the banner of a user',
+                                options: [
+                                        {
+                                                type: ApplicationCommandOptionType.User,
+                                                name: 'user',
+                                                description: 'The user whose banner to show (defaults to yourself)',
+                                                required: false,
+                                        },
+                                ],
+                        },
+                });
+        }
+
+        async execute({ ctx }) {
+                const user = await resolveUser(ctx);
+
+                if (!user) {
+                        return ctx.reply({
+                                content: 'Could not find that user.',
+                                flags: MessageFlags.Ephemeral,
+                        });
+                }
+
+                if (!user.banner) {
+                        return ctx.reply({
+                                content: 'The user has no banner.',
+                                flags: MessageFlags.Ephemeral,
+                        });
+                }
+
+                const member = ctx.guild?.members.cache.get(user.id);
+                const displayName = member?.displayName ?? user.globalName ?? user.username;
+
+                const bannerURL = user.bannerURL({ size: 1024, extension: 'png' });
+                const downloadURL = user.bannerURL({ size: 1024, extension: user.banner.startsWith('a_') ? 'gif' : 'png' });
+
+                const container = new ContainerBuilder();
+                container.setAccentColor(0xffffff);
+
+                container.addTextDisplayComponents(
+                        new TextDisplayBuilder().setContent(
+                                `**${displayName}'s banner**
+[Download](${downloadURL})`,
+                        ),
+                );
+
+                container.addSeparatorComponents(
+                        new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true),
+                );
+
+                container.addMediaGalleryComponents(
+                        new MediaGalleryBuilder().addItems(
+                                new MediaGalleryItemBuilder().setURL(bannerURL),
+                        ),
+                );
+
+                await ctx.reply({
+                        components: [container],
+                        flags: MessageFlags.IsComponentsV2,
+                });
+        }
+}
+
+export default new BannerCommand();
 
 /**
- * Banners are not included in message payloads, so fetch the user to make sure
- * `banner` is populated even when the member is already cached.
+ * Project: Onyx
+ * Author: Onyx 
+ * Organization: Onyx
+ * GitHub: https://github.com/Onyx-dev07
+ * License: Custom
+ *
+ * © 2026 Onyx. All rights reserved.
  */
-async function resolveBannerUser(interaction, target) {
-  const id = target?.id || interaction.user.id;
-
-  const fetched = await interaction.client.users
-    .fetch(id, { force: true })
-    .catch(() => null);
-
-  return fetched || target || interaction.user;
-}
-
-function resolveBannerUrl(user) {
-  if (typeof user?.displayBannerURL === 'function') {
-    const url = user.displayBannerURL({ size: 4096, dynamic: true });
-    if (url) return url;
-  }
-
-  if (typeof user?.bannerURL === 'function') {
-    return user.bannerURL({ size: 4096, dynamic: true }) || null;
-  }
-
-  return null;
-}
-
-export default {
-  data: new SlashCommandBuilder()
-    .setName('banner')
-    .setDescription("Display a member's profile banner")
-    .addUserOption((option) =>
-      option
-        .setName('target')
-        .setDescription('The member whose banner you want to see (defaults to you)'),
-    ),
-
-  async execute(interaction) {
-    const target = interaction.options.getUser('target') || interaction.user;
-    const user = await resolveBannerUser(interaction, target);
-    const bannerUrl = resolveBannerUrl(user);
-
-    if (!bannerUrl) {
-      return InteractionHelper.safeReply(interaction, {
-        embeds: [
-          compactEmbed(
-            `**${userMention(user)}** doesn't have a profile banner set.`,
-            'warning',
-          ),
-        ],
-      });
-    }
-
-    const embed = createEmbed({
-      description: `${userMention(user)}'s banner\n[Open full size](${bannerUrl})`,
-      color: 'primary',
-      image: bannerUrl,
-      footer: false,
-      timestamp: false,
-    });
-
-    await InteractionHelper.safeReply(interaction, { embeds: [embed] });
-    logger.info('Banner command executed', {
-      userId: interaction.user.id,
-      targetUserId: user.id,
-      guildId: interaction.guildId,
-    });
-  },
-};

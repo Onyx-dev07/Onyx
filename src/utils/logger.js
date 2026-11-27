@@ -1,268 +1,193 @@
-// logger.js
+// Onyx Discord Bot
+// Author: Onyx
+import util from 'util';
+import { config as conf } from '#config';
 
-import winston from 'winston';
-import 'winston-daily-rotate-file';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { AsyncLocalStorage } from 'async_hooks';
-import crypto from 'crypto';
-
-const traceStorage = new AsyncLocalStorage();
-
-function sanitizeCommandName(interaction) {
-  if (interaction?.isChatInputCommand?.() && interaction.commandName) {
-    return interaction.commandName;
-  }
-
-  if (interaction?.isButton?.() || interaction?.isModalSubmit?.() || interaction?.isStringSelectMenu?.()) {
-    return interaction.customId || null;
-  }
-
-  return null;
-}
-
-export function createTraceId(prefix = 'trc') {
-  return `${prefix}_${crypto.randomUUID().replace(/-/g, '')}`;
-}
-
-export function createInteractionTraceContext(interaction, overrides = {}) {
-  return {
-    traceId: createTraceId(),
-    interactionId: interaction?.id || null,
-    interactionType: interaction?.type || null,
-    guildId: interaction?.guildId || null,
-    channelId: interaction?.channelId || null,
-    userId: interaction?.user?.id || null,
-    command: sanitizeCommandName(interaction),
-    ...overrides
-  };
-}
-
-export function runWithTraceContext(traceContext, callback) {
-  return traceStorage.run(traceContext, callback);
-}
-
-export function getTraceContext() {
-  return traceStorage.getStore() || null;
-}
-
-export function getTraceId() {
-  return getTraceContext()?.traceId || null;
-}
-
-const { createLogger, format, transports } = winston;
-const { combine, timestamp, printf, colorize, errors, json } = format;
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const validLogLevels = new Set(['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly']);
-const defaultLogLevel = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
-const logLevelAliases = {
-  warning: 'warn',
-  warnings: 'warn',
-  warns: 'warn',
-  err: 'error',
-  information: 'info',
-};
-const rawRequestedLogLevel = process.env.LOG_LEVEL?.toLowerCase().trim();
-const requestedLogLevel = logLevelAliases[rawRequestedLogLevel] || rawRequestedLogLevel;
-
-const resolvedLogLevel = validLogLevels.has(requestedLogLevel)
-  ? requestedLogLevel
-  : defaultLogLevel;
-
-const pendingInvalidLevelWarning = requestedLogLevel && !validLogLevels.has(requestedLogLevel)
-  ? `[logger] Invalid LOG_LEVEL "${process.env.LOG_LEVEL}". Falling back to "${defaultLogLevel}".`
-  : null;
-
-const shouldPromoteUserFacingLogs = process.env.NODE_ENV === 'production' && resolvedLogLevel === 'warn';
-
-const LOG_SCHEMA_DEFAULTS = Object.freeze({
-  event: 'application.log',
-  guildId: null,
-  userId: null,
-  command: null,
-  errorCode: null,
-  traceId: null,
-});
-
-const logFormat = printf(({ level, message, timestamp, stack, displayLevel }) => {
-  const visibleLevel = displayLevel || level;
-  const logMessage = `[${timestamp}] [${visibleLevel}]: ${stack || message}`;
-  return logMessage;
-});
-
-const attachTraceContext = format((info) => {
-  const traceContext = getTraceContext();
-  if (!traceContext) {
-    return info;
-  }
-
-  info.traceId = info.traceId || traceContext.traceId;
-  info.guildId = info.guildId || traceContext.guildId;
-  info.userId = info.userId || traceContext.userId;
-  info.command = info.command || traceContext.command;
-  info.interactionId = info.interactionId || traceContext.interactionId;
-
-  return info;
-});
-
-function deriveErrorCode(info) {
-  if (info.errorCode) {
-    return info.errorCode;
-  }
-
-  if (typeof info.code === 'string' || typeof info.code === 'number') {
-    return String(info.code);
-  }
-
-  if (typeof info.type === 'string') {
-    return info.type;
-  }
-
-  if (info.error && (typeof info.error.code === 'string' || typeof info.error.code === 'number')) {
-    return String(info.error.code);
-  }
-
-  return null;
-}
-
-function normalizeEvent(info) {
-  if (typeof info.event === 'string' && info.event.trim()) {
-    return info.event;
-  }
-
-  const displayLevel = typeof info.displayLevel === 'string' ? info.displayLevel.toLowerCase().trim() : null;
-  if (displayLevel === 'startup') {
-    return 'system.startup';
-  }
-
-  if (displayLevel === 'status') {
-    return 'system.status';
-  }
-
-  return `log.${info.level || 'info'}`;
-}
-
-const enforceLogSchema = format((info) => {
-  info.event = normalizeEvent(info);
-  info.guildId = info.guildId ?? LOG_SCHEMA_DEFAULTS.guildId;
-  info.userId = info.userId ?? LOG_SCHEMA_DEFAULTS.userId;
-  info.command = info.command ?? LOG_SCHEMA_DEFAULTS.command;
-  info.traceId = info.traceId ?? LOG_SCHEMA_DEFAULTS.traceId;
-  info.errorCode = deriveErrorCode(info);
-  return info;
-});
-
-const logger = createLogger({
-  level: resolvedLogLevel,
-  format: combine(
-    attachTraceContext(),
-    enforceLogSchema(),
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    errors({ stack: true }),
-    format.json()
-  ),
-  defaultMeta: { service: 'Onyx-bot' },
-  transports: [
-    new transports.DailyRotateFile({
-      filename: path.join(__dirname, '../../logs/error-%DATE%.log'),
-      level: 'error',
-      maxSize: '20m',
-      maxFiles: '14d',
-      zippedArchive: true,
-    }),
-    new transports.DailyRotateFile({
-      filename: path.join(__dirname, '../../logs/combined-%DATE%.log'),
-      maxSize: '20m',
-      maxFiles: '7d',
-      zippedArchive: true,
-    }),
-  ],
-  exceptionHandlers: [
-    new transports.DailyRotateFile({
-      filename: path.join(__dirname, '../../logs/exceptions-%DATE%.log'),
-      maxSize: '20m',
-      maxFiles: '14d',
-      zippedArchive: true,
-    }),
-  ],
-  rejectionHandlers: [
-    new transports.DailyRotateFile({
-      filename: path.join(__dirname, '../../logs/rejections-%DATE%.log'),
-      maxSize: '20m',
-      maxFiles: '14d',
-      zippedArchive: true,
-    }),
-  ],
-});
-
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new transports.Console({
-    format: combine(
-      colorize(),
-      timestamp({ format: 'HH:mm:ss' }),
-      errors({ stack: true }),
-      logFormat
-    ),
-    level: resolvedLogLevel,
-  }));
-} else {
-  logger.add(new transports.Console({
-    format: combine(
-      colorize(),
-      timestamp({ format: 'HH:mm:ss' }),
-      errors({ stack: true }),
-      logFormat
-    ),
-    level: resolvedLogLevel,
-  }));
-}
-
-logger.stream = {
-  write: (message) => {
-    logger.info(message.trim());
-  },
+const config = {
+	logLevel: 'debug',
+	defaultContext: 'APP',
+	timezone: 'Asia/Kolkata',
+	colors: {
+		info: '#2F6FD6',
+		success: '#0FA37F',
+		warning: '#C47A00',
+		error: '#C2362B',
+		debug: '#6B6B6B',
+	},
+	textColors: {
+		message: '#D8DEE9',
+		timestamp: '#7A7A7A',
+		dimmed: '#4C4C4C',
+		badge: '#E5E9F0',
+	},
 };
 
-if (pendingInvalidLevelWarning) {
-  logger.warn(pendingInvalidLevelWarning);
+/**
+ * Returns a function that wraps text in the given hex foreground colour using ANSI escape codes.
+ * @param {string} hex - Hex colour string (e.g. `'#2F6FD6'`).
+ * @returns {(t: string) => string}
+ */
+const rgb = (hex) => {
+	const r = parseInt(hex.slice(1, 3), 16);
+	const g = parseInt(hex.slice(3, 5), 16);
+	const b = parseInt(hex.slice(5, 7), 16);
+	return (t) => `[38;2;${r};${g};${b}m${t}[0m`;
+};
+
+/**
+ * Returns a function that wraps text with ANSI background + foreground colours,
+ * adding a single space of padding on each side.
+ * @param {string} bgHex - Background hex colour.
+ * @param {string} fgHex - Foreground hex colour.
+ * @returns {(t: string) => string}
+ */
+const bg = (bgHex, fgHex) => {
+	const br = parseInt(bgHex.slice(1, 3), 16);
+	const bgc = parseInt(bgHex.slice(3, 5), 16);
+	const bb = parseInt(bgHex.slice(5, 7), 16);
+	const fr = parseInt(fgHex.slice(1, 3), 16);
+	const fg = parseInt(fgHex.slice(3, 5), 16);
+	const fb = parseInt(fgHex.slice(5, 7), 16);
+	return (t) => `[48;2;${br};${bgc};${bb}m[38;2;${fr};${fg};${fb}m ${t} [0m`;
+};
+
+/** Pre-built colouriser functions for common text roles. */
+const text = {
+	message: rgb(config.textColors.message),
+	timestamp: rgb(config.textColors.timestamp),
+	dimmed: rgb(config.textColors.dimmed),
+};
+
+/**
+ * Structured console logger with coloured, badged output.
+ *
+ * Log format per line: `HH:MM:SS [CONTEXT] message`
+ *
+ * Supports five levels (`debug` < `info` < `success` < `warn` < `error`) and
+ * filters output based on `config.logLevel`. Errors/warnings go to `console.warn`;
+ * everything else to `console.log`. Stack traces are printed in dimmed colour below
+ * the main line when an `Error` is passed as the last argument.
+ */
+class Logger {
+	constructor() {
+		/** @type {Object.<string, number>} Numeric severity for each level name. */
+		this.levels = { debug: 0, info: 1, success: 2, warn: 3, error: 4 };
+		this.consoleLogLevel = this.levels[config.logLevel] ?? 1;
+
+		/** Coloured badge renderers keyed by level name. */
+		this.badges = {
+			info: bg(config.colors.info, config.textColors.badge),
+			success: bg(config.colors.success, config.textColors.badge),
+			warn: bg(config.colors.warning, config.textColors.badge),
+			error: bg(config.colors.error, config.textColors.badge),
+			debug: bg(config.colors.debug, config.textColors.badge),
+		};
+	}
+
+	/**
+	 * Returns the current time formatted as `HH:MM:SS` in the configured timezone.
+	 * @returns {string}
+	 */
+	_time() {
+		return new Date().toLocaleTimeString('en-IN', {
+			timeZone: config.timezone,
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: false,
+		});
+	}
+
+	/**
+	 * Returns the current date and time as a full locale string in the configured timezone.
+	 * @returns {string}
+	 */
+	_fullTime() {
+		return new Date().toLocaleString('en-IN', {
+			timeZone: config.timezone,
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: false,
+		});
+	}
+
+	/**
+	 * Parses variadic log arguments into a structured object.
+	 * Accepts an optional leading string as the context badge and an optional
+	 * trailing `Error` instance whose stack is printed separately.
+	 * @param {any[]} args
+	 * @returns {{ context: string, msg: string, error: Error|null }}
+	 */
+	_parse(args) {
+		let context = config.defaultContext;
+		let error = null;
+		const a = [...args];
+
+		if (a[a.length - 1] instanceof Error) error = a.pop();
+		if (typeof a[0] === 'string') context = a.shift();
+
+		return { context, msg: a.length ? util.format(...a) : '', error };
+	}
+
+	/**
+	 * Core log method. Skips output if `level` is below the configured threshold,
+	 * or if level is `'debug'` and `conf.debug` is falsy.
+	 * @param {'debug'|'info'|'success'|'warn'|'error'} level
+	 * @param {...any} args - Optional leading context string, message parts, optional trailing Error.
+	 */
+	_log(level, ...args) {
+		if (!conf.debug && level === 'debug') return;
+		if (this.levels[level] < this.consoleLogLevel) return;
+
+		const { context, msg, error } = this._parse(args);
+
+		const line =
+			`${text.timestamp(this._time())} ` +
+			`${this.badges[level](context)} ` +
+			`${text.message(msg)}`;
+
+		(level === 'error' || level === 'warn' ? console.warn : console.log)(line);
+
+		if (error) {
+			const out = error.stack || error.message || util.inspect(error);
+			console.log(text.dimmed(out));
+		}
+	}
+
+	/** @param {...any} a */
+	info(...a) {
+		this._log('info', ...a);
+	}
+	/** @param {...any} a */
+	success(...a) {
+		this._log('success', ...a);
+	}
+	/** @param {...any} a */
+	warn(...a) {
+		this._log('warn', ...a);
+	}
+	/** @param {...any} a */
+	error(...a) {
+		this._log('error', ...a);
+	}
+	/** @param {...any} a */
+	debug(...a) {
+		this._log('debug', ...a);
+	}
 }
 
-function startupLog(message) {
-  if (shouldPromoteUserFacingLogs) {
-    logger.log({
-      level: 'warn',
-      message,
-      displayLevel: 'startup',
-    });
-    return;
-  }
+export const logger = new Logger();
 
-  logger.log({
-    level: 'info',
-    message,
-    displayLevel: 'startup',
-  });
-}
-
-function shutdownLog(message) {
-  if (shouldPromoteUserFacingLogs) {
-    logger.log({
-      level: 'warn',
-      message,
-      displayLevel: 'status',
-    });
-    return;
-  }
-
-  logger.log({
-    level: 'info',
-    message,
-    displayLevel: 'status',
-  });
-}
-
-export { logger, startupLog, shutdownLog };
-
-export default logger;
+/**
+ * Project: Onyx
+ * Author: Onyx 
+ * Organization: Onyx
+ * GitHub: https://github.com/Onyx-dev07
+ * License: Custom
+ *
+ * © 2026 Onyx. All rights reserved.
+ */

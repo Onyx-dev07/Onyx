@@ -1,39 +1,61 @@
 {
   "name": "onyx-bot",
-  "version": "3.0.0",
-  "description": "Onyx - Modular community and security bot. TitanBot feature core merged with the Onyx security suite.",
-  "main": "src/app.js",
+  "version": "4.0.0",
+  "description": "Onyx - a modular Discord bot for invite tracking, giveaways, moderation, and server automation.",
+  "main": "src/bot.js",
   "type": "module",
   "scripts": {
-    "start": "node src/app.js",
-    "migrate": "node scripts/migrate.js apply",
-    "migrate:check": "node scripts/migrate.js check",
-    "migrate:status": "node scripts/migrate.js status",
-    "migrate:keys": "node scripts/migrate-keys.js",
-    "migrate:keys:dry": "node scripts/migrate-keys.js --dry-run",
-    "backup:db": "node scripts/backup.js",
-    "restore:db": "node scripts/restore.js",
-    "backup:drill": "node scripts/restore-drill.js"
+    "start": "node src/bot.js",
+    "format": "prettier --write \"src/**/*.js\""
   },
-  "dependencies": {
-    "@discordjs/rest": "^2.6.1",
-    "@napi-rs/canvas": "^1.1.1",
-    "axios": "^1.15.2",
-    "chalk": "^4.1.2",
-    "discord.js": "^14.26.4",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "node-cron": "^4.2.1",
-    "pg": "^8.11.3",
-    "winston": "^3.19.0",
-    "winston-daily-rotate-file": "^5.0.0",
-    "zod": "^3.25.76"
+  "imports": {
+    "#commands/*": "./src/commands/*.js",
+    "#command": "./src/structures/classes/command.js",
+    "#context": "./src/structures/classes/context.js",
+    "#config": "./src/config/config.js",
+    "#emoji": "./src/config/emoji.js",
+    "#dbManager": "./src/database/manager.js",
+    "#structures/*": "./src/structures/*.js",
+    "#database/*": "./src/database/*.js",
+    "#config/*": "./src/config/*.js",
+    "#utils": "./src/utils/index.js",
+    "#utils/integrity": "./src/utils/integrity.js",
+    "#timerUtils": "./src/utils/timerUtils.js",
+    "#giveawayUtils": "./src/utils/giveawayUtils.js",
+    "#events/*": "./src/events/*.js",
+    "#handlers/*": "./src/structures/handlers/*.js",
+    "#classes/*": "./src/structures/classes/*.js",
+    "#db/*": "./src/database/*.js",
+    "#dbRepo/*": "./src/database/repositories/*.js",
+    "#dbServices/*": "./src/database/services/*.js",
+    "#src/*": "./src/*.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "discord.js",
+    "onyx",
+    "modular",
+    "invite-tracker",
+    "giveaway"
+  ],
+  "author": "Onyx",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://github.com/Onyx-dev07/Onyx",
+  "bugs": {
+    "url": "https://discord.gg/QnWNz2dKCE"
   },
   "engines": {
     "node": ">=20.10.0"
   },
-  "overrides": {
-    "form-data": "^4.0.6",
-    "undici": "^6.27.0"
+  "dependencies": {
+    "@discordjs/rest": "^2.6.1",
+    "discord-api-types": "^0.38.48",
+    "discord.js": "^14.25.1",
+    "dokdo": "^1.0.1",
+    "dotenv": "^17.2.3",
+    "fs-extra": "^11.3.3",
+    "mongoose": "^9.3.3",
+    "prettier": "^3.8.1"
   }
 }

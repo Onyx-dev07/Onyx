@@ -1,68 +1,74 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { moderationEmbed } from '../../utils/embeds.js';
-import { logger } from '../../utils/logger.js';
-import { ModerationService } from '../../services/moderation/moderationService.js';
-import { replyUserError, ErrorTypes } from '../../utils/errorHandler.js';
-import { InteractionHelper } from '../../utils/interactionHelper.js';
+// Onyx Discord Bot
+// Author: Onyx
+import { Command } from '#command';
+import {
+        MessageFlags,
+        PermissionFlagsBits,
+        ApplicationCommandOptionType,
+} from 'discord.js';
+import { emoji } from '#emoji';
 
-export default {
-    data: new SlashCommandBuilder()
-        .setName("unban")
-        .setDescription("Unban a user from the server")
-        .addStringOption(option =>
-            option
-                .setName("target")
-                .setDescription("The ID (or mention) of the user to unban")
-                .setRequired(true),
-        )
-        .addStringOption(option =>
-            option.setName("reason")
-                .setDescription("Reason for the unban")
-                .setRequired(false),
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.BanMembers),
-    category: "moderation",
-
-    async execute(interaction, config, client) {
-        const deferSuccess = await InteractionHelper.safeDefer(interaction);
-        if (!deferSuccess) {
-            logger.warn(`Unban interaction defer failed`, {
-                userId: interaction.user.id,
-                guildId: interaction.guildId,
-                commandName: 'unban',
-            });
-            return;
+class UnbanCommand extends Command {
+        constructor() {
+                super({
+                        name: 'unban',
+                        description: 'Unbans a banned user from a Discord server',
+                        usage: 'unban <userID>',
+                        cooldown: 5,
+                        minArgs: 1,
+                        examples: ['unban 123456789012345678'],
+                        userPermissions: [PermissionFlagsBits.BanMembers],
+                        permissions: [PermissionFlagsBits.BanMembers],
+                        enabledSlash: true,
+                        slashData: {
+                                name: 'unban',
+                                description: 'Unbans a banned user from a Discord server',
+                                defaultMemberPermissions: PermissionFlagsBits.BanMembers,
+                                options: [
+                                        {
+                                                type: ApplicationCommandOptionType.String,
+                                                name: 'userid',
+                                                description: 'The user ID to unban',
+                                                required: true,
+                                        },
+                                ],
+                        },
+                });
         }
 
-        const rawTarget = interaction.options.getString("target");
-        const targetId = rawTarget.replace(/[<@!>]/g, '').trim();
+        async execute({ ctx }) {
+                if (!ctx.guild) {
+                        return ctx.reply({ content: 'This command can only be used in a server.', flags: MessageFlags.Ephemeral });
+                }
 
-        if (!/^\d{17,20}$/.test(targetId)) {
-            return replyUserError(interaction, {
-                type: ErrorTypes.USER_INPUT,
-                message: 'Please provide a valid user ID or mention.',
-            });
+                const userId = ctx.isSlash
+                        ? ctx.options.getString('userid')
+                        : ctx.args[0]?.replace(/[<@!>]/g, '');
+
+                if (!userId || !/^\d{17,20}$/.test(userId)) {
+                        return ctx.reply({ content: `${emoji.cross} Please provide a valid user ID.`, flags: MessageFlags.Ephemeral });
+                }
+
+                const ban = await ctx.guild.bans.fetch(userId).catch(() => null);
+
+                if (!ban) {
+                        return ctx.reply({ content: `${emoji.cross} That user is not banned.`, flags: MessageFlags.Ephemeral });
+                }
+
+                await ctx.guild.members.unban(userId).catch(() => null);
+
+                await ctx.reply({ content: `**${ban.user.displayName ?? ban.user.username}** has been unbanned` });
         }
+}
 
-        const targetUser = await client.users.fetch(targetId).catch(() => null);
-        if (!targetUser) {
-            return replyUserError(interaction, {
-                type: ErrorTypes.USER_INPUT,
-                message: `Could not find a user with the ID \`${targetId}\`.`,
-            });
-        }
+export default new UnbanCommand();
 
-        const reason = interaction.options.getString("reason") || "No reason provided";
-
-        await ModerationService.unbanUser({
-            guild: interaction.guild,
-            user: targetUser,
-            moderator: interaction.member,
-            reason,
-        });
-
-        await InteractionHelper.safeEditReply(interaction, {
-            embeds: [moderationEmbed(`🔓 <@${targetUser.id}> unbanned.`, 'success')],
-        });
-    },
-};
+/**
+ * Project: Onyx
+ * Author: Onyx 
+ * Organization: Onyx
+ * GitHub: https://github.com/Onyx-dev07
+ * License: Custom
+ *
+ * © 2026 Onyx. All rights reserved.
+ */
