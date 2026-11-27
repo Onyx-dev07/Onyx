@@ -85,7 +85,7 @@ export const replyPanel = (ctx, options) =>
 export const tick = () => emoji.get('tick', '✅');
 
 /** Failure marker from the configured emoji file. */
-export const cross = () => emoji.get('cross', ':cross:');
+export const cross = () => emoji.get('cross', '❌');
 
 /**
  * Builds a standard error panel with the configured cross marker.
@@ -137,7 +137,7 @@ export const replyInteractionPanel = (interaction, title, lines, options = {}) =
 
 const FAILURE_PATTERN =
         /\b(?:could not|couldn't|cannot|can't|invalid|missing|not found|no\b|provide|please\b|only\b|type must|blacklisted|failed|error|not your|belongs to someone else|disabled|ignored|unable|high enough|need the|already|does not have|has no|not configured|not in|aborted|maximum)\b/i;
-const MARKER_PATTERN = /(?:\p{Extended_Pictographic}|<a?:\w+:\d+>|:cross:|:tick:)/u;
+const MARKER_PATTERN = /(?:\p{Extended_Pictographic}|<a?:\w+:\d+>)/u;
 
 const titleize = (value) =>
         String(value ?? 'Onyx')
