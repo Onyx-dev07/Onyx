@@ -35,7 +35,7 @@ class DeletePrefixCommand extends Command {
                         return ctx.reply('This command is only available in servers.');
                 }
 
-                await db.guild.setPrefixes(ctx.guild.id, [config.prefix]);
+                await db.guild.setPrefixes(ctx.guild.id, []);
 
                 const now = new Date().toLocaleTimeString('en-IN', {
                         hour: 'numeric',

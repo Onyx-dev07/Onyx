@@ -45,6 +45,10 @@ class SetPrefixCommand extends Command {
 
                 const newPrefix = ctx.args?.[0] ?? ctx.options?.getString('prefix');
 
+                if (!newPrefix || typeof newPrefix !== 'string' || !newPrefix.trim()) {
+                        return ctx.reply('Please provide a valid prefix.');
+                }
+
                 if (newPrefix.length > 10) {
                         return ctx.reply('Prefix cannot be longer than 10 characters.');
                 }

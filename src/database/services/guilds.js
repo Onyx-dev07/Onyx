@@ -39,16 +39,11 @@ export class GuildService {
          */
         async getPrefixes(guildId) {
                 const guild = await this.ensureGuild(guildId);
-                const configured = config.prefix || ',';
+                const configured = config.prefix || '!';
+                const custom = (Array.isArray(guild.prefixes) ? guild.prefixes : [])
+                        .filter((prefix) => typeof prefix === 'string' && prefix.trim());
 
-                return [
-                        ...new Set([
-                                configured,
-                                ',',
-                                '!',
-                                ...(Array.isArray(guild.prefixes) ? guild.prefixes : []),
-                        ]),
-                ].filter(Boolean);
+                return [...new Set(custom.length ? custom : [configured])];
         }
 
         /**

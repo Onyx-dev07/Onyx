@@ -113,7 +113,7 @@
 
   On Render Web Services, Onyx automatically binds to `$PORT` and serves `GET /health` for port checks. No extra configuration is needed.
 
-  The default command prefix is `,` and `!` is always accepted as a fallback. It can be changed globally with `PREFIX` or per guild with `,setprefix`.
+  The default command prefix is `!`. Server managers can change it with `!setprefix <prefix>` and reset it with `!deleteprefix`.
 
   ---
 

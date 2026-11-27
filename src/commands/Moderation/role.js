@@ -22,16 +22,19 @@ import {
         tick,
 } from '../../utils/moderation.js';
 
-const USAGE_LINES = [
-        ',role assign <@user> <role1, role2> · ,role remove <@user> <role1, role2>',
-        ',role create <name1, name2> · ,role delete <roles | all> · ,role edit <@role>',
-        ',role info <@role> · ,role icon <@role> · ,role history <@user> [page]',
-        ',role limit <@role> [max|0] · ,role lock <@role>',
-        ',role autorole add <@role> <add|remove> <everyone|humans|bots> [delay] [remove_on_change]',
-        ',role autorole list · remove <@role> · reset',
-        ',role mass <all|humans|bots> <@role> <add|remove> · ,role mass cancel',
-        ',role temp assign <@user> <@role> <duration> [reason] · ,role temp extend <@user> <@role> <duration>',
-];
+const usageLines = (ctx) => {
+        const prefix = ctx?.prefix || '!';
+        return [
+                `${prefix}role assign <@user> <role1, role2> · ${prefix}role remove <@user> <role1, role2>`,
+                `${prefix}role create <name1, name2> · ${prefix}role delete <roles | all> · ${prefix}role edit <@role>`,
+                `${prefix}role info <@role> · ${prefix}role icon <@role> · ${prefix}role history <@user> [page]`,
+                `${prefix}role limit <@role> [max|0] · ${prefix}role lock <@role>`,
+                `${prefix}role autorole add <@role> <add|remove> <everyone|humans|bots> [delay] [remove_on_change]`,
+                `${prefix}role autorole list · ${prefix}role autorole remove <@role> · ${prefix}role autorole reset`,
+                `${prefix}role mass <all|humans|bots> <@role> <add|remove> · ${prefix}role mass cancel`,
+                `${prefix}role temp assign <@user> <@role> <duration> [reason] · ${prefix}role temp extend <@user> <@role> <duration>`,
+        ];
+};
 
 const HISTORY_PAGE_SIZE = 10;
 const ACTION_ALIASES = {
@@ -132,10 +135,10 @@ class RoleCommand extends Command {
                                 'role <assign|remove|create|delete|edit|info|icon|history|limit|lock|autorole|mass|temp> ...',
                         cooldown: 3,
                         examples: [
-                                ',role assign @user @Role1, @Role2',
-                                ',role create Admin, Moderator',
-                                ',role lock @Role',
-                                ',role temp assign @user @Role 30m',
+                                'role assign @user @Role1, @Role2',
+                                'role create Admin, Moderator',
+                                'role lock @Role',
+                                'role temp assign @user @Role 30m',
                         ],
                         userPermissions: [PermissionFlagsBits.ManageRoles],
                         permissions: [PermissionFlagsBits.ManageRoles],
@@ -177,7 +180,7 @@ class RoleCommand extends Command {
                 return ctx.reply(
                         panelPayload({
                                 title: 'Role Management Usage',
-                                lines: USAGE_LINES,
+                                lines: usageLines(ctx),
                                 author: ctx.author,
                         }),
                 );
@@ -189,7 +192,7 @@ class RoleCommand extends Command {
                                 title: 'Role Management Error',
                                 lines: [
                                         `${cross()} ${message}`,
-                                        ...(showUsage ? ['', ...USAGE_LINES] : []),
+                                        ...(showUsage ? ['', ...usageLines(ctx)] : []),
                                 ],
                                 author: ctx.author,
                         }),
@@ -404,7 +407,7 @@ class RoleCommand extends Command {
                         return replyPanel(ctx, {
                                 title: 'Role Management',
                                 lines: [
-                                        `${cross()} Provide fields to edit, for example: \`,role edit ${roleMention(role)} name: Staff color: #ffffff hoist: true\`.`,
+                                        `${cross()} Provide fields to edit, for example: \`${ctx.prefix || '!'}role edit ${roleMention(role)} name: Staff color: #ffffff hoist: true\`.`,
                                 ],
                         });
                 }
