@@ -6,6 +6,7 @@ import {
         PermissionFlagsBits,
         ApplicationCommandOptionType,
 } from 'discord.js';
+import { panelPayload, tick } from '../../utils/moderation.js';
 
 class EraseCommand extends Command {
         constructor() {
@@ -52,7 +53,13 @@ class EraseCommand extends Command {
 
                 await ctx.channel.bulkDelete(amount, true).catch(() => null);
 
-                const msg = await ctx.channel.send({ content: `Deleted **${amount}** messages.` });
+                const msg = await ctx.channel.send(
+                        panelPayload({
+                                title: 'Erase',
+                                lines: [`${tick()} Deleted **${amount}** messages.`],
+                                author: ctx.author,
+                        }),
+                );
 
                 setTimeout(() => msg?.delete?.().catch(() => null), 3000);
         }

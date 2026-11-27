@@ -12,36 +12,29 @@ import { config } from '#config';
 import { validateCommand, canBotSendMessages, logger, buildLeaderboard, buildInviteLeaderboard, PER_PAGE, buildInvitedList, buildServerList, SL_PER_PAGE } from '#utils';
 import { CommandContext } from '#context';
 import { db } from '#dbManager';
-import { emoji } from '#emoji';
 import { handleGreetInteraction } from './handlers/greetHandler.js';
-
-const errorContainer = new ContainerBuilder();
-const errorTitle = new TextDisplayBuilder();
-const errorSeparator = new SeparatorBuilder()
-        .setSpacing(SeparatorSpacingSize.Small)
-        .setDivider(true);
-const errorDescription = new TextDisplayBuilder();
+import {
+        cross,
+        panelPayload,
+        replyInteractionPanel,
+} from '../../../utils/moderation.js';
 
 const sendError = async (interaction, title, description, forceEphemeral = false) => {
         if (!interaction || !title || !description) return;
 
-        errorContainer.components.length = 0;
-        errorContainer.setAccentColor(config.colors?.error || 0xed4245);
-        errorTitle.data.content = `## ${emoji?.cross || '❌'} ${title}`;
-        errorDescription.data.content = description;
-        errorContainer
-                .addTextDisplayComponents(errorTitle)
-                .addSeparatorComponents(errorSeparator)
-                .addTextDisplayComponents(errorDescription);
-
         try {
                 const canSend = interaction.channel ? canBotSendMessages(interaction.channel) : false;
+                const payload = panelPayload({
+                        title,
+                        lines: [`${cross()} ${description}`],
+                        author: interaction.user,
+                });
                 const flags =
                         !canSend || forceEphemeral
-                                ? MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
-                                : MessageFlags.IsComponentsV2;
+                                ? payload.flags | MessageFlags.Ephemeral
+                                : payload.flags;
 
-                const reply = { components: [errorContainer], flags };
+                const reply = { ...payload, flags };
 
                 if (interaction.deferred || interaction.replied) {
                         await interaction.followUp(reply).catch(() => {});
@@ -154,29 +147,32 @@ const handleChatInputCommand = async (interaction, client) => {
                 }
 
                 if (isUserBlacklisted || isGuildBlacklisted) {
-                        return interaction
-                                .reply({
-                                        content: 'You or this server is blacklisted.',
-                                        flags: MessageFlags.Ephemeral,
-                                })
-                                .catch(() => {});
+                        return sendError(
+                                interaction,
+                                'Blacklisted',
+                                'You or this server is blacklisted.',
+                                true,
+                        );
                 }
 
                 if (config.ownerOnly && !config.ownerIds.includes(userId)) {
-                        await interaction
-                                .reply({ content: `${emoji?.lock || '🔒'} Owner only mode is enabled.` })
-                                .catch(() => {});
+                        await sendError(
+                                interaction,
+                                'Owner Only',
+                                'Owner only mode is enabled.',
+                                true,
+                        );
                         setTimeout(() => interaction.deleteReply().catch(() => {}), 3000);
                         return;
                 }
 
                 if (isChannelIgnored) {
-                        return interaction
-                                .reply({
-                                        content: '**Ignored Channel** Commands are disabled in this channel.',
-                                        flags: MessageFlags.Ephemeral,
-                                })
-                                .catch(() => {});
+                        return sendError(
+                                interaction,
+                                'Ignored Channel',
+                                'Commands are disabled in this channel.',
+                                true,
+                        );
                 }
 
                 const commandToExecute = getCommandFile(interaction, client);
@@ -276,10 +272,12 @@ const handleInvitedComponent = async (interaction) => {
                 const requesterId = parts[5];
 
                 if (interaction.user.id !== requesterId) {
-                        return interaction.reply({
-                                content: 'This list belongs to someone else.',
-                                flags: MessageFlags.Ephemeral,
-                        }).catch(() => {});
+                        return replyInteractionPanel(
+                                interaction,
+                                'Invited List',
+                                `${cross()} This list belongs to someone else.`,
+                                { ephemeral: true },
+                        ).catch(() => {});
                 }
 
                 if (action === 'stop') {
@@ -339,10 +337,12 @@ const handleMessageComponent = async (interaction, client) => {
                         const userId  = parts[2];
 
                         if (interaction.user.id !== userId) {
-                                return interaction.reply({
-                                        content: 'This server list belongs to someone else.',
-                                        flags: MessageFlags.Ephemeral,
-                                }).catch(() => {});
+                                return replyInteractionPanel(
+                                        interaction,
+                                        'Server List',
+                                        `${cross()} This server list belongs to someone else.`,
+                                        { ephemeral: true },
+                                ).catch(() => {});
                         }
 
                         const newSort = interaction.values?.[0] === 'lth' ? 'lth' : 'htl';
@@ -374,10 +374,12 @@ const handleMessageComponent = async (interaction, client) => {
                         const sort   = parts[4] === 'lth' ? 'lth' : 'htl';
 
                         if (interaction.user.id !== userId) {
-                                return interaction.reply({
-                                        content: 'This server list belongs to someone else.',
-                                        flags: MessageFlags.Ephemeral,
-                                }).catch(() => {});
+                                return replyInteractionPanel(
+                                        interaction,
+                                        'Server List',
+                                        `${cross()} This server list belongs to someone else.`,
+                                        { ephemeral: true },
+                                ).catch(() => {});
                         }
 
                         if (action === 'stop') {
@@ -421,10 +423,12 @@ const handleMessageComponent = async (interaction, client) => {
                         const userId  = parts[4];
 
                         if (interaction.user.id !== userId) {
-                                return interaction.reply({
-                                        content: 'This leaderboard belongs to someone else.',
-                                        flags: MessageFlags.Ephemeral,
-                                }).catch(() => {});
+                                return replyInteractionPanel(
+                                        interaction,
+                                        'Leaderboard',
+                                        `${cross()} This leaderboard belongs to someone else.`,
+                                        { ephemeral: true },
+                                ).catch(() => {});
                         }
 
                         if (action === 'stop') {
@@ -474,10 +478,12 @@ const handleMessageComponent = async (interaction, client) => {
                 const userId  = parts[4];
 
                 if (interaction.user.id !== userId) {
-                        return interaction.reply({
-                                content: 'This leaderboard belongs to someone else.',
-                                flags: MessageFlags.Ephemeral,
-                        }).catch(() => {});
+                        return replyInteractionPanel(
+                                interaction,
+                                'Leaderboard',
+                                `${cross()} This leaderboard belongs to someone else.`,
+                                { ephemeral: true },
+                        ).catch(() => {});
                 }
 
                 if (action === 'stop') {

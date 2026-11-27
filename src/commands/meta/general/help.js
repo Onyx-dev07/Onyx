@@ -17,6 +17,7 @@ import { config } from '#config';
 import { emoji } from '#emoji';
 import { db } from '#dbManager';
 import { disableComponents, logger } from '#utils';
+import { cross, replyInteractionPanel } from '../../../utils/moderation.js';
 
 const ACCENT = 0xffffff;
 
@@ -198,10 +199,12 @@ class HelpCommand extends Command {
                         time: 120_000,
                         filter: (i) => {
                                 if (i.user.id !== ctx.author.id) {
-                                        void i.reply({
-                                                content: `${emoji.cross || '❌'} Not your command.`,
-                                                flags: MessageFlags.Ephemeral,
-                                        }).catch(() => {});
+                                        void replyInteractionPanel(
+                                                i,
+                                                'Help',
+                                                `${cross()} Not your command.`,
+                                                { ephemeral: true },
+                                        ).catch(() => {});
                                         return false;
                                 }
                                 return true;

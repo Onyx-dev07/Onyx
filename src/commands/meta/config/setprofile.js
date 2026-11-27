@@ -21,8 +21,12 @@ import {
 import { REST } from '@discordjs/rest';
 import { db } from '#dbManager';
 import { config } from '#config';
-import { emoji } from '#emoji';
 import { disableComponents } from '#utils';
+import {
+        cross,
+        failurePayload,
+        replyInteractionPanel,
+} from '../../../utils/moderation.js';
 
 class SetProfileCommand extends Command {
         constructor() {
@@ -44,19 +48,14 @@ class SetProfileCommand extends Command {
 
         async execute({ ctx }) {
                 if (!ctx.guild) {
-                        const container = new ContainerBuilder();
-                        container.setAccentColor(colors.error);
-                        container.addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(
-                                        `## Server Only
-
-This command can only be used in a server.`,
-                                ),
+                        return ctx.reply(
+                                failurePayload({
+                                        title: 'Server Only',
+                                        lines: 'This command can only be used in a server.',
+                                        author: ctx.author,
+                                        ephemeral: true,
+                                }),
                         );
-                        return ctx.reply({
-                                components: [container],
-                                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-                        });
                 }
                 const container = await this._buildHome(ctx.guild.id);
                 await ctx.reply({
@@ -69,10 +68,12 @@ This command can only be used in a server.`,
                         time: 300_000,
                         filter: (i) => {
                                 if (i.user.id !== ctx.author.id) {
-                                        i.reply({
-                                                content: `${emoji.cross} Not your command dude, Use ur own command `,
-                                                flags: MessageFlags.Ephemeral,
-                                        });
+                                        void replyInteractionPanel(
+                                                i,
+                                                'Set Profile',
+                                                `${cross()} Not your command, use your own command.`,
+                                                { ephemeral: true },
+                                        ).catch(() => {});
                                         return false;
                                 }
                                 return true;
@@ -92,19 +93,12 @@ This command can only be used in a server.`,
                                 }
                         } catch (error) {
                                 if (!interaction.replied && !interaction.deferred) {
-                                        const container = new ContainerBuilder();
-                                        container.setAccentColor(colors.error);
-                                        container.addTextDisplayComponents(
-                                                new TextDisplayBuilder().setContent(
-                                                        `## Error
-
-An error occurred while processing your request.`,
-                                                ),
+                                        await replyInteractionPanel(
+                                                interaction,
+                                                'Error',
+                                                `${cross()} An error occurred while processing your request.`,
+                                                { ephemeral: true },
                                         );
-                                        await interaction.reply({
-                                                components: [container],
-                                                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-                                        });
                                 }
                         }
                 });
@@ -222,17 +216,12 @@ Bot profile has been reset to default`,
                 const cooldownMsg = this._checkCooldown(lastUpdate);
 
                 if (cooldownMsg) {
-                        const container = new ContainerBuilder();
-                        container.setAccentColor(colors.error);
-                        container.addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`## Cooldown Active
-
-${cooldownMsg}`),
+                        return replyInteractionPanel(
+                                interaction,
+                                'Cooldown Active',
+                                [`${cross()} ${cooldownMsg}`],
+                                { ephemeral: true },
                         );
-                        return interaction.reply({
-                                components: [container],
-                                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-                        });
                 }
 
                 const modal = new ModalBuilder()
@@ -371,17 +360,12 @@ Please try again.`,
                 const cooldownMsg = this._checkCooldown(lastUpdate);
 
                 if (cooldownMsg) {
-                        const container = new ContainerBuilder();
-                        container.setAccentColor(colors.error);
-                        container.addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`## Cooldown Active
-
-${cooldownMsg}`),
+                        return replyInteractionPanel(
+                                interaction,
+                                'Cooldown Active',
+                                [`${cross()} ${cooldownMsg}`],
+                                { ephemeral: true },
                         );
-                        return interaction.reply({
-                                components: [container],
-                                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-                        });
                 }
 
                 const modal = new ModalBuilder()
@@ -520,17 +504,12 @@ Please try again.`,
                 const cooldownMsg = this._checkCooldown(lastUpdate);
 
                 if (cooldownMsg) {
-                        const container = new ContainerBuilder();
-                        container.setAccentColor(colors.error);
-                        container.addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`## Cooldown Active
-
-${cooldownMsg}`),
+                        return replyInteractionPanel(
+                                interaction,
+                                'Cooldown Active',
+                                [`${cross()} ${cooldownMsg}`],
+                                { ephemeral: true },
                         );
-                        return interaction.reply({
-                                components: [container],
-                                flags: MessageFlags.Ephemeral | MessageFlags.IsComponentsV2,
-                        });
                 }
 
                 const modal = new ModalBuilder().setCustomId('modal_bio').setTitle('Set Bot Bio');

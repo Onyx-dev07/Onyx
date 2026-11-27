@@ -2,7 +2,7 @@
 // Author: Onyx
 import { Command } from '#command';
 import { MessageFlags, PermissionFlagsBits } from 'discord.js';
-import { emoji } from '#emoji';
+import { cross, panelPayload, tick } from '../../utils/moderation.js';
 import { timerStore, buildPausedComponents, formatTime } from '#timerUtils';
 
 class TPauseCommand extends Command {
@@ -40,15 +40,15 @@ class TPauseCommand extends Command {
 
                 const timer = timerStore.get(messageId);
                 if (!timer) {
-                        return ctx.reply({ content: `${emoji.cross} No active timer found with that message ID.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} No active timer found with that message ID.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (timer.status === 'paused') {
-                        return ctx.reply({ content: `${emoji.cross} That timer is already paused.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} That timer is already paused.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (timer.status === 'ended') {
-                        return ctx.reply({ content: `${emoji.cross} That timer has already ended.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} That timer has already ended.`, flags: MessageFlags.Ephemeral });
                 }
 
                 clearTimeout(timer.timerId);
@@ -64,11 +64,18 @@ class TPauseCommand extends Command {
                         flags: MessageFlags.IsComponentsV2,
                 }).catch(() => null);
 
+                const payload = panelPayload({
+                        title: 'Timer',
+                        lines: [`${tick()} Timer paused.`],
+                        author: ctx.author,
+                        ephemeral: ctx.isSlash,
+                });
+
                 if (ctx.isSlash) {
-                        await ctx.reply({ content: 'Timer paused', flags: MessageFlags.Ephemeral });
+                        await ctx.reply(payload);
                 } else {
                         await ctx.message?.delete().catch(() => null);
-                        const msg = await ctx.channel.send({ content: 'Timer paused' });
+                        const msg = await ctx.channel.send(payload);
                         setTimeout(() => msg.delete().catch(() => null), 3000);
                 }
         }

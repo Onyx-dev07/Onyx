@@ -6,7 +6,7 @@ import {
         PermissionFlagsBits,
         ApplicationCommandOptionType,
 } from 'discord.js';
-import { emoji } from '#emoji';
+import { cross } from '../../utils/moderation.js';
 
 class UnbanCommand extends Command {
         constructor() {
@@ -46,13 +46,13 @@ class UnbanCommand extends Command {
                         : ctx.args[0]?.replace(/[<@!>]/g, '');
 
                 if (!userId || !/^\d{17,20}$/.test(userId)) {
-                        return ctx.reply({ content: `${emoji.cross} Please provide a valid user ID.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} Please provide a valid user ID.`, flags: MessageFlags.Ephemeral });
                 }
 
                 const ban = await ctx.guild.bans.fetch(userId).catch(() => null);
 
                 if (!ban) {
-                        return ctx.reply({ content: `${emoji.cross} That user is not banned.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} That user is not banned.`, flags: MessageFlags.Ephemeral });
                 }
 
                 await ctx.guild.members.unban(userId).catch(() => null);

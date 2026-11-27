@@ -1,12 +1,8 @@
 // Onyx Discord Bot
 // Author: Onyx
 import { Command } from '#command';
-import {
-        MessageFlags,
-        PermissionFlagsBits,
-        ApplicationCommandOptionType,
-} from 'discord.js';
-import { emoji } from '#emoji';
+import { PermissionFlagsBits, ApplicationCommandOptionType } from 'discord.js';
+import { replyFailure, replyPanel, tick } from '../../utils/moderation.js';
 
 const resolveMember = async (ctx) => {
         if (ctx.isSlash) {
@@ -23,12 +19,14 @@ const resolveMember = async (ctx) => {
 
         await ctx.guild.members.fetch().catch(() => {});
         const query = arg.toLowerCase();
-        return ctx.guild.members.cache.find(
-                (m) =>
-                        m.user.username.toLowerCase() === query ||
-                        m.displayName.toLowerCase() === query ||
-                        m.user.globalName?.toLowerCase() === query,
-        ) ?? null;
+        return (
+                ctx.guild.members.cache.find(
+                        (m) =>
+                                m.user?.username?.toLowerCase() === query ||
+                                m.displayName?.toLowerCase() === query ||
+                                m.user?.globalName?.toLowerCase() === query,
+                ) ?? null
+        );
 };
 
 class BanCommand extends Command {
@@ -61,35 +59,44 @@ class BanCommand extends Command {
 
         async execute({ ctx }) {
                 if (!ctx.guild) {
-                        return ctx.reply({ content: 'This command can only be used in a server.', flags: MessageFlags.Ephemeral });
+                        return replyFailure(ctx, 'Ban Error', 'This command can only be used in a server.');
                 }
 
                 const member = await resolveMember(ctx);
-
-                if (!member) {
-                        return ctx.reply({ content: `${emoji.cross} Could not find that member.`, flags: MessageFlags.Ephemeral });
-                }
-
+                if (!member) return replyFailure(ctx, 'Ban Error', 'Could not find that member.');
                 if (member.id === ctx.author.id) {
-                        return ctx.reply({ content: `${emoji.cross} You cannot ban yourself.`, flags: MessageFlags.Ephemeral });
+                        return replyFailure(ctx, 'Ban Error', 'You cannot ban yourself.');
                 }
-
                 if (member.id === ctx.client.user.id) {
-                        return ctx.reply({ content: `${emoji.cross} I cannot ban myself.`, flags: MessageFlags.Ephemeral });
+                        return replyFailure(ctx, 'Ban Error', 'I cannot ban myself.');
                 }
 
                 const botMember = ctx.guild.members.cache.get(ctx.client.user.id);
-                if (botMember.roles.highest.position <= member.roles.highest.position) {
-                        return ctx.reply({ content: `${emoji.cross} I don't have a high enough role to ban this member.`, flags: MessageFlags.Ephemeral });
+                if (botMember?.roles?.highest?.position <= member.roles.highest.position) {
+                        return replyFailure(
+                                ctx,
+                                'Ban Error',
+                                "I don't have a high enough role to ban this member.",
+                        );
                 }
 
-                if (ctx.member.roles.highest.position <= member.roles.highest.position && ctx.guild.ownerId !== ctx.author.id) {
-                        return ctx.reply({ content: `${emoji.cross} You don't have a high enough role to ban this member.`, flags: MessageFlags.Ephemeral });
+                if (
+                        ctx.member.roles.highest.position <= member.roles.highest.position &&
+                        ctx.guild.ownerId !== ctx.author.id
+                ) {
+                        return replyFailure(
+                                ctx,
+                                'Ban Error',
+                                "You don't have a high enough role to ban this member.",
+                        );
                 }
 
                 await member.ban().catch(() => null);
 
-                await ctx.reply({ content: `**${member.displayName}** has been banned` });
+                return replyPanel(ctx, {
+                        title: 'Moderation',
+                        lines: [`${tick()} **${member.displayName}** has been banned.`],
+                });
         }
 }
 
@@ -97,7 +104,7 @@ export default new BanCommand();
 
 /**
  * Project: Onyx
- * Author: Onyx 
+ * Author: Onyx
  * Organization: Onyx
  * GitHub: https://github.com/Onyx-dev07
  * License: Custom

@@ -6,7 +6,7 @@ import {
         PermissionFlagsBits,
         ApplicationCommandOptionType,
 } from 'discord.js';
-import { emoji } from '#emoji';
+import { cross } from '../../utils/moderation.js';
 
 const resolveMember = async (ctx) => {
         if (ctx.isSlash) {
@@ -67,24 +67,24 @@ class KickCommand extends Command {
                 const member = await resolveMember(ctx);
 
                 if (!member) {
-                        return ctx.reply({ content: `${emoji.cross} Could not find that member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} Could not find that member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (member.id === ctx.author.id) {
-                        return ctx.reply({ content: `${emoji.cross} You cannot kick yourself.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} You cannot kick yourself.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (member.id === ctx.client.user.id) {
-                        return ctx.reply({ content: `${emoji.cross} I cannot kick myself.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} I cannot kick myself.`, flags: MessageFlags.Ephemeral });
                 }
 
                 const botMember = ctx.guild.members.cache.get(ctx.client.user.id);
                 if (botMember.roles.highest.position <= member.roles.highest.position) {
-                        return ctx.reply({ content: `${emoji.cross} I don't have a high enough role to kick this member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} I don't have a high enough role to kick this member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (ctx.member.roles.highest.position <= member.roles.highest.position && ctx.guild.ownerId !== ctx.author.id) {
-                        return ctx.reply({ content: `${emoji.cross} You don't have a high enough role to kick this member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} You don't have a high enough role to kick this member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 await member.kick().catch(() => null);

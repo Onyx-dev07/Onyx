@@ -1,5 +1,7 @@
 // Onyx Discord Bot
 // Author: Onyx
+import { toThemedPayload } from '../../utils/moderation.js';
+
 /**
  * Command Context class
  * Unified context for both prefix and slash commands
@@ -101,19 +103,35 @@ export class CommandContext {
         }
 
         /**
+         * Applies the shared Onyx panel theme to plain content replies.
+         * @param {Object|string} options Discord reply options.
+         * @returns {Object} Themed reply options.
+         */
+        themed(options) {
+                let title = 'Onyx';
+                try {
+                        title = this.commandName;
+                } catch {
+                        title = 'Onyx';
+                }
+                return toThemedPayload(options, this.author, title);
+        }
+
+        /**
          * Replies to the command
          * @async
          * @param {Object} options - Reply options (Discord message options)
          * @returns {Promise<Message>} The reply message
          */
         async reply(options) {
+                const payload = this.themed(options);
                 if (this.isSlash) {
                         if (this.interaction.deferred) {
-                                return await this.interaction.editReply(options);
+                                return await this.interaction.editReply(payload);
                         }
-                        return await this.interaction.reply(options);
+                        return await this.interaction.reply(payload);
                 }
-                this._replyMessage = await this.message.reply(options);
+                this._replyMessage = await this.message.reply(payload);
                 return this._replyMessage;
         }
 
@@ -125,13 +143,14 @@ export class CommandContext {
          * @throws {Error} If no initial reply exists for prefix commands
          */
         async editReply(options) {
+                const payload = this.themed(options);
                 if (this.isSlash) {
-                        return await this.interaction.editReply(options);
+                        return await this.interaction.editReply(payload);
                 }
                 if (!this._replyMessage) {
                         throw new Error('Cannot edit reply: no initial reply found');
                 }
-                return await this._replyMessage.edit(options);
+                return await this._replyMessage.edit(payload);
         }
 
         /**
@@ -159,10 +178,11 @@ export class CommandContext {
          * @returns {Promise<Message>} The follow-up message
          */
         async followUp(options) {
+                const payload = this.themed(options);
                 if (this.isSlash) {
-                        return await this.interaction.followUp(options);
+                        return await this.interaction.followUp(payload);
                 }
-                return await this.message.channel.send(options);
+                return await this.message.channel.send(payload);
         }
 
         /**

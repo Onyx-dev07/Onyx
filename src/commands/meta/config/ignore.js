@@ -15,10 +15,14 @@ import {
         ChannelType,
 } from 'discord.js';
 import { db } from '#dbManager';
-import { emoji } from '#emoji';
 import { config } from '#config';
 
 import { disableComponents, logger } from '#utils';
+import {
+        cross,
+        replyInteractionPanel,
+        tick,
+} from '../../../utils/moderation.js';
 
 class IgnoreCommand extends Command {
         constructor() {
@@ -137,10 +141,12 @@ ${feedback}` : '';
                         time: 300_000,
                         filter: (i) => {
                                 if (i.user.id !== ctx.author.id) {
-                                        i.reply({
-                                                content: `${emoji.cross} Not your command dude, Use ur own command `,
-                                                flags: MessageFlags.Ephemeral,
-                                        });
+                                        void replyInteractionPanel(
+                                                i,
+                                                'Ignore Channels',
+                                                `${cross()} Not your command, use your own command.`,
+                                                { ephemeral: true },
+                                        ).catch(() => {});
                                         return false;
                                 }
                                 return true;
@@ -181,10 +187,12 @@ ${feedback}` : '';
                                 const invalidCount = i.values.length - validChannels.length;
 
                                 if (invalidCount > 0) {
-                                        await i.reply({
-                                                content: `${emoji.cross} Cannot add ${invalidCount} channel${invalidCount > 1 ? 's' : ''} without view permission`,
-                                                flags: MessageFlags.Ephemeral,
-                                        });
+                                        await replyInteractionPanel(
+                                                i,
+                                                'Ignore Channels',
+                                                `${cross()} Cannot add ${invalidCount} channel${invalidCount > 1 ? 's' : ''} without view permission.`,
+                                                { ephemeral: true },
+                                        );
                                 } else {
                                         await i.deferUpdate();
                                 }
@@ -205,7 +213,7 @@ ${feedback}` : '';
                                                         this._renderIgnoreEditor(
                                                                 ctx,
                                                                 current,
-                                                                `${emoji.cross} Cannot ignore channel without view permission`,
+                                                                `${cross()} Cannot ignore channel without view permission`,
                                                         ),
                                                 ],
                                         });
@@ -229,7 +237,7 @@ ${feedback}` : '';
                                                         this._renderIgnoreEditor(
                                                                 ctx,
                                                                 current,
-                                                                `${emoji.cross} Channel already in list`,
+                                                                `${cross()} Channel already in list`,
                                                         ),
                                                 ],
                                         });
@@ -255,7 +263,7 @@ ${feedback}` : '';
                                                 this._renderIgnoreEditor(
                                                         ctx,
                                                         updated,
-                                                        `${emoji.check} Current channel added`,
+                                                        `${tick()} Current channel added`,
                                                 ),
                                         ],
                                 });
@@ -281,7 +289,7 @@ ${feedback}` : '';
                                                         this._renderIgnoreEditor(
                                                                 ctx,
                                                                 current,
-                                                                `${emoji.cross} Channel not in a category`,
+                                                                `${cross()} Channel not in a category`,
                                                         ),
                                                 ],
                                         });
@@ -317,7 +325,7 @@ ${feedback}` : '';
                                                         this._renderIgnoreEditor(
                                                                 ctx,
                                                                 current,
-                                                                `${emoji.cross} No new channels to add from category`,
+                                                                `${cross()} No new channels to add from category`,
                                                         ),
                                                 ],
                                         });
@@ -344,7 +352,7 @@ ${feedback}` : '';
                                                 this._renderIgnoreEditor(
                                                         ctx,
                                                         updated,
-                                                        `${emoji.check} Added ${newChannels.length} from ${parent?.name || 'category'}`,
+                                                        `${tick()} Added ${newChannels.length} from ${parent?.name || 'category'}`,
                                                 ),
                                         ],
                                 });
@@ -366,7 +374,7 @@ ${feedback}` : '';
                                 const updated = await db.guild.getIgnoredChannels(ctx.guild.id);
                                 await msg.edit({
                                         components: [
-                                                this._renderIgnoreEditor(ctx, updated, `${emoji.check} All channels removed`),
+                                                this._renderIgnoreEditor(ctx, updated, `${tick()} All channels removed`),
                                         ],
                                 });
 

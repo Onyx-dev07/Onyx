@@ -7,6 +7,7 @@ import {
         ApplicationCommandOptionType,
 } from 'discord.js';
 import { emoji } from '#emoji';
+import { cross, panelPayload } from '../../utils/moderation.js';
 
 const DEFAULT_DURATION_MS = 24 * 60 * 60 * 1000;
 const MAX_DURATION_MS = 28 * 24 * 60 * 60 * 1000;
@@ -102,24 +103,24 @@ class MuteCommand extends Command {
                 const member = await resolveMember(ctx);
 
                 if (!member) {
-                        return ctx.reply({ content: `${emoji.cross} Could not find that member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} Could not find that member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (member.id === ctx.author.id) {
-                        return ctx.reply({ content: `${emoji.cross} You cannot mute yourself.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} You cannot mute yourself.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (member.id === ctx.client.user.id) {
-                        return ctx.reply({ content: `${emoji.cross} I cannot mute myself.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} I cannot mute myself.`, flags: MessageFlags.Ephemeral });
                 }
 
                 const botMember = ctx.guild.members.cache.get(ctx.client.user.id);
                 if (botMember.roles.highest.position <= member.roles.highest.position) {
-                        return ctx.reply({ content: `${emoji.cross} I don't have a high enough role to mute this member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} I don't have a high enough role to mute this member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (ctx.member.roles.highest.position <= member.roles.highest.position && ctx.guild.ownerId !== ctx.author.id) {
-                        return ctx.reply({ content: `${emoji.cross} You don't have a high enough role to mute this member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} You don't have a high enough role to mute this member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 let duration = DEFAULT_DURATION_MS;
@@ -142,14 +143,20 @@ class MuteCommand extends Command {
                 }
 
                 if (duration > MAX_DURATION_MS) {
-                        return ctx.reply({ content: `${emoji.cross} Mute duration cannot exceed 28 days.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} Mute duration cannot exceed 28 days.`, flags: MessageFlags.Ephemeral });
                 }
 
                 await member.timeout(duration, reason ?? undefined);
 
-                const dmSent = await member.send({
-                        content: `You have been muted in **${ctx.guild.name}** for reason: ${reason ?? 'None'}`,
-                }).then(() => true).catch(() => false);
+                const dmSent = await member.send(
+                        panelPayload({
+                                title: 'Muted',
+                                lines: [
+                                        `You have been muted in **${ctx.guild.name}** for reason: ${reason ?? 'None'}.`,
+                                ],
+                                author: ctx.author,
+                        }),
+                ).then(() => true).catch(() => false);
 
                 await ctx.reply({
                         content: `${emoji.tick} | **${member.displayName}** has been muted for reason: ${reason ?? 'None'}${dmSent ? ', notified the member' : ''}`,

@@ -3,6 +3,7 @@
 import { Command } from '#command';
 import { MessageFlags, PermissionFlagsBits } from 'discord.js';
 import { emoji } from '#emoji';
+import { cross } from '../../utils/moderation.js';
 import { giveawayStore, endGiveaway } from '#giveawayUtils';
 
 class GEndCommand extends Command {
@@ -41,14 +42,14 @@ class GEndCommand extends Command {
                 const giveaway = giveawayStore.get(messageId);
                 if (!giveaway) {
                         return ctx.reply({
-                                content: `${emoji.cross} No giveaway found with that message ID.`,
+                                content: `${cross()} No giveaway found with that message ID.`,
                                 flags: MessageFlags.Ephemeral,
                         });
                 }
 
                 if (giveaway.status === 'ended') {
                         return ctx.reply({
-                                content: `${emoji.cross} That giveaway has already ended.`,
+                                content: `${cross()} That giveaway has already ended.`,
                                 flags: MessageFlags.Ephemeral,
                         });
                 }

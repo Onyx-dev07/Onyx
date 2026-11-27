@@ -1,5 +1,7 @@
 // Onyx Discord Bot
 // Author: Onyx
+import { cross, replyPanel } from '../../utils/moderation.js';
+
 /**
  * Command class
  * Base class for all bot commands (prefix and slash)
@@ -51,13 +53,16 @@ export class Command {
         async sendUsage(ctx) {
                 const prefix = ctx.prefix ?? '!';
                 const lines = [
-                        `⚠️ Missing required argument(s).`,
+                        `${cross()} Missing required argument(s).`,
                         `Usage: \`${prefix}${this.usage}\``,
                 ];
                 if (this.examples?.length) {
                         lines.push(`Example : \`${prefix}${this.examples[0]}\``);
                 }
-                return ctx.reply({ content: lines.join('\n') });
+                return replyPanel(ctx, {
+                        title: `${this.name} Usage`,
+                        lines,
+                });
         }
 
         /**

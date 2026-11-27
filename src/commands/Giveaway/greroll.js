@@ -2,7 +2,7 @@
 // Author: Onyx
 import { Command } from '#command';
 import { MessageFlags, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } from 'discord.js';
-import { emoji } from '#emoji';
+import { cross, panelPayload, tick } from '../../utils/moderation.js';
 import { giveawayStore } from '#giveawayUtils';
 
 class GRerollCommand extends Command {
@@ -41,14 +41,14 @@ class GRerollCommand extends Command {
                 const giveaway = giveawayStore.get(messageId);
                 if (!giveaway) {
                         return ctx.reply({
-                                content: `${emoji.cross} No giveaway found with that message ID.`,
+                                content: `${cross()} No giveaway found with that message ID.`,
                                 flags: MessageFlags.Ephemeral,
                         });
                 }
 
                 if (giveaway.status !== 'ended') {
                         return ctx.reply({
-                                content: `${emoji.cross} That giveaway has not ended yet. Use \`gend\` to end it first.`,
+                                content: `${cross()} That giveaway has not ended yet. Use \`gend\` to end it first.`,
                                 flags: MessageFlags.Ephemeral,
                         });
                 }
@@ -56,7 +56,7 @@ class GRerollCommand extends Command {
                 const participantsList = [...giveaway.participants];
                 if (participantsList.length === 0) {
                         return ctx.reply({
-                                content: `${emoji.cross} No entries detected therefore cannot declare the winner.`,
+                                content: `${cross()} No entries detected therefore cannot declare the winner.`,
                                 flags: MessageFlags.Ephemeral,
                         });
                 }
@@ -76,13 +76,22 @@ class GRerollCommand extends Command {
                                 .setURL(giveaway.giveawayMsg.url),
                 );
 
-                const content = `Congrats, <@${newWinner}> you have won **${giveaway.prize}**, hosted by <@!${giveaway.hostId}>`;
+                const payload = panelPayload({
+                        title: 'Giveaway Reroll',
+                        lines: [
+                                `${tick()} Congrats, <@${newWinner}> you have won **${giveaway.prize}**, hosted by <@!${giveaway.hostId}>.`,
+                        ],
+                        author: ctx.author,
+                        ephemeral: ctx.isSlash,
+                        extraComponents: [linkRow],
+                        allowedMentions: { users: [newWinner] },
+                });
 
                 if (ctx.isSlash) {
-                        await ctx.reply({ content, components: [linkRow], allowedMentions: { users: [newWinner] } });
+                        await ctx.reply(payload);
                 } else {
                         await ctx.message?.delete().catch(() => null);
-                        await ctx.channel.send({ content, components: [linkRow], allowedMentions: { users: [newWinner] } });
+                        await ctx.channel.send(payload);
                 }
         }
 }

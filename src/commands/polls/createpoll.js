@@ -18,6 +18,7 @@ import {
         PermissionFlagsBits,
 } from 'discord.js';
 import { disableComponents, logger } from '#utils';
+import { cross, replyInteractionPanel } from '../../utils/moderation.js';
 
 const ACCENT = 0xffffff;
 const MAX_OPTIONS = 10;
@@ -102,10 +103,12 @@ class CreatePollCommand extends Command {
 
                                 } else if (interaction.customId === 'poll_add_option') {
                                         if (session.options.length >= MAX_OPTIONS) {
-                                                return interaction.reply({
-                                                        content: `Maximum of ${MAX_OPTIONS} options reached.`,
-                                                        flags: [MessageFlags.Ephemeral],
-                                                });
+                                                return replyInteractionPanel(
+                                                        interaction,
+                                                        'Poll Builder',
+                                                        `${cross()} Maximum of ${MAX_OPTIONS} options reached.`,
+                                                        { ephemeral: true },
+                                                );
                                         }
 
                                         const modal = new ModalBuilder()
@@ -151,10 +154,12 @@ class CreatePollCommand extends Command {
 
                                 } else if (interaction.customId === 'poll_launch') {
                                         if (!session.question || session.options.length < 2) {
-                                                return interaction.reply({
-                                                        content: 'A question and at least 2 options are required to launch.',
-                                                        flags: [MessageFlags.Ephemeral],
-                                                });
+                                                return replyInteractionPanel(
+                                                        interaction,
+                                                        'Poll Builder',
+                                                        `${cross()} A question and at least 2 options are required to launch.`,
+                                                        { ephemeral: true },
+                                                );
                                         }
 
                                         await interaction.deferUpdate();

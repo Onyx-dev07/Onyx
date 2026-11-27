@@ -9,7 +9,7 @@ import { config } from '#config';
 import { db } from '#dbManager';
 import { CommandContext } from '#context';
 import { validateCommand, canBotSendMessages, logger } from '#utils';
-import { emoji } from '#emoji';
+import { cross, panelPayload } from '../../../utils/moderation.js';
 
 const regexCache = new Map();
 
@@ -26,11 +26,6 @@ const getMentionPrefixRegex = (id) => {
         return regexCache.get(key);
 };
 
-const errorContainer = new ContainerBuilder();
-const errorTitle = new TextDisplayBuilder();
-const errorDescription = new TextDisplayBuilder();
-
-
 const sendDM = async (user, title, description, client) => {
         if (!user || !title || !description || !client) return false;
         try {
@@ -39,15 +34,13 @@ const sendDM = async (user, title, description, client) => {
                         .catch(() => false);
                 if (dmCooldown) return false;
 
-                const dmContainer = new ContainerBuilder();
-                dmContainer.setAccentColor(config.colors?.error || 0xed4245);
-                dmContainer
-                        .addTextDisplayComponents(
-                                new TextDisplayBuilder().setContent(`### ${emoji?.cross || '❌'} ${title}`),
-                        )
-                        .addTextDisplayComponents(new TextDisplayBuilder().setContent(description));
-
-                await user.send({ components: [dmContainer], flags: MessageFlags.IsComponentsV2 });
+                await user.send(
+                        panelPayload({
+                                title,
+                                lines: [`${cross()} ${description}`],
+                                author: user,
+                        }),
+                );
 
                 if (client.commandHandler) {
                         await client.commandHandler
@@ -68,16 +61,14 @@ const sendError = async (message, title, description, client) => {
                         return await sendDM(message.author, title, description, client);
                 }
 
-                errorContainer.components.length = 0;
-                errorContainer.setAccentColor(config.colors?.error || 0xed4245);
-                errorTitle.data.content = `### ${emoji?.cross || '❌'} ${title}`;
-                errorDescription.data.content = description;
-                errorContainer
-                        .addTextDisplayComponents(errorTitle)
-                        .addTextDisplayComponents(errorDescription);
-
                 await message
-                        .reply({ components: [errorContainer], flags: MessageFlags.IsComponentsV2 })
+                        .reply(
+                                panelPayload({
+                                        title,
+                                        lines: [`${cross()} ${description}`],
+                                        author: message.author,
+                                }),
+                        )
                         .catch(async () => {
                                 await sendDM(message.author, title, description, client);
                         });
@@ -168,7 +159,13 @@ const handleMentionOnly = async (message, client, guildPrefixes) => {
                 if (!canBotSendMessages(message.channel)) return true;
 
                 await message.channel
-                        .send(`My Prefix Here Is \`${guildPrefixes[0]}\``)
+                        .send(
+                                panelPayload({
+                                        title: 'Prefix',
+                                        lines: [`My prefix here is \`${guildPrefixes[0]}\`.`],
+                                        author: message.author,
+                                }),
+                        )
                         .catch(() => {});
 
                 if (client.commandHandler) {
@@ -258,7 +255,13 @@ export default {
 
                         if (config.ownerOnly && !config.ownerIds.includes(message.author.id)) {
                                 message
-                                        .reply(`${emoji?.lock || '🔒'} Owner only mode is enabled.`)
+                                        .reply(
+                                                panelPayload({
+                                                        title: 'Owner Only',
+                                                        lines: [`${cross()} Owner only mode is enabled.`],
+                                                        author: message.author,
+                                                }),
+                                        )
                                         .then((m) => setTimeout(() => m.delete().catch(() => {}), 3000))
                                         .catch(() => {});
                                 return;
@@ -289,7 +292,15 @@ export default {
 
                                         if (!ignoreNotifCooldown) {
                                                 message
-                                                        .reply(`${emoji?.info || 'ℹ️'} Commands disabled in this channel`)
+                                                        .reply(
+                                                                panelPayload({
+                                                                        title: 'Ignored Channel',
+                                                                        lines: [
+                                                                                `${cross()} Commands disabled in this channel.`,
+                                                                        ],
+                                                                        author: message.author,
+                                                                }),
+                                                        )
                                                         .then((m) => setTimeout(() => m.delete().catch(() => {}), 3e3))
                                                         .catch(() => {});
 

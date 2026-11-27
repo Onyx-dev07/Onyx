@@ -18,6 +18,9 @@ import { emoji } from '#emoji';
  * @param {number} [options.accentColor=0xffffff]
  * @param {{username?: string}} [options.author]
  * @param {boolean} [options.footer=true]
+ * @param {boolean} [options.ephemeral=false]
+ * @param {Array} [options.extraComponents=[]]
+ * @param {object} [options.allowedMentions]
  * @returns {object} Discord message payload.
  */
 export const panelPayload = ({
@@ -26,6 +29,9 @@ export const panelPayload = ({
         accentColor = 0xffffff,
         author,
         footer = true,
+        ephemeral = false,
+        extraComponents = [],
+        allowedMentions,
 }) => {
         const container = new ContainerBuilder();
         container.setAccentColor(accentColor);
@@ -53,10 +59,16 @@ export const panelPayload = ({
                 );
         }
 
+        if (extraComponents.length) {
+                container.addActionRowComponents(...extraComponents);
+        }
+
         return {
                 components: [container],
-                flags: MessageFlags.IsComponentsV2,
-                allowedMentions: { parse: [] },
+                flags:
+                        MessageFlags.IsComponentsV2 |
+                        (ephemeral ? MessageFlags.Ephemeral : 0),
+                allowedMentions: allowedMentions ?? { parse: [] },
         };
 };
 
@@ -73,7 +85,111 @@ export const replyPanel = (ctx, options) =>
 export const tick = () => emoji.get('tick', '✅');
 
 /** Failure marker from the configured emoji file. */
-export const cross = () => emoji.get('cross', '❌');
+export const cross = () => emoji.get('cross', ':cross:');
+
+/**
+ * Builds a standard error panel with the configured cross marker.
+ * @param {object} options
+ * @param {string} [options.title='Error']
+ * @param {string|string[]} options.lines
+ * @param {{username?: string}} [options.author]
+ * @param {boolean} [options.ephemeral=false]
+ * @returns {object} Discord message payload.
+ */
+export const failurePayload = ({ title = 'Error', lines, author, ephemeral = false }) => {
+        const body = Array.isArray(lines) ? lines : [lines];
+        return panelPayload({
+                title,
+                lines: [`${cross()} ${body[0]}`, ...body.slice(1)],
+                author,
+                ephemeral,
+        });
+};
+
+/**
+ * Replies with a standard error panel.
+ * @param {import('#context').CommandContext} ctx
+ * @param {string} title
+ * @param {string|string[]} lines
+ * @param {boolean} [ephemeral=false]
+ * @returns {Promise<unknown>}
+ */
+export const replyFailure = (ctx, title, lines, ephemeral = false) =>
+        ctx.reply(failurePayload({ title, lines, author: ctx.author, ephemeral }));
+
+/**
+ * Replies to a raw interaction with a standard panel.
+ * @param {import('discord.js').Interaction} interaction
+ * @param {string} title
+ * @param {string|string[]} lines
+ * @param {{ephemeral?: boolean, author?: {username?: string}}} [options]
+ * @returns {Promise<unknown>}
+ */
+export const replyInteractionPanel = (interaction, title, lines, options = {}) =>
+        interaction.reply(
+                panelPayload({
+                        title,
+                        lines: Array.isArray(lines) ? lines : [lines],
+                        author: options.author ?? interaction.user,
+                        ephemeral: options.ephemeral ?? false,
+                }),
+        );
+
+const FAILURE_PATTERN =
+        /\b(?:could not|couldn't|cannot|can't|invalid|missing|not found|no\b|provide|please\b|only\b|type must|blacklisted|failed|error|not your|belongs to someone else|disabled|ignored|unable|high enough|need the|already|does not have|has no|not configured|not in|aborted|maximum)\b/i;
+const MARKER_PATTERN = /(?:\p{Extended_Pictographic}|<a?:\w+:\d+>|:cross:|:tick:)/u;
+
+const titleize = (value) =>
+        String(value ?? 'Onyx')
+                .replace(/^[,!]+/, '')
+                .replace(/[_-]+/g, ' ')
+                .replace(/\b\w/g, (character) => character.toUpperCase());
+
+/**
+ * Converts a plain content-only reply into the shared component-panel theme.
+ * Replies that already contain embeds, components, files, or polls are left untouched.
+ * @param {object|string} options Discord reply options, or a plain string.
+ * @param {{username?: string}} [author]
+ * @param {string} [title]
+ * @returns {object} Themed Discord reply options.
+ */
+export const toThemedPayload = (options, author, title = 'Onyx') => {
+        const source = typeof options === 'string' ? { content: options } : options;
+        if (!source || typeof source !== 'object') return source ?? {};
+        if (typeof source.content !== 'string' || !source.content.trim()) return source;
+        if (
+                source.embeds?.length ||
+                source.components?.length ||
+                source.files?.length ||
+                source.poll ||
+                source.stickers?.length
+        ) {
+                return source;
+        }
+
+        const lines = source.content.split('\n');
+        if (FAILURE_PATTERN.test(source.content) && !MARKER_PATTERN.test(source.content)) {
+                lines[0] = `${cross()} ${lines[0]}`;
+        }
+
+        const { content, flags, allowedMentions, ...rest } = source;
+        const ephemeral =
+                Boolean(source.ephemeral) || Boolean(flags & MessageFlags.Ephemeral);
+        const payload = panelPayload({
+                title: titleize(title),
+                lines,
+                author,
+                ephemeral,
+        });
+        const extraFlags = typeof flags === 'number' ? flags & ~MessageFlags.Ephemeral : 0;
+
+        return {
+                ...rest,
+                ...payload,
+                flags: payload.flags | extraFlags,
+                allowedMentions: allowedMentions ?? payload.allowedMentions,
+        };
+};
 
 /**
  * Resolves a guild member from a prefix token.

@@ -2,7 +2,7 @@
 // Author: Onyx
 export const emoji = {
         check: '',
-        cross: '',
+        cross: ':cross:',
         info: '',
         home: '<:home:1493486220242583664>',
 

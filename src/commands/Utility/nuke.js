@@ -12,6 +12,7 @@ import {
         SeparatorSpacingSize,
         PermissionFlagsBits,
 } from 'discord.js';
+import { cross, panelPayload, tick } from '../../utils/moderation.js';
 
 class NukeCommand extends Command {
         constructor() {
@@ -94,13 +95,29 @@ class NukeCommand extends Command {
                                         await message.delete().catch(() => {});
                                         await channel.delete(`Channel nuked by ${ctx.author.username}`);
                                         await newChannel.setPosition(position).catch(() => {});
-                                        await newChannel.send(`This channel was nuked by ${ctx.author.username}`);
+                                        await newChannel.send(
+                                                panelPayload({
+                                                        title: 'Channel Nuked',
+                                                        lines: [
+                                                                `${tick()} This channel was nuked by ${ctx.author.username}.`,
+                                                        ],
+                                                        author: ctx.author,
+                                                }),
+                                        );
                                 } catch {
                                         await message.delete().catch(() => {});
                                 }
                         } else {
                                 await message.delete().catch(() => {});
-                                await channel.send('Aborted the task').catch(() => {});
+                                await channel
+                                        .send(
+                                                panelPayload({
+                                                        title: 'Nuke Aborted',
+                                                        lines: [`${cross()} The task was aborted.`],
+                                                        author: ctx.author,
+                                                }),
+                                        )
+                                        .catch(() => {});
                         }
                 });
 

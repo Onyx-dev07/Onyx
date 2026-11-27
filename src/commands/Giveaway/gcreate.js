@@ -2,7 +2,7 @@
 // Author: Onyx
 import { Command } from '#command';
 import { MessageFlags, ApplicationCommandOptionType, PermissionFlagsBits } from 'discord.js';
-import { emoji } from '#emoji';
+import { cross } from '../../utils/moderation.js';
 import {
         giveawayStore,
         GWAY_EMOJI_ID,
@@ -78,21 +78,21 @@ class GCreateCommand extends Command {
                 const duration = parseTime(durationStr);
                 if (!duration) {
                         return ctx.reply({
-                                content: `${emoji.cross} Invalid duration. Use \`30s\`, \`10m\`, \`1h\`, \`2d\`.`,
+                                content: `${cross()} Invalid duration. Use \`30s\`, \`10m\`, \`1h\`, \`2d\`.`,
                                 flags: MessageFlags.Ephemeral,
                         });
                 }
 
                 if (!winnersCount || winnersCount < 1 || isNaN(winnersCount)) {
                         return ctx.reply({
-                                content: `${emoji.cross} Please provide a valid winner count (minimum 1).`,
+                                content: `${cross()} Please provide a valid winner count (minimum 1).`,
                                 flags: MessageFlags.Ephemeral,
                         });
                 }
 
                 if (!prize || !prize.trim()) {
                         return ctx.reply({
-                                content: `${emoji.cross} Please provide a prize for the giveaway.`,
+                                content: `${cross()} Please provide a prize for the giveaway.`,
                                 flags: MessageFlags.Ephemeral,
                         });
                 }

@@ -11,6 +11,7 @@ import {
         MessageFlags,
 } from 'discord.js';
 import { emoji } from '#emoji';
+import { cross, panelPayload, tick } from './moderation.js';
 
 export const GWAY_EMOJI_ID = emoji.giveaway_react;
 export const GWAY_EMOJI_RAW_ID = emoji.giveaway_react.match(/:(\d+)>/)?.[1] ?? emoji.giveaway_react;
@@ -146,10 +147,13 @@ export const endGiveaway = async (messageId, giveaway) => {
                                 .setURL(giveaway.giveawayMsg.url),
                 );
 
-                await giveaway.giveawayMsg.channel.send({
-                        content: 'No entries detected therefore cannot declare the winner',
-                        components: [noEntryLinkRow],
-                }).catch(() => null);
+                await giveaway.giveawayMsg.channel.send(
+                        panelPayload({
+                                title: 'Giveaway',
+                                lines: [`${cross()} No entries detected therefore cannot declare the winner.`],
+                                extraComponents: [noEntryLinkRow],
+                        }),
+                ).catch(() => null);
                 return;
         }
 
@@ -174,11 +178,16 @@ export const endGiveaway = async (messageId, giveaway) => {
                         .setURL(giveaway.giveawayMsg.url),
         );
 
-        await giveaway.giveawayMsg.channel.send({
-                content: `Congrats, ${winnerMentions} you have won **${giveaway.prize}**, hosted by <@!${giveaway.hostId}>`,
-                components: [linkRow],
-                allowedMentions: { users: winners },
-        }).catch(() => null);
+        await giveaway.giveawayMsg.channel.send(
+                panelPayload({
+                        title: 'Giveaway Winners',
+                        lines: [
+                                `${tick()} Congrats, ${winnerMentions} you have won **${giveaway.prize}**, hosted by <@!${giveaway.hostId}>.`,
+                        ],
+                        extraComponents: [linkRow],
+                        allowedMentions: { users: winners },
+                }),
+        ).catch(() => null);
 };
 
 /**

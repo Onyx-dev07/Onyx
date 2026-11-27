@@ -7,6 +7,7 @@ import {
         ApplicationCommandOptionType,
 } from 'discord.js';
 import { emoji } from '#emoji';
+import { cross, panelPayload } from '../../utils/moderation.js';
 
 const resolveMember = async (ctx) => {
         if (ctx.isSlash) {
@@ -67,31 +68,35 @@ class UnmuteCommand extends Command {
                 const member = await resolveMember(ctx);
 
                 if (!member) {
-                        return ctx.reply({ content: `${emoji.cross} Could not find that member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} Could not find that member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (member.id === ctx.author.id) {
-                        return ctx.reply({ content: `${emoji.cross} You cannot unmute yourself.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} You cannot unmute yourself.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (!member.isCommunicationDisabled()) {
-                        return ctx.reply({ content: `${emoji.cross} That member is not muted.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} That member is not muted.`, flags: MessageFlags.Ephemeral });
                 }
 
                 const botMember = ctx.guild.members.cache.get(ctx.client.user.id);
                 if (botMember.roles.highest.position <= member.roles.highest.position) {
-                        return ctx.reply({ content: `${emoji.cross} I don't have a high enough role to unmute this member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} I don't have a high enough role to unmute this member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 if (ctx.member.roles.highest.position <= member.roles.highest.position && ctx.guild.ownerId !== ctx.author.id) {
-                        return ctx.reply({ content: `${emoji.cross} You don't have a high enough role to unmute this member.`, flags: MessageFlags.Ephemeral });
+                        return ctx.reply({ content: `${cross()} You don't have a high enough role to unmute this member.`, flags: MessageFlags.Ephemeral });
                 }
 
                 await member.timeout(null);
 
-                const dmSent = await member.send({
-                        content: `You have been unmuted in **${ctx.guild.name}**`,
-                }).then(() => true).catch(() => false);
+                const dmSent = await member.send(
+                        panelPayload({
+                                title: 'Unmuted',
+                                lines: [`You have been unmuted in **${ctx.guild.name}**.`],
+                                author: ctx.author,
+                        }),
+                ).then(() => true).catch(() => false);
 
                 await ctx.reply({
                         content: `${emoji.tick} | **${member.displayName}** has been unmuted${dmSent ? ', notified the member' : ''}`,
