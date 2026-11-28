@@ -115,7 +115,12 @@ async function safeAddIndex(qi, table, fields, options = {}) {
 const syncDatabase = async () => {
     if (!dbStatus.isDatabaseAvailable()) return false;
 
-    await sequelize.sync();
+    try {
+        await sequelize.sync();
+    } catch (error) {
+        const message = error?.message || '';
+        if (!/already exists|duplicate key|42P07|42710/i.test(message)) throw error;
+    }
 
     const qi = sequelize.getQueryInterface();
 
@@ -149,7 +154,7 @@ const syncDatabase = async () => {
 
 const dbReady = Promise.race([
     syncDatabase(),
-    new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
+    new Promise((resolve) => setTimeout(() => resolve(false), 30000)),
 ]).catch((err) => {
     if (!dbStatus.isDatabaseAvailable()) return false;
     console.error('Database sync error:', err.message);

@@ -242,10 +242,13 @@ process.on('uncaughtException', (error) => {
   });
 
   try {
-    const dbResults = await Promise.all([
-      models.dbReady,
-      ...Object.values(dbModules).map(m => m.dbReady)
-    ]);
+    const dbResults = [];
+    dbResults.push(await models.dbReady);
+
+    for (const module of Object.values(dbModules)) {
+      dbResults.push(await module.dbReady);
+    }
+
     if (dbResults.some(Boolean)) printSuccess('Database setup complete');
     else printInfo('Database unavailable — continuing without database-backed features');
   } catch (err) {

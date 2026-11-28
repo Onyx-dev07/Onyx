@@ -16,11 +16,12 @@ const sequelize = new Sequelize(DATABASE_URL, {
     pool: {
         max: 5,
         min: 0,
-        acquire: 5000,
+        acquire: 15000,
         idle: 10000
     },
     dialectOptions: {
-        connectTimeout: 5000,
+        connectTimeout: 15000,
+        ssl: dbStatus.sslOptions(DATABASE_URL),
     },
     retry: {
         max: 1,
@@ -48,8 +49,11 @@ sequelize.query = async function safeQuery(sql, options = {}) {
     try {
         return await originalQuery(sql, options);
     } catch (error) {
-        dbStatus.disableDatabase(error, 'Sequelize');
-        return [];
+        if (dbStatus.isConnectionError(error)) {
+            dbStatus.disableDatabase(error, 'Sequelize');
+            return [];
+        }
+        throw error;
     }
 };
 

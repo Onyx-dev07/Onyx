@@ -5,6 +5,8 @@
   "main": "src/client.js",
   "scripts": {
     "start": "node src/client.js",
+    "build": "node scripts/build.js",
+    "verify:services": "node scripts/verifyServices.js",
     "sync:emojis": "node scripts/syncEmojis.js",
     "format": "prettier --write \"src/**/*.js\"",
     "migrate": "node scripts/migrate.js apply",
@@ -36,6 +38,8 @@
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",
+    "@neon/config": "^1.14.8",
+    "@neon/env": "^2.1.11",
     "axios": "^1.11.0",
     "bytez.js": "^3.0.0",
     "discord.js": "^14.25.1",

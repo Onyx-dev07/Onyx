@@ -147,3 +147,4 @@ backups/
 
 # Runtime data (created automatically)
 data/
+.neon

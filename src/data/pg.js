@@ -10,12 +10,10 @@ const connectionString = hasDatabase
 const realPool = hasDatabase
     ? new Pool({
         connectionString,
-        ssl: / Neon\.tech|supabase|sslmode=require/i.test(connectionString)
-            ? { require: true, rejectUnauthorized: false }
-            : false,
+        ssl: dbStatus.sslOptions(connectionString),
         max: 10,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000
+        connectionTimeoutMillis: 15000
     })
     : null;
 
@@ -26,8 +24,11 @@ const query = async (text, params) => {
     try {
         return await realPool.query(text, params);
     } catch (error) {
-        dbStatus.disableDatabase(error, 'PostgreSQL');
-        return emptyResult();
+        if (dbStatus.isConnectionError(error)) {
+            dbStatus.disableDatabase(error, 'PostgreSQL');
+            return emptyResult();
+        }
+        throw error;
     }
 };
 
