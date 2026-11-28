@@ -1,23 +1,12 @@
 // © Author: Onyx
 // https://discord.gg/QnWNz2dKCE
 
+const { PermissionFlagsBits } = require('discord.js');
 
+const channelCards = require('../../../../lib/channelLockCard');
 
-const {
-  ContainerBuilder,
-  TextDisplayBuilder,
-  SeparatorBuilder,
-  SeparatorSpacingSize,
-  MessageFlags,
-  PermissionFlagsBits,
-} = require('discord.js');
-
-function modReply(interaction, title, body, ephemeral = false) {
-  const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${title}**`))
-    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(body));
-  return interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral });
+function send(interaction, payload, ephemeral = false) {
+  return interaction.reply(channelCards.withFlags(payload, ephemeral));
 }
 
 module.exports = {
@@ -28,18 +17,22 @@ module.exports = {
     const channel = interaction.options.getChannel('channel') || interaction.channel;
 
     if (!interaction.member.permissions.has(PermissionFlagsBits.ManageChannels))
-      return modReply(interaction, 'Permission Denied', 'You need the **Manage Channels** permission.', true);
+      return send(interaction, channelCards.error('Permission Denied', 'You need the **Manage Channels** permission.'), true);
 
     if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ManageChannels))
-      return modReply(interaction, 'Missing Permissions', 'I need the **Manage Channels** permission.', true);
+      return send(interaction, channelCards.error('Missing Permissions', 'I need the **Manage Channels** permission.'), true);
 
     try {
       await channel.permissionOverwrites.edit(interaction.guild.roles.everyone, { SendMessages: null });
-      await modReply(interaction, 'Channel Unlocked',
-        `**Channel:** ${channel}\n**Unlocked by:** ${interaction.user.tag}`);
+      return send(interaction, channelCards.unlocked({
+        channel,
+        moderator: interaction.user,
+      }));
     } catch (error) {
-      const msg = error.code === 50013 ? 'I lack the permissions to modify this channel.' : 'Failed to unlock channel.';
-      await modReply(interaction, 'Error', msg, true);
+      const text = error.code === 50013
+        ? 'I lack the permissions to modify this channel.'
+        : 'Failed to unlock channel.';
+      return send(interaction, channelCards.error('Error', text), true);
     }
   },
 };
