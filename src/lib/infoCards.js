@@ -127,7 +127,7 @@ function serverInfoCard({ guild, textChannels, voiceChannels }) {
         const voiceCount = Number(voiceChannels) || 0;
 
         const header = new SectionBuilder()
-                .addTextDisplayComponents(text(`### ${emojis.cat_information} Server Info`));
+                .addTextDisplayComponents(text(`### ${emojis.roleInfo} Server Info`));
 
         if (guild.icon && typeof guild.iconURL === 'function') {
                 header.setThumbnailAccessory(
@@ -141,23 +141,23 @@ function serverInfoCard({ guild, textChannels, voiceChannels }) {
 
         if (guild.description) {
                 container
-                        .addTextDisplayComponents(text(`${emojis.info} **Description:** ${guild.description}`))
+                        .addTextDisplayComponents(text(`${emojis.serverDescription} **Description:** ${guild.description}`))
                         .addSeparatorComponents(divider());
         }
 
         const aboutFields = [
-                `${emojis.house} **Name:** ${guild.name}`,
-                `${emojis.roleInfo} **ID:** ${guild.id}`,
-                `${emojis.nickUser} **Owner:** <@${guild.ownerId}>`,
-                `${emojis.roleInfo} **Created:** <t:${Math.floor(guild.createdTimestamp / 1000)}:F>`,
-                `${emojis.nickUser} **Members:** ${formatNumber(guild.memberCount)}`,
+                `${emojis.serverHome} **Server:** ${guild.name}`,
+                `${emojis.serverId} **ID:** ${guild.id}`,
+                `${emojis.serverOwner} **Owner:** <@${guild.ownerId}>`,
+                `${emojis.serverCreated} **Created:** <t:${Math.floor(guild.createdTimestamp / 1000)}:F>`,
+                `${emojis.serverMembers} **Members:** ${formatNumber(guild.memberCount)}`,
         ].join('\n');
 
         const statsFields = [
-                `${emojis.cat_information} **Verification:** ${VERIFICATION_LEVELS[guild.verificationLevel] || guild.verificationLevel || 'None'}`,
-                `${emojis.tv} **Channels:** ${guild.channels.cache.size} (${textCount} text • ${voiceCount} voice)`,
-                `${emojis.roleInfo} **Roles:** ${guild.roles.cache.size}`,
-                `${emojis.trophy} **Boosts:** Level ${guild.premiumTier || 0} (${guild.premiumSubscriptionCount || 0})`,
+                `${emojis.serverVerified} **Verification:** ${VERIFICATION_LEVELS[guild.verificationLevel] || guild.verificationLevel || 'None'}`,
+                `${emojis.serverChannels} **Channels:** ${guild.channels.cache.size} (${textCount} text • ${voiceCount} voice)`,
+                `${emojis.serverRoles} **Roles:** ${guild.roles.cache.size}`,
+                `${emojis.serverBoost} **Boosts:** Level ${guild.premiumTier || 0} (${guild.premiumSubscriptionCount || 0})`,
         ].join('\n');
 
         container
@@ -187,13 +187,13 @@ function serverRolesPageCard({ roles, pageIndex, startIndex, totalPages, totalRo
         });
 
         const content = [
-                `${emojis.botInfo} **Page:** ${pageIndex + 1}/${totalPages}`,
+                `${emojis.serverNumber} **Page:** ${pageIndex + 1}/${totalPages}`,
                 ...roleLines,
-                `${emojis.trophy} **Total Roles:** ${formatNumber(totalRoles)}`,
+                `${emojis.serverNumber} **Total Roles:** ${formatNumber(totalRoles)}`,
         ].join('\n');
 
         const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-                .addTextDisplayComponents(text(`### ${emojis.cat_information} Server Roles`))
+                .addTextDisplayComponents(text(`### ${emojis.serverRoles} Server Roles`))
                 .addSeparatorComponents(divider())
                 .addTextDisplayComponents(text(content));
 
@@ -208,13 +208,13 @@ function serverEmojisPageCard({ guildEmojis, pageIndex, startIndex, totalPages, 
         });
 
         const content = [
-                `${emojis.botInfo} **Page:** ${pageIndex + 1}/${totalPages}`,
+                `${emojis.serverNumber} **Page:** ${pageIndex + 1}/${totalPages}`,
                 ...emojiLines,
-                `${emojis.trophy} **Total Emojis:** ${formatNumber(totalEmojis)}`,
+                `${emojis.serverNumber} **Total Emojis:** ${formatNumber(totalEmojis)}`,
         ].join('\n');
 
         const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-                .addTextDisplayComponents(text(`### ${emojis.cat_information} Server Emojis`))
+                .addTextDisplayComponents(text(`### ${emojis.roleInfo} Server Emojis`))
                 .addSeparatorComponents(divider())
                 .addTextDisplayComponents(text(content));
 
