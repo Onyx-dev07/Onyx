@@ -1,9 +1,9 @@
 const { Sequelize } = require('sequelize');
-const config = require('../config.js');
+const dbStatus = require('./dbStatus');
 
-const configuredUrl = process.env.DATABASE_URL || config.DATABASE_URL || '';
-const isPostgresUrl = /^postgres(?:ql)?:\/\//i.test(configuredUrl);
-const DATABASE_URL = isPostgresUrl
+const configuredUrl = dbStatus.configuredUrl();
+const hasDatabase = dbStatus.hasConfiguredDatabase();
+const DATABASE_URL = hasDatabase
     ? configuredUrl
     : 'postgres://postgres:postgres@127.0.0.1:5432/onyx';
 
@@ -36,6 +36,22 @@ const sequelize = new Sequelize(DATABASE_URL, {
         ],
     }
 });
+
+const originalQuery = sequelize.query.bind(sequelize);
+
+sequelize.query = async function safeQuery(sql, options = {}) {
+    if (!dbStatus.isDatabaseAvailable()) {
+        if (options.type === 'COUNT' || /\bcount\s*\(/i.test(sql)) return [{ count: 0 }];
+        return [];
+    }
+
+    try {
+        return await originalQuery(sql, options);
+    } catch (error) {
+        dbStatus.disableDatabase(error, 'Sequelize');
+        return [];
+    }
+};
 
 module.exports = sequelize;
 

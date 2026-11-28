@@ -157,6 +157,8 @@ async function checkGiveaways(client) {
       await endGiveaway(client, giveaway);
       await giveaway.update({ ended: true });
     }));
+  } catch (error) {
+    console.error('[Giveaways] Error checking giveaways:', error.message);
   } finally {
     isChecking = false;
   }

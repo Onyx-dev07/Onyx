@@ -1,45 +1,68 @@
 const { Pool } = require('pg');
-const config = require('../config.js');
+const dbStatus = require('./dbStatus');
 
-const configuredUrl = process.env.DATABASE_URL || config.DATABASE_URL || '';
-const isPostgresUrl = /^postgres(?:ql)?:\/\//i.test(configuredUrl);
-const connectionString = isPostgresUrl
+const configuredUrl = dbStatus.configuredUrl();
+const hasDatabase = dbStatus.hasConfiguredDatabase();
+const connectionString = hasDatabase
     ? configuredUrl
     : 'postgres://postgres:postgres@127.0.0.1:5432/onyx';
 
-const pool = new Pool({
-    connectionString,
-    ssl: isPostgresUrl && / Neon\.tech|supabase|sslmode=require/i.test(connectionString)
-        ? { require: true, rejectUnauthorized: false }
-        : false,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000
-});
+const realPool = hasDatabase
+    ? new Pool({
+        connectionString,
+        ssl: / Neon\.tech|supabase|sslmode=require/i.test(connectionString)
+            ? { require: true, rejectUnauthorized: false }
+            : false,
+        max: 10,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000
+    })
+    : null;
 
-pool.on('error', (err) => {
-    console.error('[PostgreSQL] Unexpected error on idle client:', err.message);
-});
+const emptyResult = () => ({ rows: [], rowCount: 0 });
 
 const query = async (text, params) => {
-    const res = await pool.query(text, params);
-    return res;
+    if (!dbStatus.isDatabaseAvailable() || !realPool) return emptyResult();
+    try {
+        return await realPool.query(text, params);
+    } catch (error) {
+        dbStatus.disableDatabase(error, 'PostgreSQL');
+        return emptyResult();
+    }
 };
 
 const getOne = async (text, params) => {
-    const res = await pool.query(text, params);
+    const res = await query(text, params);
     return res.rows[0] || null;
 };
 
 const getAll = async (text, params) => {
-    const res = await pool.query(text, params);
+    const res = await query(text, params);
     return res.rows;
 };
 
 const run = async (text, params) => {
-    const res = await pool.query(text, params);
+    const res = await query(text, params);
     return { changes: res.rowCount };
 };
+
+const pool = {
+    query,
+    on(event, handler) {
+        if (realPool) realPool.on(event, handler);
+        return pool;
+    },
+    async end() {
+        if (realPool) await realPool.end().catch(() => {});
+    },
+    get totalCount() { return realPool ? realPool.totalCount : 0; },
+    get idleCount() { return realPool ? realPool.idleCount : 0; },
+    get waitingCount() { return realPool ? realPool.waitingCount : 0; },
+};
+
+pool.on('error', (err) => {
+    dbStatus.disableDatabase(err, 'PostgreSQL idle client');
+});
 
 module.exports = { pool, query, getOne, getAll, run };
 

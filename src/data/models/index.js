@@ -7,6 +7,7 @@
  */
 
 const sequelize = require('../sequelize');
+const dbStatus = require('../dbStatus');
 const NoPrefix = require('./NoPrefix');
 const AFK = require('./AFK');
 const J2CConfig = require('./J2CConfig');
@@ -111,13 +112,8 @@ async function safeAddIndex(qi, table, fields, options = {}) {
     }
 }
 
-const config = require('../../config');
-const hasDatabase = /^postgres(?:ql)?:\/\//i.test(
-    process.env.DATABASE_URL || config.DATABASE_URL || ''
-);
-
 const syncDatabase = async () => {
-    if (!hasDatabase) return false;
+    if (!dbStatus.isDatabaseAvailable()) return false;
 
     await sequelize.sync();
 
@@ -155,9 +151,77 @@ const dbReady = Promise.race([
     syncDatabase(),
     new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
 ]).catch((err) => {
+    if (!dbStatus.isDatabaseAvailable()) return false;
     console.error('Database sync error:', err.message);
     return false;
 });
+
+let fallbacksApplied = false;
+
+function fakeInstance(values = {}) {
+    const instance = {
+        ...values,
+        dataValues: { ...values },
+        isNewRecord: false,
+        save: async () => instance,
+        reload: async () => instance,
+        update: async (updates = {}) => {
+            Object.assign(instance, updates, instance.dataValues);
+            Object.assign(instance.dataValues, updates);
+            return instance;
+        },
+        destroy: async () => instance,
+        increment: async () => instance,
+        decrement: async () => instance,
+    };
+    return instance;
+}
+
+function applyDatabaseFallbacks() {
+    if (fallbacksApplied) return;
+    fallbacksApplied = true;
+
+    for (const model of Object.values(models)) {
+        if (typeof model !== 'function' || !model.prototype) continue;
+
+        if (typeof model.findAll === 'function') model.findAll = async () => [];
+        if (typeof model.findOne === 'function') model.findOne = async () => null;
+        if (typeof model.findByPk === 'function') model.findByPk = async () => null;
+        if (typeof model.count === 'function') model.count = async () => 0;
+        if (typeof model.sum === 'function') model.sum = async () => 0;
+        if (typeof model.max === 'function') model.max = async () => null;
+        if (typeof model.min === 'function') model.min = async () => null;
+        if (typeof model.create === 'function') {
+            model.create = async (values = {}) => fakeInstance(values);
+        }
+        if (typeof model.upsert === 'function') {
+            model.upsert = async (values = {}) => [fakeInstance(values), false];
+        }
+        if (typeof model.findOrCreate === 'function') {
+            model.findOrCreate = async (options = {}) => [
+                fakeInstance(options.defaults || options.where || {}),
+                true,
+            ];
+        }
+        if (typeof model.update === 'function') model.update = async () => [0];
+        if (typeof model.destroy === 'function') model.destroy = async () => 0;
+
+        if (typeof model.prototype.save === 'function') {
+            model.prototype.save = async function () { return this; };
+        }
+        if (typeof model.prototype.reload === 'function') {
+            model.prototype.reload = async function () { return this; };
+        }
+        if (typeof model.prototype.increment === 'function') {
+            model.prototype.increment = async function () { return this; };
+        }
+        if (typeof model.prototype.decrement === 'function') {
+            model.prototype.decrement = async function () { return this; };
+        }
+    }
+}
+
+dbStatus.onUnavailable(applyDatabaseFallbacks);
 
 models.dbReady = dbReady;
 

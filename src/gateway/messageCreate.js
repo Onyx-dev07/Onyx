@@ -24,6 +24,7 @@ const { generateAiResponse, CASUAL_PROMPT, hasApiKey, splitMessage } = require('
 const { isAdminLockEnabled } = require('../lib/adminLock');
 const commandLockDb = require('../data/commandLock');
 const config = require('../config');
+const dbStatus = require('../data/dbStatus');
 const botLogger = require('../lib/botLogger');
 const { checkCooldown, storePendingReply, clearPendingReply } = require('../lib/cooldown');
 
@@ -85,40 +86,42 @@ module.exports = {
 
     if (client.dokdo) await client.dokdo.run(message);
 
-    try {
-      let guildConfig = getCached(guildConfigCache, message.guildId);
-      if (guildConfig === undefined) {
-        guildConfig = await GuildConfig.findOne({ where: { guildId: message.guildId }, raw: true });
-        setCache(guildConfigCache, message.guildId, guildConfig);
-      }
-      const isEnabled = guildConfig ? guildConfig.autoreactEnabled : true;
-
-      if (isEnabled) {
-        let reactions = getCached(autoReactCache, message.guildId);
-        if (reactions === undefined) {
-          reactions = await AutoReact.findAll({ where: { guildId: message.guildId } });
-          setCache(autoReactCache, message.guildId, reactions);
+    if (dbStatus.isDatabaseAvailable()) {
+      try {
+        let guildConfig = getCached(guildConfigCache, message.guildId);
+        if (guildConfig === undefined) {
+          guildConfig = await GuildConfig.findOne({ where: { guildId: message.guildId }, raw: true });
+          setCache(guildConfigCache, message.guildId, guildConfig);
         }
-        const lowerContent = message.content.toLowerCase();
-        const matchingEmojis = reactions
-          .filter(r => lowerContent.includes(r.trigger.toLowerCase()))
-          .map(r => {
-            const customEmojiMatch = r.emoji.match(/<a?:.+:(\d+)>/);
-            return customEmojiMatch ? customEmojiMatch[1] : r.emoji;
-          });
+        const isEnabled = guildConfig ? guildConfig.autoreactEnabled : true;
 
-        if (matchingEmojis.length > 0) {
-          await Promise.all(
-            matchingEmojis.map(emoji =>
-              message.react(emoji).catch(err => {
-                console.error(`[AUTOREACT] Failed to react with ${emoji}:`, err.message);
-              })
-            )
-          );
+        if (isEnabled) {
+          let reactions = getCached(autoReactCache, message.guildId);
+          if (reactions === undefined) {
+            reactions = await AutoReact.findAll({ where: { guildId: message.guildId } });
+            setCache(autoReactCache, message.guildId, reactions);
+          }
+          const lowerContent = message.content.toLowerCase();
+          const matchingEmojis = reactions
+            .filter(r => lowerContent.includes(r.trigger.toLowerCase()))
+            .map(r => {
+              const customEmojiMatch = r.emoji.match(/<a?:.+:(\d+)>/);
+              return customEmojiMatch ? customEmojiMatch[1] : r.emoji;
+            });
+
+          if (matchingEmojis.length > 0) {
+            await Promise.all(
+              matchingEmojis.map(emoji =>
+                message.react(emoji).catch(err => {
+                  console.error(`[AUTOREACT] Failed to react with ${emoji}:`, err.message);
+                })
+              )
+            );
+          }
         }
+      } catch (error) {
+        console.error('[AUTOREACT] Error processing reactions:', error.message);
       }
-    } catch (error) {
-      console.error('[AUTOREACT] Error processing reactions:', error.message);
     }
 
     const globalPrefix = config.PREFIX;

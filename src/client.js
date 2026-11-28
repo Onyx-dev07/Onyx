@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const config = require('./config');
+const dbStatus = require('./data/dbStatus');
 const { loadSlashCommands, loadPrefixCommands, loadHybridCommands, reloadAllCommands } = require('./lib/commandLoader');
 const { colors, printHeader, printLoading, printSuccess, printError, printInfo, printSystemReady } = require('./lib/consoleLogger');
 const botLogger    = require('./lib/botLogger');
@@ -25,7 +26,12 @@ process.emitWarning = (warning, ...args) => {
 };
 
 process.on('unhandledRejection', (error) => {
-  printError(`Unhandled rejection: ${error?.message ?? String(error)}`);
+  const message = error?.message ?? String(error);
+  if (/127\.0\.0\.1:5432/.test(message)) {
+    dbStatus.disableDatabase(error, 'unhandled rejection');
+    return;
+  }
+  printError(`Unhandled rejection: ${message}`);
 });
 
 process.on('uncaughtException', (error) => {
@@ -190,7 +196,12 @@ process.on('uncaughtException', (error) => {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
   client.on('error', (error) => {
-    printError(`Discord client error: ${error.message}`);
+    const message = error?.message ?? String(error);
+    if (/127\.0\.0\.1:5432/.test(message)) {
+      dbStatus.disableDatabase(error, 'Discord client error');
+      return;
+    }
+    printError(`Discord client error: ${message}`);
     botLogger.logError(error, 'Discord client error', client).catch(() => {});
   });
 
