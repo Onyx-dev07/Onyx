@@ -48,7 +48,7 @@ const registry = {
       { name: 'invite',           description: 'Get an invite link for the bot' },
       { name: 'users',            description: 'Show the total user count' },
       { name: 'botinfo',          description: 'View detailed bot information' },
-      { name: 'ping',             description: 'Check the bot\'s response time' },
+      { name: 'ping',             description: 'Check latency and service health' },
       { name: 'avgping',          description: 'Check the bot\'s average latency' },
       { name: 'uptime',           description: 'Show how long the bot has been online' },
       { name: 'help [command]',   description: 'Show the help menu or a specific command' },
@@ -102,7 +102,7 @@ const registry = {
       { name: 'wikipedia <query>',  description: 'Search Wikipedia for an article' },
       { name: 'news <query>',       description: 'Search for latest news articles' },
       { name: 'google <query>',     description: 'Search Google' },
-      { name: 'ping',               description: 'Check the bot\'s response time' },
+      { name: 'ping',               description: 'Check latency and service health' },
     ]
   },
   roleplay: {

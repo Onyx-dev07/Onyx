@@ -1,72 +1,19 @@
 // © Author: Onyx
 // https://discord.gg/QnWNz2dKCE
 
-const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, MessageFlags } = require('discord.js');
-const sequelize = require('../../../data/sequelize');
-
-function pad(key, width = 7) {
-    return key + ' '.repeat(Math.max(1, width - key.length));
-}
+const { buildPingCard } = require('../../../lib/pingCard');
 
 module.exports = {
     name: 'ping',
-    description: 'Check the bot\'s latency',
+    description: 'Check the bot\'s latency and service health',
 
     async execute(message) {
         const sent = await message.reply({ content: 'Pinging...', fetchReply: true });
 
-        const wsLatency = message.client.ws.ping;
+        const roundtripMs = Date.now() - sent.createdTimestamp;
+        const reply = await buildPingCard(message.client, roundtripMs);
 
-        const t0 = Date.now();
-        try { await sequelize.query('SELECT 1'); } catch (_) {}
-        const readMs = (Date.now() - t0).toFixed(2);
-
-        const t1 = Date.now();
-        try { await sequelize.query('SELECT NOW()'); } catch (_) {}
-        const writeMs = (Date.now() - t1).toFixed(2);
-
-        const t2 = Date.now();
-        try { await sequelize.query('SELECT 1+1'); } catch (_) {}
-        const deleteMs = (Date.now() - t2).toFixed(2);
-
-        const ESC = '\u001b';
-        const purple = `${ESC}[1;35m`;
-        const cyan   = `${ESC}[1;36m`;
-        const reset  = `${ESC}[0m`;
-
-        const latencyBlock = [
-            '```ansi',
-            `${purple}Latency${reset}`,
-            `${cyan}${pad('Bot')}:: v1${reset}`,
-            `${cyan}${pad('Latency')}:: ${wsLatency} MS${reset}`,
-            '```'
-        ].join('\n');
-
-        const dbBlock = [
-            '```ansi',
-            `${purple}Database Performance${reset}`,
-            `${cyan}${pad('Read')}:: ${readMs} MS${reset}`,
-            `${cyan}${pad('Write')}:: ${writeMs} MS${reset}`,
-            `${cyan}${pad('Delete')}:: ${deleteMs} MS${reset}`,
-            '```'
-        ].join('\n');
-
-        const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(latencyBlock)
-            )
-            .addSeparatorComponents(
-                new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true)
-            )
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(dbBlock)
-            );
-
-        await sent.edit({
-            content: null,
-            components: [container],
-            flags: MessageFlags.IsComponentsV2
-        });
+        await sent.edit({ content: null, ...reply });
     },
 };
 

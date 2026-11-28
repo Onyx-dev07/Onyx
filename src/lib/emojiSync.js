@@ -86,7 +86,8 @@ async function runEmojiSync() {
 
         for (const file of imageFiles) {
                 const ext = path.extname(file).toLowerCase();
-                const name = path.basename(file, ext);
+                // Discord emoji names only allow letters, numbers and underscores.
+                const name = path.basename(file, ext).replace(/[^A-Za-z0-9_]/g, '_');
                 const animated = ext === '.gif';
                 const existing = appEmojis.find((emoji) => emoji.name === name);
 
