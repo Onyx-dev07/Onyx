@@ -128,10 +128,11 @@ module.exports = {
             );
 
             const username = targetMember.user?.username || targetMember.displayName || 'Unknown';
+            const actionTitle = newNick ? 'Nickname Updated' : 'Nickname Cleared';
 
             const container = new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`### ${emojis.nickSuccess} Nickname Updated`)
+                    new TextDisplayBuilder().setContent(`### ${emojis.nickSuccess} ${actionTitle}`)
                 )
                 .addSeparatorComponents(divider())
                 .addTextDisplayComponents(
