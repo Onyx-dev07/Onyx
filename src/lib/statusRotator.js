@@ -5,8 +5,8 @@ const { ActivityType } = require('discord.js');
 
 const config = require('../config');
 
-const DEFAULT_STATUSES = ['online', 'idle'];
-const DEFAULT_INTERVAL_MS = 12 * 60 * 60 * 1000;
+const DEFAULT_STATUSES = ['idle', 'dnd', 'online'];
+const DEFAULT_INTERVAL_MS = 8 * 60 * 60 * 1000;
 const VALID_STATUSES = new Set(['online', 'idle', 'dnd', 'invisible']);
 
 function normalizeStatuses(statuses) {
