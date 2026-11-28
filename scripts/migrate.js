@@ -1,9 +1,8 @@
 // Onyx Discord Bot
 // Author: Onyx
 
-// The redesigned Onyx bot uses MongoDB and creates/indexes its collections at
-// runtime. The old PostgreSQL migration scripts are intentionally no-ops so
-// existing deployment workflows can keep calling them safely.
+// Onyx keeps these commands as no-ops so existing deployment workflows can keep
+// calling them safely. Database setup is handled during bot startup.
 
 const mode = process.argv[2] || 'apply';
 const allowedModes = new Set([
@@ -21,4 +20,4 @@ if (!allowedModes.has(mode)) {
         process.exit(1);
 }
 
-console.log(`[Onyx] migrate:${mode} — no SQL migration required (MongoDB redesign).`);
+console.log(`[Onyx] migrate:${mode} — no manual migration required (handled at startup).`);

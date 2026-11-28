@@ -1,168 +1,248 @@
 <div align="center">
 
-  # Onyx
+# Onyx
 
-  A feature-rich, modular Discord bot built with Discord.js.
-  Designed for invite tracking, community management, and server automation.
+A feature-rich, open source multipurpose Discord bot built with Discord.js v14.
+Designed for server protection, community management, AI chat, and automation.
 
-  [![Discord](https://img.shields.io/discord/QnWNz2dKCE?color=5865F2&label=Support&logo=discord&logoColor=white)](https://discord.gg/QnWNz2dKCE)
+[![Discord](https://img.shields.io/discord/1414217749038891102?color=5865F2&label=Support&logo=discord&logoColor=white)](https://discord.gg/QnWNz2dKCE)
 
-  </div>
+</div>
 
-  ---
+---
 
-  ## Overview
+## Overview
 
-  Onyx is a powerful, modular Discord bot engineered for performance and extensibility. It supports both **prefix commands** and **slash commands**, backed by **MongoDB** when configured and a local JSON store as a safe fallback. Every feature is purpose-built with clean separation between commands, events, and data layers.
+Onyx is a fully self-hostable, open source multipurpose Discord bot engineered to replace the need for several bots in a single server. It supports both **prefix commands** (default: `!`) and **slash commands** through a unified hybrid command system. Persistent data is stored in a **PostgreSQL** database via Sequelize ORM, and every feature is configurable on a per-server basis through setup commands.
 
-  ---
+---
 
-  ## Features
+## Features
 
-  ### Invite Tracking
-  Track every invite in your server with precision.
+### Security & Antinuke
+Protect your server from malicious actors and raids.
 
-  - Identify who invited each member
-  - Separate counters for **joins**, **leaves**, **rejoins**, and **fake invites** (bots or young accounts)
-  - Set custom **join and leave message channels** with rich template variables
-  - Manually adjust invite counts per user — add, remove, clear, or reset
+- Detects and blocks mass channel deletions, role deletions, webhook creations, and unauthorized bot joins
+- Interactive setup wizard with configurable thresholds and punishment actions
+- Per-server whitelist management for trusted users and bots
 
-  ### Giveaways
-  Run clean and fair giveaways.
+### Moderation
+Essential tools for keeping your server in order.
 
-  - Create giveaways with a custom prize, duration, and winner count
-  - End giveaways early at any time
-  - Reroll winners with a single command
-  - Reaction-based entry system powered by Discord's native reactions
+- Ban, kick, mute, and temporary role assignment with reason tracking
+- Slowmode, channel lock/unlock, and nickname management
+- Bulk message purging with filters (user, bots, all)
+- Full voice moderation: mute, deafen, kick, move, pull, lock, and private channels
 
-  ### Timers
-  Server-side timers that persist across restarts.
+### Automod
+Automatic rule enforcement without manual intervention.
 
-  - Start a named timer with a custom duration and optional message
-  - Pause, resume, and end timers at will
-  - Useful for events, competitions, or time-boxed activities
+- Invite link and URL filtering with configurable whitelists
+- Anti-spam and mass mention detection
+- Per-channel and per-role whitelist support
 
-  ### Greet Messages
-  A fully customisable welcome system.
+### Logging
+A comprehensive server audit trail.
 
-  - Configure up to **3 separate greet channels** per server
-  - Two greet modes:
-    - **Simple** — plain text message with variable support
-    - **Container** — rich UI with title, description, thumbnail, banner image, and accent colour
-  - Set greet messages to **auto-delete** after a configurable number of seconds
-  - Built-in variable system for dynamic content
+- Tracks message edits and deletions with content snapshots
+- Logs server changes: channels, roles, and emojis
+- Member joins, leaves, user updates, and voice state changes
+- Fully configurable log channel routing per event type
 
-  ### Message Tracking
-  Monitor and manage message activity across your server.
+### AI Integration
+A built-in conversational AI assistant named Onyx.
 
-  - Track total message counts per member
-  - Blacklist specific channels from being counted
-  - Manually adjust counts — add, remove, clear, or reset
-  - Daily and all-time tracking
+- Powered by **Groq API** for fast language model responses
+- Image analysis via **Gemini Vision API**
+- Real-time web search via **SerpAPI**
+- Per-channel enable/disable toggle
+- Custom identity — does not reveal underlying model or provider
 
-  ### Leaderboards
-  Recognise your most active members.
+### Ticketing
+A complete support ticket system.
 
-  - **Invite leaderboard** — ranked by total invites
-  - **Message leaderboard** — all-time and daily rankings
-  - Clean paginated display
+- Multiple ticket categories with dedicated staff roles
+- Claim, transfer, rename, close, delete, and reopen tickets
+- Full ticket transcripts
+- Panel embeds for self-service ticket creation
 
-  ### Moderation
-  Essential tools to keep your server in order.
+### Giveaways
+Run clean and fair giveaways.
 
-  - Ban and unban members
-  - Kick members
-  - Mute and unmute members
-  - Bulk delete messages (erase)
+- Create giveaways with a custom prize, duration, and winner count
+- End giveaways early and reroll winners at any time
+- Automated ending with winner announcement
 
-  ### Polls
-  Gather opinions from your community.
+### Welcome & Farewell
+Fully customizable join and leave messages.
 
-  - Create standard polls visible to everyone
-  - Create ephemeral polls visible only to the command user
+- Rich embed configuration with image and background support
+- Test command to preview messages before going live
+- Per-server setup with channel routing
 
-  ### Utility
-  A wide range of general-purpose tools.
+### Profile System
+User identity and engagement tracking.
 
-  - User info, server info, role info, voice channel info
-  - Avatar and banner viewer (user and server)
-  - Bot info, ping, uptime, and shard statistics
-  - Member count, invite link, permission viewer
-  - Set or delete a custom server prefix
+- Canvas-generated profile cards with custom biography, background, and social links
+- View profiles for any server member
+- Global message and invite leaderboards
 
-  ---
+### Utility
+A wide range of general-purpose tools.
 
-  ## Setup
+- Unit and encoding conversions (cm/ft, kg/lb, Base32, Hex, Rot13, Binary)
+- Server info, user info, role info, and invite tracking with join positions
+- Export server data: bans, roles, members, and messages to file
+- AFK status, personal reminders, todo lists, Wikipedia search, calculator
 
-  **Requirements:** Node.js >= 20.10. MongoDB is optional; if `MONGODB_URI` is missing, invalid, or unreachable, Onyx automatically uses local JSON storage at `data/onyx-db.json` (override with `ONYX_DB_FILE`).
+### Automation
+Background systems that run without manual input.
 
-  ```bash
-  # 1. Clone the repository
-  git clone https://github.com/Onyx-dev07/Onyx.git
-  cd Onyx
+- **Join to Create (J2C)** — dynamic temporary voice channels
+- **Autopost** — schedule recurring messages in any channel
+- **Autobump** — automated server bump scheduling
+- **Autoreact** — auto-react to messages in configured channels
+- **Vanity Roles** — assign roles based on user Discord status text
+- **Reaction Roles** — reaction and button-based role assignment
 
-  # 2. Install dependencies
-  npm install
+### Fun & Roleplay
+Engagement commands for active communities.
 
-  # 3. Configure the bot
-  # Set DISCORD_TOKEN, CLIENT_ID, OWNER_IDS, and optionally MONGODB_URI in your environment
+- Roleplay commands: hug, kiss, slap, pat, and more
+- Animal facts and images, meme generation, ship calculator, fake hack
+- GitHub and YouTube search integrations
 
-  # 4. Start the bot
-  node src/bot.js
-  ```
+---
 
-  On Render Web Services, Onyx automatically binds to `$PORT` and serves `GET /health` for port checks. No extra configuration is needed.
+## Setup
 
-  The default command prefix is `!`. Server managers can change it with `!setprefix <prefix>` and reset it with `!deleteprefix`.
+**Requirements:** Node.js >= 18, PostgreSQL database
 
-  ---
+```bash
+# 1. Clone the repository
+git clone https://github.com/OnyxDevs/onyx.git
+cd onyx
 
-  ## Project Structure
+# 2. Install dependencies
+npm install
 
-  ```
-  src/
-  ├── bot.js                    Entry point
-  ├── commands/                 All prefix & slash commands
-  │   ├── giveaway/
-  │   ├── greet/
-  │   ├── invites/
-  │   ├── leaderboard/
-  │   ├── messages/
-  │   ├── moderation/
-  │   ├── polls/
-  │   ├── timer/
-  │   └── utility/
-  ├── events/                   Discord gateway event handlers
-  ├── structures/               Core framework
-  │   ├── classes/              Command, Context, Client, Cache
-  │   └── handlers/             Command loader, event loader
-  ├── database/                 MongoDB/JSON storage, repositories & services
-  ├── utils/                    Shared utility functions
-  └── config/                   Bot config & emoji definitions
-  ```
+# 3. Configure the bot
+# Edit src/config.js with your token, client ID, database URL, and API keys
 
-  ---
+# 4. Start the bot
+npm start
+```
 
-  ## Credits
+---
 
-  **Developer** — [Onyx](https://github.com/Onyx)
-  **Organisation** — [Onyx](https://github.com/Onyx-dev07)
-  **Handler** — Built using the [bre4d777/handler](https://github.com/bre4d777/handler) framework by [bre4d777](https://github.com/bre4d777)
+## Emoji Synchronisation
 
-  ---
+Onyx uses **application emojis** — emojis uploaded directly to the bot's Discord application — so they are available globally across every server without requiring a dedicated emoji server.
 
-  ## Support
+Emoji upload is manual so Render's `$PORT` health server is never interrupted:
 
-  Join the Onyx Discord server for help, updates, and community support.
+```bash
+npm run sync:emojis
+```
 
-  **[discord.gg/QnWNz2dKCE](https://discord.gg/QnWNz2dKCE)**
+The sync reads the source images in `tempassets/`, uploads missing emojis to the configured Discord application, and rewrites `src/emojis.json` with the resulting emoji IDs. It never deletes `tempassets/` and never restarts the bot. Use `!setprefix <prefix>` to change a guild prefix and `!deleteprefix` to reset it back to `!`.
 
-  ---
+---
 
-  <div align="center">
+## Configuration
 
-  © 2026 Onyx. All rights reserved.
-  See [LICENSE](./LICENSE) for usage terms.
+All configuration lives in `src/config.js`.
 
-  </div>
-  
+| Key | Description |
+|-----|-------------|
+| `BOT_TOKEN` | Discord bot token from the Developer Portal |
+| `CLIENT_ID` | Bot application/client ID |
+| `OWNER_ID` | Your Discord user ID for owner-only commands |
+| `PREFIX` | Default text command prefix (default: `!`) |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `GROQ.API_KEY` | Groq API key for AI chat |
+| `SERPAPI.API_KEY` | SerpAPI key for web search in AI responses |
+| `STATUS.status` | Bot presence: `online`, `idle`, `dnd`, `invisible` |
+| `STATUS.activity` | Bot activity display text |
+| `SUPPORT_SERVER` | Your support server invite link |
+
+The database schema is automatically synced on startup — no manual migrations required.
+
+---
+
+## Project Structure
+
+```
+src/
+├── client.js                    Entry point — initializes client, DB, and loaders
+├── config.js                    Bot configuration and API keys
+├── emojis.json                  Application emoji mappings (name → formatted string)
+├── hybrid/                      Hybrid slash + prefix commands
+│   ├── ai/                      Onyx AI chat
+│   ├── antinuke/                Antinuke protection
+│   ├── automod/                 Automated moderation
+│   ├── autobump/                Server bump automation
+│   ├── autopost/                Scheduled message posting
+│   ├── autoreact/               Auto-reaction bindings
+│   ├── farewell/                Farewell messages
+│   ├── giveaway/                Giveaway management
+│   ├── j2c/                     Join to Create voice channels
+│   ├── leaderboard/             Message and invite leaderboards
+│   ├── logging/                 Audit log configuration
+│   ├── profile/                 User profile cards
+│   ├── reactionroles/           Reaction-based role assignment
+│   ├── remind/                  Personal reminders
+│   ├── ticket/                  Full ticket system
+│   ├── todo/                    Personal todo lists
+│   ├── vanityroles/             Status-based role assignment
+│   ├── voice/                   Voice channel moderation
+│   ├── welcome/                 Welcome messages
+│   └── ...                      And more
+├── gateway/                     Discord event handlers
+│   ├── antinuke/                Antinuke detection logic
+│   ├── automod/                 Automod enforcement
+│   ├── interactions/            Interaction-specific handlers
+│   ├── messageCreate.js         Prefix command dispatcher
+│   ├── interactionCreate.js     Slash command dispatcher
+│   ├── welcomeEvent.js          Welcome trigger
+│   ├── farewellEvent.js         Farewell trigger
+│   ├── voiceStateUpdate.js      J2C and voice events
+│   ├── trackUserInvites.js      Invite usage tracking
+│   ├── trackUserMessages.js     Message count tracking
+│   └── ...                      And more
+├── data/
+│   └── models/                  Sequelize database models (27 total)
+├── lib/                         Internal utilities and helpers
+│   ├── emojiSync.js             Startup emoji synchronisation
+│   ├── profileCard.js           Canvas profile card renderer
+│   ├── pagination.js            Paginated embed component
+│   ├── giveawayUtils.js         Giveaway timer and result logic
+│   ├── ticketUtils.js           Ticket creation and management
+│   ├── commandLoader.js         Dynamic command loader
+│   └── ...                      And more
+└── static/                      Static assets (fonts, badges, images)
+```
+
+---
+
+## Credits
+
+**Developer** — [Onyx](https://github.com/Onyx-dev07) (Onyx)  
+**Organisation** — [Onyx](https://github.com/OnyxDevs)
+
+---
+
+## Support
+
+Join the Onyx Discord server for help, updates, and community support.
+
+**[discord.gg/onyx](https://discord.gg/QnWNz2dKCE)**
+
+---
+
+<div align="center">
+
+© 2026 Onyx — Onyx. All rights reserved.  
+See [LICENSE](./LICENSE) for usage terms.
+
+</div>
