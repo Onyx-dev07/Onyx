@@ -4,14 +4,13 @@
 const { MessageFlags, SlashCommandBuilder } = require('discord.js');
 
 const {
-        DEFAULT_REASON,
         alreadyAfkResponse,
         findAfk,
         invalidReasonResponse,
         isInvalidReason,
         normalizeReason,
-        setAfk,
-        successResponse,
+        promptResponse,
+        storePendingAfk,
 } = require('../../../lib/afkService');
 
 function ephemeral(response) {
@@ -39,8 +38,11 @@ module.exports = {
                 return interaction.reply(ephemeral(alreadyAfkResponse(existingAFK)));
         }
 
-        const savedReason = await setAfk(interaction.guildId, interaction.user.id, reason);
-        return interaction.reply(successResponse(savedReason || DEFAULT_REASON));
+        const guildId = interaction.guildId;
+        const userId = interaction.user.id;
+
+        storePendingAfk(guildId, userId, reason);
+        return interaction.reply(promptResponse({ guildId, userId, reason }));
     },
 };
 

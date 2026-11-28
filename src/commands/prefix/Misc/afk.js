@@ -2,14 +2,13 @@
 // https://discord.gg/QnWNz2dKCE
 
 const {
-        DEFAULT_REASON,
         alreadyAfkResponse,
         findAfk,
         invalidReasonResponse,
         isInvalidReason,
         normalizeReason,
-        setAfk,
-        successResponse,
+        promptResponse,
+        storePendingAfk,
 } = require('../../../lib/afkService');
 
 module.exports = {
@@ -28,8 +27,11 @@ module.exports = {
             return message.reply(alreadyAfkResponse(existingAFK));
         }
 
-        const savedReason = await setAfk(message.guildId, message.author.id, reason);
-        return message.reply(successResponse(savedReason || DEFAULT_REASON));
+        const guildId = message.guildId;
+        const userId = message.author.id;
+
+        storePendingAfk(guildId, userId, reason);
+        return message.reply(promptResponse({ guildId, userId, reason }));
     },
 };
 

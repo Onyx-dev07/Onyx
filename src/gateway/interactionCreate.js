@@ -8,6 +8,7 @@ const botLogger = require('../lib/botLogger');
 const { checkCooldown, storePendingReply, clearPendingReply } = require('../lib/cooldown');
 const emojis = require('../emojis.json');
 
+const afkHandler = require('./interactions/afkHandler');
 const feedbackHandler = require('./interactions/feedbackHandler');
 const giveawayHandler = require('./interactions/giveawayHandler');
 const j2cHandler = require('./interactions/j2cHandler');
@@ -26,6 +27,7 @@ const config = require('../config');
 const { buildRoleplayResponse, roleplayActions } = require('../lib/roleplayHelper');
 
 const handlers = [
+  afkHandler,
   feedbackHandler,
   giveawayHandler,
   j2cHandler,
