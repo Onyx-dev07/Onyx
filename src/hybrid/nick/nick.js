@@ -7,10 +7,16 @@ const {
     SlashCommandBuilder,
     ContainerBuilder,
     TextDisplayBuilder,
+    SeparatorBuilder,
+    SeparatorSpacingSize,
+    SectionBuilder,
+    ThumbnailBuilder,
     MessageFlags,
     PermissionFlagsBits,
 } = require('discord.js');
 const emojis = require('../../emojis.json');
+
+const FOOTER = '-# Nickname management • Onyx';
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -39,6 +45,12 @@ module.exports = {
         const guild = interactionOrMessage.guild;
         const executor = interactionOrMessage.member;
 
+        function divider(dividerLine = true) {
+            return new SeparatorBuilder()
+                .setSpacing(SeparatorSpacingSize.Small)
+                .setDivider(dividerLine);
+        }
+
         function reply(container, ephemeral = false) {
             const opts = {
                 components: [container],
@@ -53,7 +65,15 @@ module.exports = {
         function errorMsg(text) {
             return new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`${emojis.nickError} ${text}`)
+                    new TextDisplayBuilder().setContent(`# ${emojis.nickError} Nickname Update Failed`)
+                )
+                .addSeparatorComponents(divider())
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(text)
+                )
+                .addSeparatorComponents(divider(false))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(FOOTER)
                 );
         }
 
@@ -110,13 +130,34 @@ module.exports = {
             );
 
             const username = targetMember.user?.username || targetMember.displayName || 'Unknown';
+            const avatarUrl = typeof targetMember.displayAvatarURL === 'function'
+                ? targetMember.displayAvatarURL({ dynamic: true, size: 256 })
+                : targetMember.user?.displayAvatarURL({ dynamic: true, size: 256 });
+
+            const details = new TextDisplayBuilder().setContent(
+                `${emojis.nickUser} **User:** ${username}\n` +
+                `${emojis.nickRight} **Nickname:** ${newNick || 'None'}`
+            );
+
             const container = new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(
-                        `${emojis.nickSuccess} Nickname Updated\n` +
-                        `${emojis.nickUser} User: ${username}\n` +
-                        `${emojis.nickRight} Nickname: ${newNick || 'None'}`
-                    )
+                    new TextDisplayBuilder().setContent(`# ${emojis.nickSuccess} Nickname Updated`)
+                )
+                .addSeparatorComponents(divider());
+
+            if (avatarUrl) {
+                const section = new SectionBuilder()
+                    .addTextDisplayComponents(details)
+                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarUrl));
+                container.addSectionComponents(section);
+            } else {
+                container.addTextDisplayComponents(details);
+            }
+
+            container
+                .addSeparatorComponents(divider(false))
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(FOOTER)
                 );
 
             return reply(container);
