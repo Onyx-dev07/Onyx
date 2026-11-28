@@ -19,7 +19,7 @@ const registry = {
     title: 'General Commands',
     commands: [
       { name: 'status',           description: 'Check the bot\'s current status' },
-      { name: 'avatar [user]',    description: 'View a user\'s avatar' },
+      { name: 'avatar [user] (av)', description: 'View a user\'s avatar' },
       { name: 'banner [user]',    description: 'View a user\'s banner' },
       { name: 'servericon',       description: 'View the server\'s icon' },
       { name: 'membercount',      description: 'Show the server member count' },
