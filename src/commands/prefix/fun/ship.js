@@ -11,7 +11,7 @@ const {
   AttachmentBuilder,
   MessageFlags,
 } = require('discord.js');
-const canvafy = require('canvafy');
+const { generateShipCard } = require('../../../lib/shipCard');
 
 module.exports = {
   name: 'ship',
@@ -42,12 +42,7 @@ module.exports = {
       const avatar1 = mention1.displayAvatarURL({ extension: 'png', size: 512, forceStatic: true });
       const avatar2 = mention2.displayAvatarURL({ extension: 'png', size: 512, forceStatic: true });
 
-      const shipCard = await new canvafy.Ship()
-        .setAvatars(avatar1, avatar2)
-        .setBackground('color', '#2B2D31')
-        .setOverlayOpacity(0.3)
-        .setBorder('#ff69b4')
-        .build();
+      const shipCard = await generateShipCard(avatar1, avatar2);
 
       const attachment = new AttachmentBuilder(shipCard, { name: 'ship.png' });
 
