@@ -469,7 +469,7 @@ module.exports = {
       const duration = Date.now() - userAFK.time;
       const afkRemovedContainer = new ContainerBuilder().setAccentColor(0x2B2D31)
         .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(`${emojis.success} **Welcome Back**`)
+          new TextDisplayBuilder().setContent(`${emojis.white_tick} **Welcome Back**`)
         )
         .addSeparatorComponents(new SeparatorBuilder())
         .addTextDisplayComponents(
