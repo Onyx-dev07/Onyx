@@ -7,8 +7,6 @@ const {
     SlashCommandBuilder,
     ContainerBuilder,
     TextDisplayBuilder,
-    SeparatorBuilder,
-    SeparatorSpacingSize,
     MessageFlags,
     PermissionFlagsBits,
 } = require('discord.js');
@@ -39,18 +37,23 @@ module.exports = {
     async execute(interactionOrMessage, args = []) {
         const isSlash = interactionOrMessage.isChatInputCommand?.();
         const guild = interactionOrMessage.guild;
-        const executor = isSlash ? interactionOrMessage.member : interactionOrMessage.member;
+        const executor = interactionOrMessage.member;
 
         function reply(container, ephemeral = false) {
-            const opts = { components: [container], flags: ephemeral ? MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral : MessageFlags.IsComponentsV2, allowedMentions: { users: [] } };
-            if (isSlash) return interactionOrMessage.reply(opts);
+            const opts = {
+                components: [container],
+                flags: ephemeral
+                    ? MessageFlags.IsComponentsV2 | MessageFlags.Ephemeral
+                    : MessageFlags.IsComponentsV2,
+                allowedMentions: { users: [] },
+            };
             return interactionOrMessage.reply(opts);
         }
 
         function errorMsg(text) {
             return new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`${emojis.error} ${text}`)
+                    new TextDisplayBuilder().setContent(`${emojis.nickError} ${text}`)
                 );
         }
 
@@ -101,22 +104,23 @@ module.exports = {
         }
 
         try {
-            await targetMember.setNickname(newNick, `Nickname changed by ${isSlash ? interactionOrMessage.user.tag : interactionOrMessage.author.tag}`);
+            await targetMember.setNickname(
+                newNick,
+                `Nickname changed by ${isSlash ? interactionOrMessage.user.tag : interactionOrMessage.author.tag}`
+            );
 
-            const action = newNick ? `set to **${newNick}**` : `removed`;
+            const username = targetMember.user?.username || targetMember.displayName || 'Unknown';
             const container = new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent('Nickname Updated')
-                )
-                .addSeparatorComponents(
-                    new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small)
-                )
-                .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`Nickname for ${targetMember} has been ${action}.`)
+                    new TextDisplayBuilder().setContent(
+                        `${emojis.nickSuccess} Nickname Updated\n` +
+                        `${emojis.nickUser} User: ${username}\n` +
+                        `${emojis.nickRight} Nickname: ${newNick || 'None'}`
+                    )
                 );
 
             return reply(container);
-        } catch (err) {
+        } catch {
             return reply(errorMsg('Failed to change the nickname. Make sure I have the required permissions.'), true);
         }
     }
