@@ -4,18 +4,10 @@
 const {
         ContainerBuilder,
         MessageFlags,
-        SeparatorBuilder,
-        SeparatorSpacingSize,
         TextDisplayBuilder,
 } = require('discord.js');
 
 const emojis = require('../emojis.json');
-
-function divider() {
-        return new SeparatorBuilder()
-                .setSpacing(SeparatorSpacingSize.Small)
-                .setDivider(true);
-}
 
 function userMention(value, fallback = 'Unknown') {
         const id = value?.id || value?.user?.id;
@@ -26,14 +18,17 @@ function roleMention(role, fallback = 'Unknown') {
         return role?.id ? `<@&${role.id}>` : fallback;
 }
 
+function withFlags(payload, ephemeral) {
+        if (!ephemeral) return payload;
+        return { ...payload, flags: payload.flags | MessageFlags.Ephemeral };
+}
+
 function card(title, icon, lines) {
         const container = new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent(`## ${icon} ${title}`)
-                )
-                .addSeparatorComponents(divider())
-                .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent(lines.join('\n'))
+                        new TextDisplayBuilder().setContent(
+                                `## ${icon} ${title}\n${lines.join('\n')}`
+                        )
                 );
 
         return {
@@ -41,11 +36,6 @@ function card(title, icon, lines) {
                 flags: MessageFlags.IsComponentsV2,
                 allowedMentions: { parse: [] },
         };
-}
-
-function withFlags(payload, ephemeral) {
-        if (!ephemeral) return payload;
-        return { ...payload, flags: payload.flags | MessageFlags.Ephemeral };
 }
 
 function given({ member, role, actor, count = 1 }) {
