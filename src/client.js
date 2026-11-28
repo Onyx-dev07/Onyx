@@ -1,7 +1,7 @@
 // © Author: Onyx
 // https://discord.gg/QnWNz2dKCE
 
-const { Client, GatewayIntentBits, Partials, Collection, REST, Routes, ActivityType } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, Collection, REST, Routes } = require('discord.js');
 const Dokdo = require('dokdo');
 const fs = require('fs');
 const path = require('path');
@@ -11,6 +11,7 @@ const dbStatus = require('./data/dbStatus');
 const { loadSlashCommands, loadPrefixCommands, loadHybridCommands, reloadAllCommands } = require('./lib/commandLoader');
 const { colors, printHeader, printLoading, printSuccess, printError, printInfo, printSystemReady } = require('./lib/consoleLogger');
 const botLogger    = require('./lib/botLogger');
+const { startStatusRotation, stopStatusRotation } = require('./lib/statusRotator');
 const { startHealthServer } = require('./healthServer');
 
 // Render Web Services need $PORT bound before any long-running initialization.
@@ -187,6 +188,7 @@ process.on('uncaughtException', (error) => {
 
   async function gracefulShutdown(signal) {
     console.log(`\n${colors.YELLOW}⚠${colors.RESET}  Received ${signal}, shutting down gracefully...`);
+    stopStatusRotation(client);
     client.destroy();
     try { await models.sequelize.close(); } catch (_) {}
     process.exit(0);
@@ -210,10 +212,7 @@ process.on('uncaughtException', (error) => {
 
     botLogger.init(client);
 
-    client.user.setPresence({
-      status: config.STATUS.status,
-      activities: [{ name: config.STATUS.activity, type: ActivityType.Listening }]
-    });
+    startStatusRotation(client);
 
     printLoading('Synchronizing slash commands');
     try {
