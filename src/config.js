@@ -14,7 +14,7 @@ module.exports = {
     STATUS: {
         status: 'online',
         statuses: ['online', 'idle'],
-        rotateEveryMs: Number(process.env.STATUS_ROTATE_MS) || 30000,
+        rotateEveryMs: Number(process.env.STATUS_ROTATE_MS) || 12 * 60 * 60 * 1000,
         activity: '!help | @Onyx',
     },
 
