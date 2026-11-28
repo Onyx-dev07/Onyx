@@ -9,8 +9,6 @@ const {
     TextDisplayBuilder,
     SeparatorBuilder,
     SeparatorSpacingSize,
-    SectionBuilder,
-    ThumbnailBuilder,
     MessageFlags,
     PermissionFlagsBits,
 } = require('discord.js');
@@ -65,7 +63,7 @@ module.exports = {
         function errorMsg(text) {
             return new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`# ${emojis.nickError} Nickname Update Failed`)
+                    new TextDisplayBuilder().setContent(`## ${emojis.nickError} Nickname Update Failed`)
                 )
                 .addSeparatorComponents(divider())
                 .addTextDisplayComponents(
@@ -130,31 +128,18 @@ module.exports = {
             );
 
             const username = targetMember.user?.username || targetMember.displayName || 'Unknown';
-            const avatarUrl = typeof targetMember.displayAvatarURL === 'function'
-                ? targetMember.displayAvatarURL({ dynamic: true, size: 256 })
-                : targetMember.user?.displayAvatarURL({ dynamic: true, size: 256 });
-
-            const details = new TextDisplayBuilder().setContent(
-                `${emojis.nickUser} **User:** ${username}\n` +
-                `${emojis.nickRight} **Nickname:** ${newNick || 'None'}`
-            );
 
             const container = new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`# ${emojis.nickSuccess} Nickname Updated`)
+                    new TextDisplayBuilder().setContent(`## ${emojis.nickSuccess} Nickname Updated`)
                 )
-                .addSeparatorComponents(divider());
-
-            if (avatarUrl) {
-                const section = new SectionBuilder()
-                    .addTextDisplayComponents(details)
-                    .setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarUrl));
-                container.addSectionComponents(section);
-            } else {
-                container.addTextDisplayComponents(details);
-            }
-
-            container
+                .addSeparatorComponents(divider())
+                .addTextDisplayComponents(
+                    new TextDisplayBuilder().setContent(
+                        `${emojis.nickUser} **User:** ${username}\n` +
+                        `${emojis.nickRight} **Nickname:** ${newNick || 'None'}`
+                    )
+                )
                 .addSeparatorComponents(divider(false))
                 .addTextDisplayComponents(
                     new TextDisplayBuilder().setContent(FOOTER)
