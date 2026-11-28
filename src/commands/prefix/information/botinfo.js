@@ -1,31 +1,44 @@
 // © Author: Onyx
 // https://discord.gg/QnWNz2dKCE
 
-const { ContainerBuilder, TextDisplayBuilder, SeparatorBuilder, SeparatorSpacingSize, SectionBuilder, ThumbnailBuilder, MessageFlags } = require('discord.js');
 const os = require('os');
 const fs = require('fs');
 
-function pad(key, width = 12) {
-    return key + ' '.repeat(Math.max(1, width - key.length));
-}
+const { botInfoCard } = require('../../../lib/infoCards');
 
 function formatRam(bytes) {
     return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB';
 }
 
 async function getCpuUsage() {
-    const start = os.cpus().map(c => ({ ...c.times }));
-    await new Promise(r => setTimeout(r, 150));
-    const end = os.cpus().map(c => ({ ...c.times }));
-    let idle = 0, total = 0;
-    for (let i = 0; i < start.length; i++) {
-        for (const type of Object.keys(start[i])) {
-            const diff = end[i][type] - start[i][type];
-            total += diff;
-            if (type === 'idle') idle += diff;
+    const start = os.cpus().map(cpu => ({ ...cpu.times }));
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const end = os.cpus().map(cpu => ({ ...cpu.times }));
+
+    let idle = 0;
+    let total = 0;
+
+    for (let index = 0; index < start.length; index++) {
+        for (const type of Object.keys(start[index])) {
+            const difference = end[index][type] - start[index][type];
+            total += difference;
+            if (type === 'idle') idle += difference;
         }
     }
+
     return ((1 - idle / total) * 100).toFixed(1);
+}
+
+function diskStats() {
+    try {
+        const stats = fs.statfsSync(process.cwd());
+        return {
+            free: (stats.bsize * stats.bavail / 1e9).toFixed(1) + ' GB Free',
+            total: (stats.bsize * stats.blocks / 1e9).toFixed(1) + ' GB',
+        };
+    } catch {
+        return { free: 'N/A', total: 'N/A' };
+    }
 }
 
 module.exports = {
@@ -35,72 +48,23 @@ module.exports = {
 
     async execute(message) {
         const { client } = message;
-
-        const servers  = client.guilds.cache.size;
-        const users    = client.guilds.cache.reduce((acc, g) => acc + g.memberCount, 0);
+        const disk = diskStats();
         const ramUsage = (process.memoryUsage().rss / 1024 / 1024).toFixed(0);
-        const cpuUsage = await getCpuUsage();
-        const avatarURL = client.user.displayAvatarURL({ size: 256 });
 
-        let diskFree = 'N/A';
-        try {
-            const d = fs.statfsSync('/');
-            diskFree = (d.bsize * d.bavail / 1e9).toFixed(1) + ' GB Free';
-        } catch (_) {}
-
-        const cpuModel = os.cpus()[0]?.model?.trim() ?? 'Unknown';
-        const cores    = os.cpus().length;
-        const ramTotal = formatRam(os.totalmem());
-        let diskTotal  = 'N/A';
-        try {
-            const d = fs.statfsSync('/');
-            diskTotal = (d.bsize * d.blocks / 1e9).toFixed(1) + ' GB';
-        } catch (_) {}
-
-        const sysType = `${os.type()} ${os.release()}`;
-
-        const botOverview =
-            `### Bot Overview\n` +
-            `\`\`\`asciidoc\n` +
-            `- ${pad('Servers')}:: ${servers}\n` +
-            `- ${pad('Users')}:: ${users.toLocaleString('en-US')}\n` +
-            `- ${pad('Clusters')}:: 1\n` +
-            `- ${pad('Ram Usage')}:: ${ramUsage} MB\n` +
-            `- ${pad('CPU Usage')}:: ${cpuUsage}%\n` +
-            `- ${pad('Disk')}:: ${diskFree}\n` +
-            `\`\`\``;
-
-        const sysInfo =
-            `### System Info\n` +
-            `\`\`\`asciidoc\n` +
-            `- ${pad('System')}:: ${sysType}\n` +
-            `- ${pad('CPU')}:: ${cpuModel}\n` +
-            `- ${pad('Cores')}:: ${cores}\n` +
-            `- ${pad('Ram')}:: ${ramTotal}\n` +
-            `- ${pad('Disk')}:: ${diskTotal}\n` +
-            `\`\`\``;
-
-        const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-            .addSectionComponents(
-                new SectionBuilder()
-                    .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent(botOverview)
-                    )
-                    .setThumbnailAccessory(
-                        new ThumbnailBuilder().setURL(avatarURL)
-                    )
-            )
-            .addSeparatorComponents(
-                new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true)
-            )
-            .addTextDisplayComponents(
-                new TextDisplayBuilder().setContent(sysInfo)
-            );
-
-        await message.reply({
-            components: [container],
-            flags: MessageFlags.IsComponentsV2
+        const payload = botInfoCard({
+            client,
+            ramUsage,
+            cpuUsage: await getCpuUsage(),
+            diskFree: disk.free,
+            cpuModel: os.cpus()[0]?.model?.trim() ?? 'Unknown',
+            cores: os.cpus().length,
+            ramTotal: formatRam(os.totalmem()),
+            diskTotal: disk.total,
+            sysType: `${os.type()} ${os.release()}`,
+            avatarURL: client.user.displayAvatarURL({ size: 256 }),
         });
+
+        return message.reply(payload);
     }
 };
 
