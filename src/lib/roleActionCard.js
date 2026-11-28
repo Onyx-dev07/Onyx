@@ -58,7 +58,7 @@ function given({ member, role, actor, count = 1 }) {
         return card('Roles Given', emojis.nickSuccess, [
                 `${emojis.nickUser} **Member:** ${userMention(member)}`,
                 `${emojis.nickRight} **Given (${count}):** ${roleMention(role)}`,
-                `Updated by ${userMention(actor)}`,
+                `${emojis.roleInfo} **Updated by:** ${userMention(actor)}`,
         ]);
 }
 
@@ -66,7 +66,7 @@ function taken({ member, role, actor, count = 1 }) {
         return card('Roles Taken', emojis.nickSuccess, [
                 `${emojis.nickUser} **Member:** ${userMention(member)}`,
                 `${emojis.nickRight} **Taken (${count}):** ${roleMention(role)}`,
-                `Updated by ${userMention(actor)}`,
+                `${emojis.roleInfo} **Updated by:** ${userMention(actor)}`,
         ]);
 }
 
