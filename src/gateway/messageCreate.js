@@ -513,7 +513,7 @@ module.exports = {
             )
             .addSeparatorComponents(new SeparatorBuilder())
             .addTextDisplayComponents(
-              new TextDisplayBuilder().setContent(`**Reason:** ${mentionedAFK.reason}\n**Since:** <t:${Math.round(mentionedAFK.time / 1000)}:R>`)
+              new TextDisplayBuilder().setContent(`**Reason:** ${mentionedAFK.reason || 'No reason'}\n**Since:** <t:${Math.round(mentionedAFK.time / 1000)}:R>`)
             );
 
           await message.reply({
