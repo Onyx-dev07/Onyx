@@ -1,30 +1,21 @@
 // © Author: Onyx
 // https://discord.gg/QnWNz2dKCE
 
-const {
-  ContainerBuilder, TextDisplayBuilder, SeparatorBuilder,
-  SeparatorSpacingSize, MessageFlags, PermissionFlagsBits,
-} = require('discord.js');
+const { PermissionFlagsBits } = require('discord.js');
 
-function modReply(message, title, body) {
-  const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(`**${title}**`))
-    .addSeparatorComponents(new SeparatorBuilder().setSpacing(SeparatorSpacingSize.Small).setDivider(true))
-    .addTextDisplayComponents(new TextDisplayBuilder().setContent(body));
-  return message.reply({ components: [container], flags: MessageFlags.IsComponentsV2 });
-}
+const roleCards = require('../../../lib/roleActionCard');
 
 module.exports = {
   name: 'rolegive',
   description: 'Give a role to a user',
   aliases: ['giverole', 'addrole'],
-  
+
   async execute(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.ManageRoles))
-      return modReply(message, 'Permission Denied', 'You need the **Manage Roles** permission.');
+      return message.reply(roleCards.error('Permission Denied', 'You need the **Manage Roles** permission.'));
 
     if (!message.guild.members.me.permissions.has(PermissionFlagsBits.ManageRoles))
-      return modReply(message, 'Missing Permissions', 'I need the **Manage Roles** permission.');
+      return message.reply(roleCards.error('Missing Permissions', 'I need the **Manage Roles** permission.'));
 
     let targetMember = message.mentions.members.first();
     if (!targetMember && args[0]) {
@@ -33,14 +24,14 @@ module.exports = {
       if (userIdMatch) {
         targetMember = await message.guild.members.fetch(userIdMatch[1]).catch(() => null);
       } else {
-        targetMember = message.guild.members.cache.find(m => 
+        targetMember = message.guild.members.cache.find(m =>
           m.user.username.toLowerCase() === userQuery.toLowerCase() ||
           m.displayName.toLowerCase() === userQuery.toLowerCase()
         );
       }
     }
     if (!targetMember)
-      return modReply(message, 'User Not Found', 'Please provide a valid user mention, ID, or username.');
+      return message.reply(roleCards.error('User Not Found', 'Please provide a valid user mention, ID, or username.'));
 
     let role = message.mentions.roles.first();
     if (!role && args[1]) {
@@ -49,31 +40,36 @@ module.exports = {
       if (roleIdMatch) {
         role = message.guild.roles.cache.get(roleIdMatch[1]);
       } else {
-        role = message.guild.roles.cache.find(r => 
+        role = message.guild.roles.cache.find(r =>
           r.name.toLowerCase() === roleQuery.toLowerCase() ||
           r.name.toLowerCase().includes(roleQuery.toLowerCase())
         );
       }
     }
     if (!role)
-      return modReply(message, 'Role Not Found', 'Please provide a valid role mention, ID, or name.');
+      return message.reply(roleCards.error('Role Not Found', 'Please provide a valid role mention, ID, or name.'));
 
     if (role.position >= message.guild.members.me.roles.highest.position)
-      return modReply(message, 'Role Too High', 'I cannot manage this role as it is higher than or equal to my highest role.');
+      return message.reply(roleCards.error('Role Too High', 'I cannot manage this role as it is higher than or equal to my highest role.'));
 
     if (message.author.id !== message.guild.ownerId && role.position >= message.member.roles.highest.position)
-      return modReply(message, 'Role Too High', 'You cannot manage a role higher than or equal to your highest role.');
+      return message.reply(roleCards.error('Role Too High', 'You cannot manage a role higher than or equal to your highest role.'));
 
     if (targetMember.roles.cache.has(role.id))
-      return modReply(message, 'Role Already Assigned', 'User already has this role.');
+      return message.reply(roleCards.alreadyHas({ member: targetMember, role }));
 
     try {
       await targetMember.roles.add(role, `[ROLEGIVE] By ${message.author.tag}`);
-      await modReply(message, 'Role Given',
-        `**User:** ${targetMember.user}\n**Role:** ${role.name}\n**Given by:** ${message.author.tag}`);
+      return message.reply(roleCards.given({
+        member: targetMember,
+        role,
+        actor: message.author,
+      }));
     } catch (error) {
-      const msg = error.code === 50013 ? 'I lack the permissions to manage this role.' : 'Failed to give role.';
-      await modReply(message, 'Error', msg);
+      const text = error.code === 50013
+        ? 'I lack the permissions to manage this role.'
+        : 'Failed to give role.';
+      return message.reply(roleCards.error('Error', text));
     }
   },
 };
