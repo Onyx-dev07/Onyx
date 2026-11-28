@@ -9,11 +9,9 @@ const {
         MediaGalleryBuilder,
         MediaGalleryItemBuilder,
         MessageFlags,
-        SectionBuilder,
         SeparatorBuilder,
         SeparatorSpacingSize,
         TextDisplayBuilder,
-        ThumbnailBuilder,
 } = require('discord.js');
 
 const emojis = require('../emojis.json');
@@ -44,19 +42,14 @@ function divider() {
 }
 
 function missingCard(user) {
-        const avatarUrl = user.displayAvatarURL({ extension: 'png', size: 256 });
         const name = displayName(user);
 
-        const header = new SectionBuilder()
-                .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent(
-                                `## ${emojis.info} ${name} has no banner\nBanners are only visible on users who have one set.`
-                        )
-                )
-                .setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarUrl));
+        const header = new TextDisplayBuilder().setContent(
+                `## ${emojis.info} ${name} has no banner\nBanners are only visible on users who have one set.`
+        );
 
         const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-                .addSectionComponents(header)
+                .addTextDisplayComponents(header)
                 .addSeparatorComponents(divider())
                 .addTextDisplayComponents(
                         new TextDisplayBuilder().setContent(`-# Try \`!banner @someone\` to check another user.`)
@@ -66,11 +59,7 @@ function missingCard(user) {
 }
 
 function mediaCard({ title, subtitle, jpgUrl, pngUrl, description }) {
-        const header = new SectionBuilder()
-                .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent(`## ${title}\n${subtitle}`)
-                )
-                .setThumbnailAccessory(new ThumbnailBuilder().setURL(jpgUrl));
+        const header = new TextDisplayBuilder().setContent(`## ${title}\n${subtitle}`);
 
         const gallery = new MediaGalleryBuilder()
                 .addItems(
@@ -91,7 +80,7 @@ function mediaCard({ title, subtitle, jpgUrl, pngUrl, description }) {
         );
 
         const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-                .addSectionComponents(header)
+                .addTextDisplayComponents(header)
                 .addSeparatorComponents(divider())
                 .addMediaGalleryComponents(gallery)
                 .addSeparatorComponents(divider())
