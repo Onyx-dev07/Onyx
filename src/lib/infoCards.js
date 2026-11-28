@@ -11,6 +11,7 @@ const {
         SeparatorSpacingSize,
         TextDisplayBuilder,
         ThumbnailBuilder,
+        version,
 } = require('discord.js');
 
 const emojis = require('../emojis.json');
@@ -68,56 +69,41 @@ function finish(container, footer, asPayload = false) {
         };
 }
 
-function botInfoCard({
-        client,
-        ramUsage,
-        cpuUsage,
-        diskFree,
-        cpuModel,
-        cores,
-        ramTotal,
-        diskTotal,
-        sysType,
-        avatarURL,
-}) {
+function botInfoCard({ client, avatarURL }) {
         const servers = client?.guilds?.cache?.size || 0;
         const users = client?.guilds?.cache?.reduce(
                 (total, guild) => total + (guild.memberCount || 0),
                 0
         ) || 0;
+        const slashCommands = client?.commands?.size || 0;
+        const heapUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2) + ' MB';
 
-        const header = new SectionBuilder()
-                .addTextDisplayComponents(text(`### ${emojis.botSecurity} Bot Info`));
+        const systemLines = [
+                `discord.js: ${version}`,
+                `Node.js: ${process.version.replace(/^v/, '')}`,
+                `Heap Usage: ${heapUsage}`,
+        ].join('\n');
+
+        const botLines = [
+                `Slash commands: ${formatNumber(slashCommands)}`,
+                `Uptime: ${formatUptime(client?.uptime)}`,
+                `Users across servers: ${formatNumber(users)}`,
+                `Servers: ${formatNumber(servers)}`,
+        ].join('\n');
+
+        const systemContent = text(`### ${emojis.botSecurity} System Info\n${systemLines}`);
+
+        const botSection = new SectionBuilder()
+                .addTextDisplayComponents(text(`### ${emojis.botInfo} Bot Info\n${botLines}`));
 
         if (avatarURL) {
-                header.setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarURL));
+                botSection.setThumbnailAccessory(new ThumbnailBuilder().setURL(avatarURL));
         }
 
-        const botFields = [
-                `${emojis.botInfo} **Bot:** Onyx`,
-                `${emojis.botInfo} **Servers:** ${formatNumber(servers)}`,
-                `${emojis.botInfo} **Users:** ${formatNumber(users)}`,
-                `${emojis.botInfo} **Uptime:** ${formatUptime(client?.uptime)}`,
-                `${emojis.botInfo} **Clusters:** 1`,
-                `${emojis.botInfo} **RAM Usage:** ${ramUsage} MB`,
-                `${emojis.botInfo} **CPU Usage:** ${cpuUsage}%`,
-                `${emojis.botInfo} **Disk Free:** ${diskFree}`,
-        ].join('\n');
-
-        const systemFields = [
-                `${emojis.botInfo} **System:** ${sysType}`,
-                `${emojis.botInfo} **CPU:** ${cpuModel}`,
-                `${emojis.botInfo} **Cores:** ${cores}`,
-                `${emojis.botInfo} **RAM:** ${ramTotal}`,
-                `${emojis.botInfo} **Disk:** ${diskTotal}`,
-        ].join('\n');
-
         const container = new ContainerBuilder().setAccentColor(0x2B2D31)
-                .addSectionComponents(header)
+                .addTextDisplayComponents(systemContent)
                 .addSeparatorComponents(divider())
-                .addTextDisplayComponents(text(botFields))
-                .addSeparatorComponents(divider())
-                .addTextDisplayComponents(text(systemFields));
+                .addSectionComponents(botSection);
 
         return finish(container, BOT_FOOTER, true);
 }
