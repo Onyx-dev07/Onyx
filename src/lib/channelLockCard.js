@@ -36,7 +36,7 @@ function withFlags(payload, ephemeral) {
 function card(title, icon, lines) {
         const container = new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                        new TextDisplayBuilder().setContent(`## ${icon} ${title}`)
+                        new TextDisplayBuilder().setContent(`### ${icon} ${title}`)
                 )
                 .addSeparatorComponents(divider())
                 .addTextDisplayComponents(

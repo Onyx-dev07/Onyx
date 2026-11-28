@@ -63,7 +63,7 @@ module.exports = {
         function errorMsg(text) {
             return new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`## ${emojis.nickError} Nickname Update Failed`)
+                    new TextDisplayBuilder().setContent(`### ${emojis.nickError} Nickname Update Failed`)
                 )
                 .addSeparatorComponents(divider())
                 .addTextDisplayComponents(
@@ -131,7 +131,7 @@ module.exports = {
 
             const container = new ContainerBuilder().setAccentColor(0x2B2D31)
                 .addTextDisplayComponents(
-                    new TextDisplayBuilder().setContent(`## ${emojis.nickSuccess} Nickname Updated`)
+                    new TextDisplayBuilder().setContent(`### ${emojis.nickSuccess} Nickname Updated`)
                 )
                 .addSeparatorComponents(divider())
                 .addTextDisplayComponents(
