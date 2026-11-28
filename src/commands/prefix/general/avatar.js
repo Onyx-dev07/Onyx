@@ -23,7 +23,6 @@ module.exports = {
 
                 return message.reply(mediaCard({
                         title: `${name}'s Avatar`,
-                        subtitle: 'High-resolution profile picture',
                         jpgUrl,
                         pngUrl,
                         description: `${name}'s avatar`,

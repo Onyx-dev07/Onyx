@@ -58,8 +58,8 @@ function missingCard(user) {
         return { components: [container], flags: MessageFlags.IsComponentsV2 };
 }
 
-function mediaCard({ title, subtitle, jpgUrl, pngUrl, description }) {
-        const header = new TextDisplayBuilder().setContent(`## ${title}\n${subtitle}`);
+function mediaCard({ title, jpgUrl, pngUrl, description }) {
+        const header = new TextDisplayBuilder().setContent(`## ${title}`);
 
         const gallery = new MediaGalleryBuilder()
                 .addItems(

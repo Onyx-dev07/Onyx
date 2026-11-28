@@ -31,7 +31,6 @@ module.exports = {
 
                         return message.reply(mediaCard({
                                 title: `${name}'s Banner`,
-                                subtitle: 'High-resolution profile banner',
                                 jpgUrl,
                                 pngUrl,
                                 description: `${name}'s banner`,
